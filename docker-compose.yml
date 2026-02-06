@@ -1,0 +1,125 @@
+services:
+  redis:
+    image: "redis/redis-stack:latest"
+    container_name: "redis"
+    ports:
+      - "6379:6379"
+      - "8001:8001"
+    environment:
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+      - REDISEARCH_ARGS=MAXSEARCHRESULTS 10000 MAXAGGREGATERESULTS 10000
+    command: >
+      redis-stack-server
+      --requirepass ${REDIS_PASSWORD}
+      --appendonly yes
+      --maxmemory 4gb
+      --maxmemory-policy noeviction
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+  postgres:
+    build:
+      context: .
+      dockerfile: Dockerfile.postgres
+    container_name: postgres
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres123
+      POSTGRES_DB: apidata
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    command:
+      - "postgres"
+      - "-c"
+      - "shared_preload_libraries=pg_cron"
+      - "-c"
+      - "max_worker_processes=8"
+      - "-c"
+      - "max_parallel_workers_per_gather=4"
+      - "-c"
+      - "max_parallel_workers=8"
+      - "-c"
+      - "parallel_tuple_cost=0.1"
+      - "-c"
+      - "parallel_setup_cost=1000"
+      - "-c"
+      - "min_parallel_table_scan_size=8MB"
+      - "-c"
+      - "min_parallel_index_scan_size=512kB"
+      - "-c"
+      - "effective_cache_size=6GB"
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--web.enable-lifecycle'
+    restart: unless-stopped
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - monitoring-network
+
+  nginx-prometheus:
+    image: nginx:alpine
+    container_name: nginx-prometheus
+    ports:
+      - "9090:80"
+    volumes:
+      - ./prometheus/prometheus.conf:/etc/nginx/conf.d/default.conf
+      - ./prometheus/.htpasswd:/etc/nginx/.htpasswd
+    restart: unless-stopped
+    depends_on:
+      - prometheus
+    networks:
+      - monitoring-network
+
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "3001:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_PROMETHEUS_URL=http://nginx-prometheus
+      - GF_PROMETHEUS_USER=${GF_PROMETHEUS_USER}
+      - GF_PROMETHEUS_PASSWORD=${GF_PROMETHEUS_PASSWORD}
+    volumes:
+      - grafana-data:/var/lib/grafana
+    restart: unless-stopped
+    depends_on:
+      - prometheus
+    networks:
+      - monitoring-network
+
+volumes:
+  redis-data:
+  postgres-data:
+  prometheus-data:
+  grafana-data:
+
+networks:
+  monitoring-network:
+    driver: bridge

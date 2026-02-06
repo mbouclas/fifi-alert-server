@@ -1,0 +1,16 @@
+FROM postgis/postgis:latest
+
+# Install build dependencies and pg_cron
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+    postgresql-common \
+    postgresql-server-dev-all \
+    git \
+    make \
+    gcc \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/* \
+    && git clone https://github.com/citusdata/pg_cron.git \
+    && cd pg_cron \
+    && make \
+    && make install

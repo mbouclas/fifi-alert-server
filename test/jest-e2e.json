@@ -1,0 +1,32 @@
+{
+  "moduleFileExtensions": [
+    "js",
+    "json",
+    "ts"
+  ],
+  "rootDir": ".",
+  "testEnvironment": "node",
+  "testRegex": ".e2e-spec.ts$",
+  "transform": {
+    "^.+\\.(t|j)s$": "ts-jest"
+  },
+  "transformIgnorePatterns": [
+    "node_modules/(?!(better-auth|better-call|@thallesp/nestjs-better-auth)/)"
+  ],
+  "moduleNameMapper": {
+    "^@prisma-lib/(.*)$": "<rootDir>/../src/generated/prisma/$1",
+    "^@services/(.*)$": "<rootDir>/../src/services/$1",
+    "^@config/(.*)$": "<rootDir>/../src/config/$1",
+    "^@generated/(.*)$": "<rootDir>/../src/generated/prisma/$1",
+    "^@shared/(.*)$": "<rootDir>/../src/shared/$1"
+  },
+  "globals": {
+    "ts-jest": {
+      "isolatedModules": true,
+      "tsconfig": {
+        "esModuleInterop": true,
+        "allowSyntheticDefaultImports": true
+      }
+    }
+  }
+}

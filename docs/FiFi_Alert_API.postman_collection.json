@@ -1,0 +1,1510 @@
+{
+    "info": {
+        "name": "FiFi Alert API",
+        "description": "Complete API collection for the FiFi Alert geolocation-based missing pet notification system. Includes authentication, alert management, device registration, sightings, and admin operations.",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+        "_postman_id": "fifi-alert-api-v1",
+        "version": "1.0.0"
+    },
+    "auth": {
+        "type": "bearer",
+        "bearer": [
+            {
+                "key": "token",
+                "value": "{{accessToken}}",
+                "type": "string"
+            }
+        ]
+    },
+    "variable": [
+        {
+            "key": "baseUrl",
+            "value": "http://localhost:3000",
+            "type": "string"
+        },
+        {
+            "key": "accessToken",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "refreshToken",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "userId",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "alertId",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "deviceId",
+            "value": "",
+            "type": "string"
+        }
+    ],
+    "item": [
+        {
+            "name": "Authentication",
+            "item": [
+                {
+                    "name": "Login",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "if (pm.response.code === 200) {",
+                                    "    const response = pm.response.json();",
+                                    "    pm.collectionVariables.set('accessToken', response.accessToken);",
+                                    "    pm.collectionVariables.set('refreshToken', response.refreshToken);",
+                                    "    pm.collectionVariables.set('userId', response.user.id);",
+                                    "    console.log('Access token saved:', response.accessToken);",
+                                    "}"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "auth": {
+                            "type": "noauth"
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"Password123!\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/auth/login",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "auth",
+                                "login"
+                            ]
+                        },
+                        "description": "Authenticate a user with email and password. Returns access token, refresh token, and user details."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Signup",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "if (pm.response.code === 201) {",
+                                    "    const response = pm.response.json();",
+                                    "    pm.collectionVariables.set('accessToken', response.accessToken);",
+                                    "    pm.collectionVariables.set('refreshToken', response.refreshToken);",
+                                    "    pm.collectionVariables.set('userId', response.user.id);",
+                                    "}"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "auth": {
+                            "type": "noauth"
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"email\": \"newuser@example.com\",\n  \"password\": \"Password123!\",\n  \"firstName\": \"John\",\n  \"lastName\": \"Doe\",\n  \"image\": \"\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/auth/signup",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "auth",
+                                "signup"
+                            ]
+                        },
+                        "description": "Register a new user account."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get Current User (Me)",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/auth/me",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "auth",
+                                "me"
+                            ]
+                        },
+                        "description": "Get the currently authenticated user's details including roles and gates."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Logout",
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/auth/logout",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "auth",
+                                "logout"
+                            ]
+                        },
+                        "description": "Sign out the current user and invalidate their session."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Request Password Reset",
+                    "request": {
+                        "auth": {
+                            "type": "noauth"
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"email\": \"user@example.com\",\n  \"redirectTo\": \"https://app.fifialert.com/reset-password\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/auth/request-password-reset",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "auth",
+                                "request-password-reset"
+                            ]
+                        },
+                        "description": "Initiate password reset process by sending a reset link to the user's email."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Reset Password",
+                    "request": {
+                        "auth": {
+                            "type": "noauth"
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"token\": \"reset-token-from-email\",\n  \"newPassword\": \"NewPassword123!\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/auth/reset-password",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "auth",
+                                "reset-password"
+                            ]
+                        },
+                        "description": "Reset password using a valid token received via email."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Update Password",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"currentPassword\": \"OldPassword123!\",\n  \"newPassword\": \"NewPassword123!\",\n  \"revokeOtherSessions\": false\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/auth/update-password",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "auth",
+                                "update-password"
+                            ]
+                        },
+                        "description": "Update password for the currently authenticated user."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Refresh Access Token",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "if (pm.response.code === 200) {",
+                                    "    const response = pm.response.json();",
+                                    "    pm.collectionVariables.set('accessToken', response.accessToken);",
+                                    "}"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "auth": {
+                            "type": "noauth"
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/auth/refresh-token",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "auth",
+                                "refresh-token"
+                            ]
+                        },
+                        "description": "Generate a new access token using a valid refresh token."
+                    },
+                    "response": []
+                }
+            ],
+            "description": "User authentication endpoints including login, signup, password management, and token refresh."
+        },
+        {
+            "name": "Health Check",
+            "item": [
+                {
+                    "name": "Health Status",
+                    "request": {
+                        "auth": {
+                            "type": "noauth"
+                        },
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/health",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "health"
+                            ]
+                        },
+                        "description": "Check system health including database, Redis, and disk space. Returns 200 if healthy, 503 if any issues."
+                    },
+                    "response": []
+                }
+            ],
+            "description": "System health monitoring endpoints."
+        },
+        {
+            "name": "Alerts",
+            "item": [
+                {
+                    "name": "Create Alert",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "if (pm.response.code === 201) {",
+                                    "    const response = pm.response.json();",
+                                    "    pm.collectionVariables.set('alertId', response.id);",
+                                    "}"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"pet_name\": \"Buddy\",\n  \"pet_type\": \"DOG\",\n  \"breed\": \"Golden Retriever\",\n  \"color\": \"Golden\",\n  \"size\": \"LARGE\",\n  \"distinctive_features\": \"White patch on chest, wearing blue collar\",\n  \"last_seen_location\": {\n    \"latitude\": 40.7128,\n    \"longitude\": -74.0060,\n    \"address\": \"Central Park, New York, NY\"\n  },\n  \"last_seen_time\": \"2026-02-06T10:30:00Z\",\n  \"contact_phone\": \"+1234567890\",\n  \"contact_email\": \"owner@example.com\",\n  \"reward_amount\": 500,\n  \"additional_notes\": \"Very friendly, responds to 'Buddy'\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/alerts",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "alerts"
+                            ]
+                        },
+                        "description": "Create a new missing pet alert. Rate limited to 5 alerts per hour."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get Alert by ID",
+                    "request": {
+                        "auth": {
+                            "type": "noauth"
+                        },
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/alerts/{{alertId}}",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "alerts",
+                                "{{alertId}}"
+                            ]
+                        },
+                        "description": "Get details of a specific alert by ID."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Search Alerts",
+                    "request": {
+                        "auth": {
+                            "type": "noauth"
+                        },
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/alerts?latitude=40.7128&longitude=-74.0060&radius_km=5&status=ACTIVE",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "alerts"
+                            ],
+                            "query": [
+                                {
+                                    "key": "latitude",
+                                    "value": "40.7128"
+                                },
+                                {
+                                    "key": "longitude",
+                                    "value": "-74.0060"
+                                },
+                                {
+                                    "key": "radius_km",
+                                    "value": "5"
+                                },
+                                {
+                                    "key": "status",
+                                    "value": "ACTIVE"
+                                },
+                                {
+                                    "key": "pet_type",
+                                    "value": "DOG",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "limit",
+                                    "value": "20",
+                                    "disabled": true
+                                }
+                            ]
+                        },
+                        "description": "Search for alerts by location (lat/lon + radius) with optional filters for status and pet type."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Update Alert",
+                    "request": {
+                        "method": "PATCH",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"distinctive_features\": \"White patch on chest, wearing blue collar with name tag\",\n  \"reward_amount\": 750,\n  \"additional_notes\": \"Last seen near the pond area\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/alerts/{{alertId}}",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "alerts",
+                                "{{alertId}}"
+                            ]
+                        },
+                        "description": "Update an existing alert. Only the alert creator can update."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Resolve Alert",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"resolution_type\": \"FOUND_BY_OWNER\",\n  \"resolution_notes\": \"Found near the park entrance. Thank you all for your help!\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/alerts/{{alertId}}/resolve",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "alerts",
+                                "{{alertId}}",
+                                "resolve"
+                            ]
+                        },
+                        "description": "Mark an alert as resolved. Only the alert creator can resolve."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Renew Alert",
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/alerts/{{alertId}}/renew",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "alerts",
+                                "{{alertId}}",
+                                "renew"
+                            ]
+                        },
+                        "description": "Extend alert expiration by 7 days. Maximum 3 renewals allowed."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Upload Alert Photos",
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "body": {
+                            "mode": "formdata",
+                            "formdata": [
+                                {
+                                    "key": "photos",
+                                    "type": "file",
+                                    "src": []
+                                },
+                                {
+                                    "key": "photos",
+                                    "type": "file",
+                                    "src": [],
+                                    "disabled": true
+                                }
+                            ]
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/alerts/{{alertId}}/photos",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "alerts",
+                                "{{alertId}}",
+                                "photos"
+                            ]
+                        },
+                        "description": "Upload photos for an alert. Max 5 files, 10MB each. Supported formats: jpg, jpeg, png, gif, webp."
+                    },
+                    "response": []
+                }
+            ],
+            "description": "Missing pet alert management including creation, updates, resolution, and photo uploads."
+        },
+        {
+            "name": "Devices",
+            "item": [
+                {
+                    "name": "Register Device",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "if (pm.response.code === 201) {",
+                                    "    const response = pm.response.json();",
+                                    "    pm.collectionVariables.set('deviceId', response.id);",
+                                    "}"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"device_uuid\": \"550e8400-e29b-41d4-a716-446655440000\",\n  \"device_name\": \"John's iPhone\",\n  \"platform\": \"IOS\",\n  \"push_token\": \"fcm-or-apns-token-here\",\n  \"app_version\": \"1.0.0\",\n  \"os_version\": \"17.2\",\n  \"location\": {\n    \"latitude\": 40.7128,\n    \"longitude\": -74.0060\n  },\n  \"postal_codes\": [\"10001\", \"10002\"]\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/devices",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "devices"
+                            ]
+                        },
+                        "description": "Register a new device or update existing device (idempotent operation)."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get All Devices",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/devices",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "devices"
+                            ]
+                        },
+                        "description": "Get all devices for the current user, ordered by last app open."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Update Device Location",
+                    "request": {
+                        "method": "PATCH",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"latitude\": 40.7580,\n  \"longitude\": -73.9855,\n  \"postal_codes\": [\"10019\", \"10020\"]\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/devices/{{deviceId}}/location",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "devices",
+                                "{{deviceId}}",
+                                "location"
+                            ]
+                        },
+                        "description": "Update GPS coordinates and/or postal codes for a device."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Update Push Token",
+                    "request": {
+                        "method": "PATCH",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"push_token\": \"new-fcm-or-apns-token\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/devices/{{deviceId}}/push-token",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "devices",
+                                "{{deviceId}}",
+                                "push-token"
+                            ]
+                        },
+                        "description": "Update the push notification token when refreshed by the OS."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Create Saved Zone",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"name\": \"Home\",\n  \"latitude\": 40.7128,\n  \"longitude\": -74.0060,\n  \"radius_meters\": 500,\n  \"priority\": 1\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/devices/{{deviceId}}/saved-zones",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "devices",
+                                "{{deviceId}}",
+                                "saved-zones"
+                            ]
+                        },
+                        "description": "Create a saved zone for high-priority notifications. Max 5 zones per device."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get Saved Zones",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/devices/{{deviceId}}/saved-zones",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "devices",
+                                "{{deviceId}}",
+                                "saved-zones"
+                            ]
+                        },
+                        "description": "Get all saved zones for a device, ordered by priority."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Update Saved Zone",
+                    "request": {
+                        "method": "PATCH",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"name\": \"Home Area\",\n  \"radius_meters\": 750,\n  \"active\": true\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/devices/saved-zones/:zoneId",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "devices",
+                                "saved-zones",
+                                ":zoneId"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "zoneId",
+                                    "value": "zone-cuid-here"
+                                }
+                            ]
+                        },
+                        "description": "Update name, radius, priority, or active status of a saved zone."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Delete Saved Zone",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/devices/saved-zones/:zoneId",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "devices",
+                                "saved-zones",
+                                ":zoneId"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "zoneId",
+                                    "value": "zone-cuid-here"
+                                }
+                            ]
+                        },
+                        "description": "Delete a saved zone. This action cannot be undone."
+                    },
+                    "response": []
+                }
+            ],
+            "description": "Device registration, location updates, and saved zone management."
+        },
+        {
+            "name": "Sightings",
+            "item": [
+                {
+                    "name": "Report Sighting",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"alert_id\": \"{{alertId}}\",\n  \"sighting_time\": \"2026-02-06T14:30:00Z\",\n  \"location\": {\n    \"latitude\": 40.7580,\n    \"longitude\": -73.9855,\n    \"address\": \"Near Times Square, New York, NY\"\n  },\n  \"description\": \"Saw a golden retriever matching the description near the subway entrance. Very friendly and approached people.\",\n  \"reporter_contact\": \"+1987654321\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/sightings",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "sightings"
+                            ]
+                        },
+                        "description": "Report a sighting of a missing pet. The alert must be in ACTIVE status."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get Sightings for Alert",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/sightings/alert/{{alertId}}",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "sightings",
+                                "alert",
+                                "{{alertId}}"
+                            ]
+                        },
+                        "description": "Get all sightings for a specific alert. Non-creators cannot see dismissed sightings."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Dismiss Sighting",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"dismissal_reason\": \"NOT_MY_PET\",\n  \"dismissal_notes\": \"Different breed and color\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/sightings/:sightingId/dismiss",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "sightings",
+                                ":sightingId",
+                                "dismiss"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "sightingId",
+                                    "value": "sighting-cuid-here"
+                                }
+                            ]
+                        },
+                        "description": "Dismiss a sighting. Only the alert creator can dismiss sightings."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Upload Sighting Photo",
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "body": {
+                            "mode": "formdata",
+                            "formdata": [
+                                {
+                                    "key": "photo",
+                                    "type": "file",
+                                    "src": []
+                                }
+                            ]
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/sightings/:sightingId/photo",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "sightings",
+                                ":sightingId",
+                                "photo"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "sightingId",
+                                    "value": "sighting-cuid-here"
+                                }
+                            ]
+                        },
+                        "description": "Upload a photo for a sighting. Max 10MB."
+                    },
+                    "response": []
+                }
+            ],
+            "description": "Pet sighting reports and management."
+        },
+        {
+            "name": "Users",
+            "item": [
+                {
+                    "name": "Create User (Admin)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"email\": \"newuser@example.com\",\n  \"password\": \"Password123!\",\n  \"name\": \"Jane Smith\",\n  \"roles\": [\"user\"]\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/users",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "users"
+                            ]
+                        },
+                        "description": "Create a new user. Admin only."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get All Users",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/users?limit=20&offset=0&orderBy=id&orderDir=desc",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "users"
+                            ],
+                            "query": [
+                                {
+                                    "key": "limit",
+                                    "value": "20"
+                                },
+                                {
+                                    "key": "offset",
+                                    "value": "0"
+                                },
+                                {
+                                    "key": "orderBy",
+                                    "value": "id"
+                                },
+                                {
+                                    "key": "orderDir",
+                                    "value": "desc"
+                                },
+                                {
+                                    "key": "email",
+                                    "value": "user@example.com",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "include",
+                                    "value": "roles,gates",
+                                    "disabled": true
+                                }
+                            ]
+                        },
+                        "description": "Get paginated list of users with optional filtering."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get User by ID",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/users/{{userId}}?include=roles,gates",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "users",
+                                "{{userId}}"
+                            ],
+                            "query": [
+                                {
+                                    "key": "include",
+                                    "value": "roles,gates"
+                                }
+                            ]
+                        },
+                        "description": "Get a specific user by ID with optional relationship includes."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get User by Email",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/users/email/:email",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "users",
+                                "email",
+                                ":email"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "email",
+                                    "value": "user@example.com"
+                                }
+                            ]
+                        },
+                        "description": "Get a user by their email address."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Update User",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"name\": \"John Doe Updated\",\n  \"email\": \"john.doe.updated@example.com\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/users/:userId",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "users",
+                                ":userId"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "userId",
+                                    "value": "1"
+                                }
+                            ]
+                        },
+                        "description": "Update user details. Admin or Manager only."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Delete User",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/users/:userId",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "users",
+                                ":userId"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "userId",
+                                    "value": "1"
+                                }
+                            ]
+                        },
+                        "description": "Delete a user. Admin only."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Assign Gate to User",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"gateId\": 1\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/users/:userId/gates",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "users",
+                                ":userId",
+                                "gates"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "userId",
+                                    "value": "1"
+                                }
+                            ]
+                        },
+                        "description": "Assign a gate (feature flag) to a user. Admin only."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Remove Gate from User",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/users/:userId/gates/:gateId",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "users",
+                                ":userId",
+                                "gates",
+                                ":gateId"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "userId",
+                                    "value": "1"
+                                },
+                                {
+                                    "key": "gateId",
+                                    "value": "1"
+                                }
+                            ]
+                        },
+                        "description": "Remove a gate from a user. Admin only."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get User Gates",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/users/:userId/gates",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "users",
+                                ":userId",
+                                "gates"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "userId",
+                                    "value": "1"
+                                }
+                            ]
+                        },
+                        "description": "Get all gates assigned to a user. Admin only."
+                    },
+                    "response": []
+                }
+            ],
+            "description": "User management endpoints (admin access required for most operations)."
+        },
+        {
+            "name": "Gates (Feature Flags)",
+            "item": [
+                {
+                    "name": "Create Gate",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"name\": \"premium_features\",\n  \"description\": \"Access to premium features\",\n  \"active\": true\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/gates",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "gates"
+                            ]
+                        },
+                        "description": "Create a new feature gate. Admin only."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get All Gates",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/gates",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "gates"
+                            ]
+                        },
+                        "description": "Get all feature gates. Admin only."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get Gate by ID",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/gates/:gateId",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "gates",
+                                ":gateId"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "gateId",
+                                    "value": "1"
+                                }
+                            ]
+                        },
+                        "description": "Get a specific gate by ID. Admin only."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Update Gate",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"name\": \"premium_features_v2\",\n  \"description\": \"Updated premium features\",\n  \"active\": false\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/gates/:gateId",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "gates",
+                                ":gateId"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "gateId",
+                                    "value": "1"
+                                }
+                            ]
+                        },
+                        "description": "Update a gate. Admin only."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Delete Gate",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/gates/:gateId",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "gates",
+                                ":gateId"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "gateId",
+                                    "value": "1"
+                                }
+                            ]
+                        },
+                        "description": "Delete a gate. Admin only."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get Users with Gate",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/gates/:gateId/users",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "gates",
+                                ":gateId",
+                                "users"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "gateId",
+                                    "value": "1"
+                                }
+                            ]
+                        },
+                        "description": "Get all users assigned to a specific gate. Admin only."
+                    },
+                    "response": []
+                }
+            ],
+            "description": "Feature flag (gate) management for controlling access to features."
+        },
+        {
+            "name": "Admin",
+            "item": [
+                {
+                    "name": "Ban User",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"reason\": \"Violation of terms of service\",\n  \"expiresInMinutes\": 10080\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/admin/users/:userId/ban",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "admin",
+                                "users",
+                                ":userId",
+                                "ban"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "userId",
+                                    "value": "1"
+                                }
+                            ]
+                        },
+                        "description": "Ban a user account. Omit expiresInMinutes for permanent ban. Admin only."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Unban User",
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/admin/users/:userId/unban",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "admin",
+                                "users",
+                                ":userId",
+                                "unban"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "userId",
+                                    "value": "1"
+                                }
+                            ]
+                        },
+                        "description": "Remove ban from a user account. Admin only."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "List Active Sessions",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/admin/sessions?limit=50",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "admin",
+                                "sessions"
+                            ],
+                            "query": [
+                                {
+                                    "key": "limit",
+                                    "value": "50"
+                                },
+                                {
+                                    "key": "userId",
+                                    "value": "1",
+                                    "disabled": true
+                                }
+                            ]
+                        },
+                        "description": "List all active user sessions with optional user filter. Admin only."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Revoke Session",
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/admin/sessions/:sessionId/revoke",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "admin",
+                                "sessions",
+                                ":sessionId",
+                                "revoke"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "sessionId",
+                                    "value": "session-id-here"
+                                }
+                            ]
+                        },
+                        "description": "Revoke a specific session. Admin only."
+                    },
+                    "response": []
+                }
+            ],
+            "description": "Administrative operations including user bans and session management."
+        }
+    ]
+}

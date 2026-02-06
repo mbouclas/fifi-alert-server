@@ -1,0 +1,456 @@
+generator pgclient {
+  provider        = "prisma-client-js"
+  output          = "../src/generated/prisma"
+  binaryTargets   = ["native"]
+  previewFeatures = ["views"]
+}
+
+datasource pg {
+  provider = "postgresql"
+}
+
+model User {
+  id            Int        @id @default(autoincrement())
+  name          String     @default("")
+  firstName     String     @default("") @map("first_name")
+  lastName      String     @default("") @map("last_name")
+  email         String     @unique
+  emailVerified Boolean    @default(false) @map("email_verified")
+  image         String?
+  createdAt     DateTime   @default(now()) @map("created_at")
+  updatedAt     DateTime   @updatedAt @map("updated_at")
+  banned        Boolean    @default(false)
+  banReason     String?    @map("ban_reason")
+  banExpires    DateTime?  @map("ban_expires")
+  settings      Json?
+  meta          Json?
+  roles         UserRole[]
+  gates         UserGate[]
+  sessions      Session[]
+  accounts      Account[]
+
+  // MVP Phase 1 Relations
+  devices            Device[]   @relation("UserDevices")
+  created_alerts     Alert[]    @relation("CreatedAlerts")
+  reported_sightings Sighting[] @relation("ReportedSightings")
+
+  @@index([email])
+  @@index([banned])
+  @@map("user")
+}
+
+model UserRole {
+  id         Int      @id @default(autoincrement())
+  user       User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  user_id    Int
+  role       Role     @relation(fields: [role_id], references: [id], onDelete: Cascade)
+  role_id    Int
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@unique([user_id, role_id])
+  @@index([user_id])
+  @@map("UserRole")
+}
+
+model UserGate {
+  id         Int      @id @default(autoincrement())
+  user       User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  user_id    Int
+  gate       Gate     @relation(fields: [gate_id], references: [id], onDelete: Cascade)
+  gate_id    Int
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@unique([user_id, gate_id])
+  @@index([user_id])
+  @@index([gate_id])
+  @@map("UserGate")
+}
+
+model Role {
+  id          Int        @id @default(autoincrement())
+  name        String     @unique
+  slug        String     @unique @default("")
+  level       Int        @default(0)
+  description String?    @default("") // new field
+  users       UserRole[] // Changed from User[] to UserRole[]
+  active      Boolean    @default(true)
+  permissions Json?
+  meta        Json?
+  conditions  Json?
+  rules       Json?
+  created_at  DateTime   @default(now())
+  updated_at  DateTime   @updatedAt
+
+  @@index([slug])
+  @@index([name])
+  @@map("Role")
+}
+
+model Session {
+  id             Int       @id @default(autoincrement())
+  expiresAt      DateTime
+  token          String    @pg.Text
+  tokenType      String    @default("session") @map("token_type") // "session" | "access" | "refresh"
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  ipAddress      String?
+  userAgent      String?
+  userId         Int
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  impersonatedBy Int?      @map("impersonated_by")
+  revoked        Boolean   @default(false)
+  revokedAt      DateTime? @map("revoked_at")
+
+  @@unique([token])
+  @@index([userId])
+  @@index([tokenType])
+  @@index([revoked])
+  @@map("session")
+}
+
+model Account {
+  id                    Int       @id @default(autoincrement())
+  accountId             String
+  providerId            String
+  userId                Int
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@index([userId])
+  @@map("account")
+}
+
+model Gate {
+  id         Int        @id @default(autoincrement())
+  name       String     @unique
+  slug       String     @unique @default("")
+  active     Boolean    @default(true)
+  level      Int        @default(0)
+  provider   String     @default("")
+  users      UserGate[]
+  created_at DateTime   @default(now())
+  updated_at DateTime   @updatedAt
+
+  @@index([name])
+  @@index([slug])
+  @@index([active])
+  @@map("Gate")
+}
+
+model Verification {
+  id         String   @id @default(uuid())
+  identifier String // email or phone number
+  value      String // verification code/token
+  expiresAt  DateTime @map("expires_at")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  @@index([identifier], map: "verification_identifier_idx")
+  @@map("verification")
+}
+
+model AuditLog {
+  id        Int      @id @default(autoincrement())
+  action    String // "login_success", "login_failed", "token_refresh", "user_banned", "user_unbanned", "role_assigned", "role_removed", "gate_assigned", "gate_removed"
+  userId    Int?     @map("user_id") // User who was affected (can be null for system events)
+  actorId   Int?     @map("actor_id") // User who performed the action (admin, etc.)
+  metadata  Json? // Additional context: IP, user agent, reason, etc.
+  ipAddress String?  @map("ip_address")
+  userAgent String?  @map("user_agent")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@index([actorId])
+  @@index([action])
+  @@index([createdAt])
+  @@map("audit_log")
+}
+
+// ============================================================================
+// MVP Phase 1: Core Alert System Models
+// ============================================================================
+
+// Alert Status Enum
+enum AlertStatus {
+  DRAFT // Created but not published
+  ACTIVE // Live, sending notifications
+  RESOLVED // Pet found
+  EXPIRED // Auto-expired after duration
+}
+
+// Pet Species Enum
+enum PetSpecies {
+  DOG
+  CAT
+  BIRD
+  RABBIT
+  OTHER
+}
+
+// Alert Model
+model Alert {
+  id Int @id @default(autoincrement())
+
+  // Ownership
+  creator_id Int  @map("creator_id")
+  creator    User @relation("CreatedAlerts", fields: [creator_id], references: [id], onDelete: Cascade)
+
+  // Pet Details
+  pet_name        String     @map("pet_name")
+  pet_species     PetSpecies @map("pet_species")
+  pet_breed       String?    @map("pet_breed")
+  pet_description String     @map("pet_description") @pg.Text
+  pet_color       String?    @map("pet_color")
+  pet_age_years   Int?       @map("pet_age_years")
+  pet_photos      String[]   @default([]) @map("pet_photos") // URLs to uploaded images
+
+  // Location (PostGIS geometry)
+  last_seen_lat    Float                                @map("last_seen_lat")
+  last_seen_lon    Float                                @map("last_seen_lon")
+  location_point   Unsupported("geometry(Point, 4326)") @map("location_point") // PostGIS POINT
+  location_address String?                              @map("location_address") // Human-readable address
+  alert_radius_km  Float                                @default(5.0) @map("alert_radius_km") // 1-50km range
+
+  // Lifecycle
+  status         AlertStatus @default(ACTIVE)
+  time_last_seen DateTime    @map("time_last_seen")
+  created_at     DateTime    @default(now()) @map("created_at")
+  updated_at     DateTime    @updatedAt @map("updated_at")
+  expires_at     DateTime    @map("expires_at") // Auto-calculated: created_at + 7 days
+  resolved_at    DateTime?   @map("resolved_at")
+  renewal_count  Int         @default(0) @map("renewal_count") // Max 3 renewals
+
+  // Contact & Preferences
+  contact_phone   String? @map("contact_phone")
+  contact_email   String? @map("contact_email")
+  is_phone_public Boolean @default(false) @map("is_phone_public")
+
+  // Metadata
+  affected_postal_codes String[] @default([]) @map("affected_postal_codes") // Pre-computed for fast lookup
+  notes                 String?  @pg.Text
+  reward_offered        Boolean  @default(false) @map("reward_offered")
+  reward_amount         Decimal? @map("reward_amount") @pg.Decimal(10, 2)
+
+  // Relations
+  sightings     Sighting[]
+  notifications Notification[]
+
+  @@index([creator_id])
+  @@index([status])
+  @@index([expires_at])
+  @@index([affected_postal_codes], type: Gin)
+  @@index([location_point], type: Gist, name: "alert_location_gist_idx") // Spatial index
+  @@map("alert")
+}
+
+// Device Platform Enum
+enum DevicePlatform {
+  IOS
+  ANDROID
+  WEB
+}
+
+// Location Source Enum
+enum LocationSource {
+  GPS // High accuracy GPS
+  IP // IP geolocation (low accuracy)
+  POSTAL_CODE // User-entered postal code
+  MANUAL // User-manually placed pin
+}
+
+// Device Model
+model Device {
+  id Int @id @default(autoincrement())
+
+  // Ownership
+  user_id Int  @map("user_id")
+  user    User @relation("UserDevices", fields: [user_id], references: [id], onDelete: Cascade)
+
+  // Device Identity
+  device_uuid String         @unique @map("device_uuid") // Client-generated UUID
+  platform    DevicePlatform
+  os_version  String?        @map("os_version")
+  app_version String?        @map("app_version")
+
+  // Push Notification Tokens
+  push_token            String?   @unique @map("push_token") // FCM/APNs token
+  push_token_updated_at DateTime? @map("push_token_updated_at")
+  push_enabled          Boolean   @default(true) @map("push_enabled")
+
+  // GPS Location
+  gps_lat             Float?                                @map("gps_lat")
+  gps_lon             Float?                                @map("gps_lon")
+  gps_point           Unsupported("geometry(Point, 4326)")? @map("gps_point") // PostGIS POINT
+  gps_accuracy_meters Float?                                @map("gps_accuracy_meters")
+  gps_updated_at      DateTime?                             @map("gps_updated_at")
+
+  // IP Geolocation
+  ip_address    String?                               @map("ip_address")
+  ip_lat        Float?                                @map("ip_lat")
+  ip_lon        Float?                                @map("ip_lon")
+  ip_point      Unsupported("geometry(Point, 4326)")? @map("ip_point") // PostGIS POINT
+  ip_city       String?                               @map("ip_city")
+  ip_country    String?                               @map("ip_country")
+  ip_updated_at DateTime?                             @map("ip_updated_at")
+
+  // Postal Codes (user can add multiple)
+  postal_codes String[] @default([]) @map("postal_codes")
+
+  // Metadata
+  last_app_open DateTime? @map("last_app_open")
+  created_at    DateTime  @default(now()) @map("created_at")
+  updated_at    DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  saved_zones   SavedZone[]
+  notifications Notification[]
+
+  @@index([user_id])
+  @@index([device_uuid])
+  @@index([push_token])
+  @@index([gps_point], type: Gist, name: "device_gps_gist_idx") // Spatial index
+  @@index([ip_point], type: Gist, name: "device_ip_gist_idx") // Spatial index
+  @@index([postal_codes], type: Gin)
+  @@map("device")
+}
+
+// SavedZone Model
+model SavedZone {
+  id Int @id @default(autoincrement())
+
+  // Ownership
+  device_id Int    @map("device_id")
+  device    Device @relation(fields: [device_id], references: [id], onDelete: Cascade)
+
+  // Zone Details
+  name           String // e.g., "Home", "Work", "Mom's House"
+  lat            Float
+  lon            Float
+  location_point Unsupported("geometry(Point, 4326)") @map("location_point") // PostGIS POINT
+  radius_km      Float                                @default(5.0) @map("radius_km") // Alert catchment area
+
+  // Preferences
+  is_active Boolean @default(true) @map("is_active")
+  priority  Int     @default(0) // Higher priority zones checked first
+
+  // Metadata
+  created_at DateTime @default(now()) @map("created_at")
+  updated_at DateTime @updatedAt @map("updated_at")
+
+  @@index([device_id])
+  @@index([is_active])
+  @@index([location_point], type: Gist, name: "saved_zone_gist_idx") // Spatial index
+  @@map("saved_zone")
+}
+
+// Sighting Model
+model Sighting {
+  id Int @id @default(autoincrement())
+
+  // Relationships
+  alert_id    Int   @map("alert_id")
+  alert       Alert @relation(fields: [alert_id], references: [id], onDelete: Cascade)
+  reporter_id Int   @map("reporter_id")
+  reporter    User  @relation("ReportedSightings", fields: [reporter_id], references: [id], onDelete: Cascade)
+
+  // Sighting Details
+  sighting_lat     Float                                @map("sighting_lat")
+  sighting_lon     Float                                @map("sighting_lon")
+  location_point   Unsupported("geometry(Point, 4326)") @map("location_point") // PostGIS POINT
+  location_address String?                              @map("location_address")
+
+  // Evidence
+  photo_url  String? @map("photo_url")
+  notes      String? @pg.Text
+  confidence String? // "CERTAIN", "LIKELY", "UNSURE"
+
+  // Context
+  sighting_time DateTime @map("sighting_time") // When pet was seen
+  direction     String? // "NORTH", "SOUTH", "EAST", "WEST", "STATIONARY"
+
+  // Status
+  dismissed        Boolean   @default(false) // Owner can dismiss false sightings
+  dismissed_at     DateTime? @map("dismissed_at")
+  dismissed_reason String?   @map("dismissed_reason")
+
+  // Metadata
+  created_at DateTime @default(now()) @map("created_at")
+  updated_at DateTime @updatedAt @map("updated_at")
+
+  @@index([alert_id])
+  @@index([reporter_id])
+  @@index([dismissed])
+  @@index([location_point], type: Gist, name: "sighting_location_gist_idx") // Spatial index
+  @@map("sighting")
+}
+
+// Notification Confidence Enum
+enum NotificationConfidence {
+  HIGH // Saved zone match or fresh GPS
+  MEDIUM // Stale GPS or postal code match
+  LOW // IP geolocation match
+}
+
+// Notification Status Enum
+enum NotificationStatus {
+  QUEUED // In BullMQ, not yet sent
+  SENT // Successfully sent to FCM/APNs
+  DELIVERED // Device confirmed receipt
+  OPENED // User opened notification
+  FAILED // Delivery failed
+  EXCLUDED // User excluded from targeting
+}
+
+// Notification Model
+model Notification {
+  id Int @id @default(autoincrement())
+
+  // Relationships
+  alert_id  Int    @map("alert_id")
+  alert     Alert  @relation(fields: [alert_id], references: [id], onDelete: Cascade)
+  device_id Int    @map("device_id")
+  device    Device @relation(fields: [device_id], references: [id], onDelete: Cascade)
+
+  // Targeting Details
+  confidence   NotificationConfidence
+  match_reason String                 @map("match_reason") // "SAVED_ZONE:Home", "GPS:FRESH", "POSTAL_CODE", etc.
+  distance_km  Float?                 @map("distance_km") // Distance from alert to device location
+
+  // Delivery Status
+  status         NotificationStatus @default(QUEUED)
+  queued_at      DateTime           @default(now()) @map("queued_at")
+  sent_at        DateTime?          @map("sent_at")
+  delivered_at   DateTime?          @map("delivered_at")
+  opened_at      DateTime?          @map("opened_at")
+  failed_at      DateTime?          @map("failed_at")
+  failure_reason String?            @map("failure_reason")
+
+  // Exclusion Tracking
+  excluded         Boolean @default(false)
+  exclusion_reason String? @map("exclusion_reason") // Canonical reason code
+
+  // FCM/APNs Response
+  push_message_id String? @map("push_message_id") // External provider's message ID
+  push_response   Json?   @map("push_response") // Full response for debugging
+
+  // Metadata
+  created_at DateTime @default(now()) @map("created_at")
+  updated_at DateTime @updatedAt @map("updated_at")
+
+  @@index([alert_id])
+  @@index([device_id])
+  @@index([status])
+  @@index([excluded])
+  @@index([sent_at])
+  @@map("notification")
+}
