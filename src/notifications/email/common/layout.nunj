@@ -1,0 +1,74 @@
+<mjml>
+  <mj-head>
+    <mj-title>{% block title %}FiFi Alert - Find Your Lost Pet{% endblock %}</mj-title>
+    <mj-font name="Helvetica" href="https://fonts.googleapis.com/css?family=Helvetica" />
+    <mj-attributes>
+      <mj-all font-family="Helvetica, Arial, sans-serif" />
+      <mj-text font-size="14px" color="#333333" line-height="1.6" />
+      <mj-section background-color="#ffffff" padding="20px" />
+    </mj-attributes>
+    <mj-style>
+      .footer-link {
+        color: #007bff;
+        text-decoration: none;
+      }
+      .footer-link:hover {
+        text-decoration: underline;
+      }
+    </mj-style>
+  </mj-head>
+  
+  <mj-body background-color="#f4f4f4">
+    <!-- Header Section -->
+    <mj-section background-color="#007bff" padding="30px 20px">
+      <mj-column>
+        <mj-text align="center" font-size="28px" font-weight="bold" color="#ffffff">
+          {% block header %}🐾 FiFi Alert{% endblock %}
+        </mj-text>
+      </mj-column>
+    </mj-section>
+
+    <!-- Main Content Section -->
+    <mj-section background-color="#ffffff" padding="40px 30px">
+      <mj-column>
+        {% block content %}
+        <mj-text>
+          This is the default content area. Child templates should override this block.
+        </mj-text>
+        {% endblock %}
+      </mj-column>
+    </mj-section>
+
+    <!-- Footer Section -->
+    <mj-section background-color="#f9f9f9" padding="30px 20px">
+      <mj-column>
+        <mj-text align="center" font-size="12px" color="#666666">
+          {% block footer %}
+          <p style="margin-bottom: 10px;">
+            © {{ year|default(2026) }} FiFi Alert. All rights reserved.
+          </p>
+          <p style="margin-bottom: 10px;">
+            Helping reunite lost pets with their families.
+          </p>
+          <p>
+            <a href="https://fifi-alert.com/unsubscribe" class="footer-link">Unsubscribe</a> | 
+            <a href="https://fifi-alert.com/privacy" class="footer-link">Privacy Policy</a> | 
+            <a href="https://fifi-alert.com/support" class="footer-link">Support</a>
+          </p>
+          {% endblock %}
+        </mj-text>
+      </mj-column>
+    </mj-section>
+
+    <!-- Social Media Section (Optional) -->
+    <mj-section background-color="#f4f4f4" padding="20px">
+      <mj-column>
+        <mj-social font-size="15px" icon-size="30px" mode="horizontal" align="center">
+          <mj-social-element name="facebook" href="https://facebook.com/fifialert" />
+          <mj-social-element name="twitter" href="https://twitter.com/fifialert" />
+          <mj-social-element name="instagram" href="https://instagram.com/fifialert" />
+        </mj-social>
+      </mj-column>
+    </mj-section>
+  </mj-body>
+</mjml>

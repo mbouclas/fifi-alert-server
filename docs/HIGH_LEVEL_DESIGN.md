@@ -214,7 +214,8 @@ These scenarios are documented to:
 | Segment | Characteristics | Engagement Level | Location Strategy |
 |---------|-----------------|------------------|-------------------|
 | **Casual User** | Downloads app, minimal setup | Low | IP geolocation + postal code |
-| **Engaged User** | Sets up saved locations | Medium | Manual zones + foreground GPS |
+| **Engaged User** | Sets up alert zones | Medium | User-wide alert zones + foreground GPS |
+| **Engaged User** | Sets up saved zones (per device) | Medium | Device-specific saved zones + GPS |
 | **Power User** | Enables all permissions | High | Background location tracking |
 | **Alert Creator** | Reports missing pets | Variable | Full location access required |
 
@@ -441,15 +442,19 @@ Where:
 
 ```
 For each registered device:
-  1. Check saved zones (highest priority)
-  2. Check fresh GPS location (< 2 hours old)
-  3. Check stale GPS location (< 24 hours, expanded radius)
-  4. Check postal code match
-  5. Check IP geolocation (expanded radius)
+  1. Check alert zones (user-wide, highest priority)
+  2. Check saved zones (device-specific, highest priority)
+  3. Check fresh GPS location (< 2 hours old)
+  4. Check stale GPS location (< 24 hours, expanded radius)
+  5. Check postal code match
+  6. Check IP geolocation (expanded radius)
   
   Assign confidence: HIGH | MEDIUM | LOW
   
   If match found → Queue notification with confidence level
+  
+  Note: If a device matches via multiple sources (e.g., both alert zone
+  and saved zone), deduplicate by device_id and use highest confidence.
 ```
 
 ### 10.2 Notification Variants by Confidence

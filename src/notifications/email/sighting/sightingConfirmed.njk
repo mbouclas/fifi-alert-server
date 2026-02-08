@@ -1,0 +1,100 @@
+{% extends "common/layout.nunj" %}
+
+{% block title %}Sighting Confirmed - FiFi Alert{% endblock %}
+
+{% block header %}🎯 High Confidence Sighting!{% endblock %}
+
+{% block content %}
+  <mj-text font-size="18px" font-weight="bold" color="#333333" padding-bottom="20px">
+    Hi {{ user.firstName|default('there') }},
+  </mj-text>
+  
+  <mj-text padding-bottom="20px" font-size="16px" color="#dc3545" font-weight="bold">
+    ⚠️ URGENT: A high-confidence sighting of <strong>{{ alert.petName }}</strong> has been confirmed!
+  </mj-text>
+  
+  <mj-divider border-width="2px" border-color="#dc3545" padding="20px 0px" />
+  
+  <mj-text font-size="18px" font-weight="bold" color="#dc3545" padding-bottom="20px" align="center">
+    Act Now - Time is Critical
+  </mj-text>
+  
+  {% if sighting.photo %}
+  <mj-image src="{{ sighting.photo }}" alt="Confirmed sighting photo" padding-bottom="20px" border-radius="8px" border="3px solid #dc3545" />
+  {% endif %}
+  
+  <mj-text padding-bottom="20px" background-color="#fff3cd" padding="15px">
+    <strong style="color: #856404;">⏰ Immediate Action Required</strong><br/>
+    Based on the details provided, this sighting has a high probability of being {{ alert.petName }}. The sooner you investigate, the better your chances of a successful reunion.
+  </mj-text>
+  
+  <mj-text padding-bottom="20px">
+    <strong>Location:</strong> {{ sighting.location|default('Not specified') }}<br/>
+    {% if sighting.latitude and sighting.longitude %}
+    <strong>GPS Coordinates:</strong> {{ sighting.latitude }}, {{ sighting.longitude }}<br/>
+    {% endif %}
+    <strong>Time Spotted:</strong> {{ sighting.sightingTime }}<br/>
+    {% if sighting.direction %}
+    <strong>Last Seen Heading:</strong> {{ sighting.direction }}<br/>
+    {% endif %}
+    <strong>Confidence:</strong> <span style="color: #dc3545; font-weight: bold;">HIGH</span>
+  </mj-text>
+  
+  {% if sighting.notes %}
+  <mj-divider border-width="1px" border-color="#e0e0e0" padding="20px 0px" />
+  
+  <mj-text font-size="15px" font-weight="bold" padding-bottom="10px">
+    Reporter's Description:
+  </mj-text>
+  
+  <mj-text padding-bottom="20px" font-style="italic" color="#666666" background-color="#f8f9fa" padding="15px">
+    "{{ sighting.notes }}"
+  </mj-text>
+  {% endif %}
+  
+  <mj-divider border-width="1px" border-color="#e0e0e0" padding="20px 0px" />
+  
+  <mj-text font-size="16px" font-weight="bold" padding-bottom="10px" color="#dc3545">
+    🚨 Recommended Actions
+  </mj-text>
+  
+  <mj-text padding-bottom="20px">
+    <strong>1. Go to the location immediately</strong><br/>
+    {% if sighting.latitude and sighting.longitude %}
+    Open in Maps: <a href="https://maps.google.com/?q={{ sighting.latitude }},{{ sighting.longitude }}" style="color: #007bff;">{{ sighting.location }}</a><br/><br/>
+    {% endif %}
+    
+    <strong>2. Bring essentials:</strong><br/>
+    • Favorite treats or food<br/>
+    • Familiar toys or blanket<br/>
+    • Leash and carrier<br/>
+    • Recent photo of {{ alert.petName }}<br/><br/>
+    
+    <strong>3. Search strategies:</strong><br/>
+    • Walk slowly and call {{ alert.petName }}'s name softly<br/>
+    • Check hiding spots (under cars, bushes, porches)<br/>
+    • Ask nearby residents if they've seen your pet<br/>
+    • Leave a familiar item at the location<br/><br/>
+    
+    <strong>4. Stay calm and patient:</strong><br/>
+    {{ alert.petName }} may be scared or disoriented. Approach slowly and speak in a calm, familiar voice.
+  </mj-text>
+  
+  <mj-button background-color="#dc3545" color="#ffffff" href="{{ appUrl }}/alerts/{{ alert.id }}/sightings/{{ sighting.id }}" padding="15px 0px">
+    View Full Sighting Details
+  </mj-button>
+  
+  <mj-divider border-width="1px" border-color="#e0e0e0" padding="20px 0px" />
+  
+  <mj-text padding-bottom="20px" font-size="14px">
+    <strong>Need support?</strong> Share this sighting with friends or family who can help you search the area. The more eyes looking, the better!
+  </mj-text>
+  
+  <mj-text padding-bottom="10px" font-size="14px" color="#666666">
+    💚 <strong>We're rooting for you! Time to bring {{ alert.petName }} home.</strong>
+  </mj-text>
+  
+  <mj-text padding-top="20px" font-size="12px" color="#999999">
+    High-confidence sightings require immediate attention. If you successfully locate {{ alert.petName }}, please mark your alert as resolved in the app.
+  </mj-text>
+{% endblock %}

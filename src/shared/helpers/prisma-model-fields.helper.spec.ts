@@ -96,7 +96,9 @@ describe('prisma-model-fields.helper', () => {
     });
 
     it('should return true for valid relation objects with create', () => {
-      expect(isValidPrismaRelationObject({ create: { name: 'test' } })).toBe(true);
+      expect(isValidPrismaRelationObject({ create: { name: 'test' } })).toBe(
+        true,
+      );
     });
 
     it('should return true for valid relation objects with set', () => {
@@ -104,7 +106,9 @@ describe('prisma-model-fields.helper', () => {
     });
 
     it('should return true for valid relation objects with update', () => {
-      expect(isValidPrismaRelationObject({ update: { where: { id: 1 }, data: {} } })).toBe(true);
+      expect(
+        isValidPrismaRelationObject({ update: { where: { id: 1 }, data: {} } }),
+      ).toBe(true);
     });
 
     it('should return true for valid relation objects with delete', () => {
@@ -124,7 +128,9 @@ describe('prisma-model-fields.helper', () => {
 
     it('should return false for objects without valid relation keys', () => {
       expect(isValidPrismaRelationObject({ invalidKey: 'value' })).toBe(false);
-      expect(isValidPrismaRelationObject({ someField: { nested: true } })).toBe(false);
+      expect(isValidPrismaRelationObject({ someField: { nested: true } })).toBe(
+        false,
+      );
     });
 
     it('should return false for empty objects', () => {
@@ -185,7 +191,9 @@ describe('prisma-model-fields.helper', () => {
 
       expect(result).toHaveProperty('firstName', 'John');
       expect(result).toHaveProperty('roles');
-      expect((result as Record<string, unknown>).roles).toEqual({ connect: [{ id: 1 }] });
+      expect((result as Record<string, unknown>).roles).toEqual({
+        connect: [{ id: 1 }],
+      });
     });
 
     it('should exclude invalid relation values (non-Prisma objects)', () => {

@@ -30,9 +30,12 @@ model User {
   accounts      Account[]
 
   // MVP Phase 1 Relations
-  devices            Device[]   @relation("UserDevices")
-  created_alerts     Alert[]    @relation("CreatedAlerts")
-  reported_sightings Sighting[] @relation("ReportedSightings")
+  devices            Device[]    @relation("UserDevices")
+  created_alerts     Alert[]     @relation("CreatedAlerts")
+  reported_sightings Sighting[]  @relation("ReportedSightings")
+  auditLogs          AuditLog[]
+  pets               Pet[]       @relation("UserPets")
+  alert_zones        AlertZone[] @relation("UserAlertZones")
 
   @@index([email])
   @@index([banned])
@@ -78,6 +81,7 @@ model Role {
   active      Boolean    @default(true)
   permissions Json?
   meta        Json?
+  settings    Json?
   conditions  Json?
   rules       Json?
   created_at  DateTime   @default(now())
@@ -123,6 +127,8 @@ model Account {
   refreshTokenExpiresAt DateTime?
   scope                 String?
   password              String?
+  meta                  Json?
+  settings              Json?
   createdAt             DateTime  @default(now())
   updatedAt             DateTime  @updatedAt
 
@@ -159,26 +165,139 @@ model Verification {
   @@map("verification")
 }
 
+// Audit Event Type Enum
+enum AuditEventType {
+  CREATE
+  UPDATE
+  DELETE
+  LOGIN
+  LOGOUT
+  ACCESS
+  EXPORT
+  IMPORT
+  APPROVAL
+  REJECTION
+  SEND
+  RECEIVE
+  ACTIVATION
+  DEACTIVATION
+  ROTATION
+  REVOCATION
+  RESET
+  FAILURE
+  SUCCESS
+  SYSTEM
+}
+
+// Audit Entity Type Enum
+enum AuditEntityType {
+  USER
+  ALERT
+  SIGHTING
+  DEVICE
+  SAVED_ZONE
+  ALERT_ZONE
+  NOTIFICATION
+  SESSION
+  ROLE
+  GATE
+  EMAIL
+  LOCATION
+  SYSTEM
+}
+
 model AuditLog {
   id        Int      @id @default(autoincrement())
   action    String // "login_success", "login_failed", "token_refresh", "user_banned", "user_unbanned", "role_assigned", "role_removed", "gate_assigned", "gate_removed"
   userId    Int?     @map("user_id") // User who was affected (can be null for system events)
-  actorId   Int?     @map("actor_id") // User who performed the action (admin, etc.)
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  actorId   String?  @map("actor_id") @pg.VarChar(100) // User or system actor who performed the action
+  actorType String?  @map("actor_type") @pg.VarChar(50) // 'user', 'system', 'api_key', 'cron'
   metadata  Json? // Additional context: IP, user agent, reason, etc.
   ipAddress String?  @map("ip_address")
   userAgent String?  @map("user_agent")
   createdAt DateTime @default(now()) @map("created_at")
 
+  // New event-driven fields
+  eventType    AuditEventType
+  entityType   AuditEntityType?
+  entityId     Int?
+  description  String?
+  oldValues    Json?            @map("old_values")
+  newValues    Json?            @map("new_values")
+  sessionId    String?          @map("session_id") @pg.VarChar(255)
+  requestId    String?          @map("request_id") @pg.VarChar(64)
+  success      Boolean          @default(true)
+  errorMessage String?          @map("error_message")
+  errorStack   String?          @map("error_stack")
+  timestamp    DateTime         @default(now())
+
   @@index([userId])
   @@index([actorId])
   @@index([action])
   @@index([createdAt])
+  @@index([eventType, timestamp])
+  @@index([entityType, entityId, timestamp])
+  @@index([userId, timestamp])
+  @@index([actorId, actorType, timestamp])
+  @@index([success, timestamp])
+  @@index([sessionId])
+  @@index([action, timestamp])
   @@map("audit_log")
 }
 
 // ============================================================================
 // MVP Phase 1: Core Alert System Models
 // ============================================================================
+
+// Pet Type Model
+model PetType {
+  id         Int      @id @default(autoincrement())
+  name       String   @unique @pg.VarChar(100)
+  slug       String   @unique @pg.VarChar(100)
+  meta       Json?
+  settings   Json?
+  created_at DateTime @default(now()) @map("created_at")
+  updated_at DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  pets Pet[]
+
+  @@index([slug])
+  @@index([name])
+  @@map("pet_type")
+}
+
+// Pet Model
+model Pet {
+  id     Int    @id @default(autoincrement())
+  tagId  String @unique @map("tag_id") @pg.VarChar(9)
+  userId Int    @map("user_id")
+  user   User   @relation("UserPets", fields: [userId], references: [id], onDelete: Cascade)
+
+  // Pet Details
+  petTypeId Int       @map("pet_type_id")
+  petType   PetType   @relation(fields: [petTypeId], references: [id], onDelete: Restrict)
+  name      String    @pg.VarChar(100)
+  gender    Gender?
+  photos    String[]  @default([])
+  size      Size?
+  isMissing Boolean   @default(false) @map("is_missing")
+  birthday  DateTime?
+
+  // Timestamps
+  created_at DateTime @default(now()) @map("created_at")
+  updated_at DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  alerts Alert[] @relation("PetAlerts")
+
+  @@index([userId])
+  @@index([tagId])
+  @@index([petTypeId])
+  @@index([isMissing])
+  @@map("pet")
+}
 
 // Alert Status Enum
 enum AlertStatus {
@@ -188,13 +307,26 @@ enum AlertStatus {
   EXPIRED // Auto-expired after duration
 }
 
-// Pet Species Enum
+// Pet Species Enum (used in Alerts)
 enum PetSpecies {
   DOG
   CAT
   BIRD
   RABBIT
   OTHER
+}
+
+// Gender Enum
+enum Gender {
+  MALE
+  FEMALE
+}
+
+// Size Enum
+enum Size {
+  SMALL
+  MEDIUM
+  LARGE
 }
 
 // Alert Model
@@ -204,6 +336,10 @@ model Alert {
   // Ownership
   creator_id Int  @map("creator_id")
   creator    User @relation("CreatedAlerts", fields: [creator_id], references: [id], onDelete: Cascade)
+
+  // Pet Reference (optional)
+  pet_id Int? @map("pet_id")
+  pet    Pet? @relation("PetAlerts", fields: [pet_id], references: [id], onDelete: SetNull)
 
   // Pet Details
   pet_name        String     @map("pet_name")
@@ -240,12 +376,15 @@ model Alert {
   notes                 String?  @pg.Text
   reward_offered        Boolean  @default(false) @map("reward_offered")
   reward_amount         Decimal? @map("reward_amount") @pg.Decimal(10, 2)
+  meta                  Json?
+  settings              Json?
 
   // Relations
   sightings     Sighting[]
   notifications Notification[]
 
   @@index([creator_id])
+  @@index([pet_id])
   @@index([status])
   @@index([expires_at])
   @@index([affected_postal_codes], type: Gin)
@@ -324,7 +463,7 @@ model Device {
   @@map("device")
 }
 
-// SavedZone Model
+// SavedZone Model (Device-scoped)
 model SavedZone {
   id Int @id @default(autoincrement())
 
@@ -351,6 +490,35 @@ model SavedZone {
   @@index([is_active])
   @@index([location_point], type: Gist, name: "saved_zone_gist_idx") // Spatial index
   @@map("saved_zone")
+}
+
+// AlertZone Model (User-scoped)
+model AlertZone {
+  id Int @id @default(autoincrement())
+
+  // Ownership
+  user_id Int  @map("user_id")
+  user    User @relation("UserAlertZones", fields: [user_id], references: [id], onDelete: Cascade)
+
+  // Zone Details
+  name           String                               @pg.VarChar(50) // e.g., "Home", "Neighborhood"
+  lat            Float
+  lon            Float
+  location_point Unsupported("geometry(Point, 4326)") @map("location_point") // PostGIS POINT
+  radius_meters  Int                                  @map("radius_meters") // 50-5000 meter range
+
+  // Preferences
+  is_active Boolean @default(true) @map("is_active")
+  priority  Int     @default(0) // Higher priority zones checked first
+
+  // Metadata
+  created_at DateTime @default(now()) @map("created_at")
+  updated_at DateTime @updatedAt @map("updated_at")
+
+  @@index([user_id])
+  @@index([is_active])
+  @@index([location_point], type: Gist, name: "alert_zone_gist_idx") // Spatial index
+  @@map("alert_zone")
 }
 
 // Sighting Model
@@ -384,6 +552,8 @@ model Sighting {
   dismissed_reason String?   @map("dismissed_reason")
 
   // Metadata
+  meta       Json?
+  settings   Json?
   created_at DateTime @default(now()) @map("created_at")
   updated_at DateTime @updatedAt @map("updated_at")
 
@@ -444,6 +614,8 @@ model Notification {
   push_response   Json?   @map("push_response") // Full response for debugging
 
   // Metadata
+  meta       Json?
+  settings   Json?
   created_at DateTime @default(now()) @map("created_at")
   updated_at DateTime @updatedAt @map("updated_at")
 

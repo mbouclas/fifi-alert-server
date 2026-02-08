@@ -1,0 +1,57 @@
+{% extends "common/layout.nunj" %}
+
+{% block title %}You're Invited to FiFi Alert!{% endblock %}
+
+{% block header %}You're Invited! 🎊{% endblock %}
+
+{% block content %}
+  <mj-text font-size="18px" font-weight="bold" color="#333333" padding-bottom="20px">
+    Hello!
+  </mj-text>
+  
+  <mj-text padding-bottom="20px">
+    {{ inviter.firstName|default('A friend') }} has invited you to join FiFi Alert - the community-powered lost pet notification system!
+  </mj-text>
+  
+  <mj-text padding-bottom="10px">
+    <strong>Why join FiFi Alert?</strong>
+  </mj-text>
+  
+  <mj-text padding-bottom="20px">
+    🐾 Get instant alerts when pets go missing near you<br/>
+    🔍 Help reunite lost pets with their families<br/>
+    💙 Join a caring community of pet lovers<br/>
+    📱 100% free to use
+  </mj-text>
+
+  {% if inviteLink %}
+  <mj-text padding-bottom="10px">
+    Accept your invitation and create your free account:
+  </mj-text>
+  
+  <mj-button background-color="#007bff" color="#ffffff" href="{{ inviteLink }}" padding="15px 0px">
+    Accept Invitation
+  </mj-button>
+  
+  <mj-text padding-top="20px" font-size="12px" color="#666666">
+    If the button doesn't work, copy and paste this URL into your browser:<br/>
+    <a href="{{ inviteLink }}" style="color: #007bff;">{{ inviteLink }}</a>
+  </mj-text>
+  
+  {% if expiresIn %}
+  <mj-text padding-top="20px" font-size="13px" color="#666666">
+    <strong>Note:</strong> This invitation expires in {{ expiresIn }}.
+  </mj-text>
+  {% endif %}
+  {% else %}
+  <mj-button background-color="#007bff" color="#ffffff" href="https://fifi-alert.com/signup" padding="15px 0px">
+    Sign Up Now
+  </mj-button>
+  {% endif %}
+  
+  <mj-divider border-width="1px" border-color="#e0e0e0" padding="30px 0px" />
+  
+  <mj-text font-size="13px" color="#666666">
+    Together, we can make sure no pet stays lost for long. Join us today!
+  </mj-text>
+{% endblock %}

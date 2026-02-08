@@ -1,0 +1,58 @@
+{% extends "common/layout.nunj" %}
+
+{% block title %}Welcome to FiFi Alert!{% endblock %}
+
+{% block header %}Welcome to FiFi Alert! 🎉{% endblock %}
+
+{% block content %}
+  <mj-text font-size="20px" font-weight="bold" color="#333333" padding-bottom="20px">
+    Hello {{ user.firstName|default('there') }}!
+  </mj-text>
+  
+  <mj-text padding-bottom="20px">
+    We're thrilled to have you join the FiFi Alert community! Our mission is to help reunite lost pets with their families through location-based notifications.
+  </mj-text>
+  
+  <mj-text padding-bottom="10px" font-weight="bold">
+    What you can do with FiFi Alert:
+  </mj-text>
+  
+  <mj-text padding-bottom="5px">
+    🐕 <strong>Create Alerts:</strong> Report your lost pet and notify nearby users
+  </mj-text>
+  
+  <mj-text padding-bottom="5px">
+    📍 <strong>Get Notifications:</strong> Receive alerts when pets go missing near you
+  </mj-text>
+  
+  <mj-text padding-bottom="5px">
+    👀 <strong>Report Sightings:</strong> Help others find their lost companions
+  </mj-text>
+  
+  <mj-text padding-bottom="20px">
+    💙 <strong>Community Support:</strong> Join thousands helping reunite pets
+  </mj-text>
+
+  {% if activationLink %}
+  <mj-text padding-bottom="10px">
+    To get started, please activate your account by clicking the button below:
+  </mj-text>
+  
+  <mj-button background-color="#007bff" color="#ffffff" href="{{ activationLink }}" padding="15px 0px">
+    Activate Your Account
+  </mj-button>
+  
+  <mj-text padding-top="20px" font-size="12px" color="#666666">
+    If the button doesn't work, copy and paste this URL into your browser:<br/>
+    <a href="{{ activationLink }}" style="color: #007bff;">{{ activationLink }}</a>
+  </mj-text>
+  {% else %}
+  <mj-button background-color="#007bff" color="#ffffff" href="https://fifi-alert.com/app" padding="15px 0px">
+    Open FiFi Alert
+  </mj-button>
+  {% endif %}
+  
+  <mj-text padding-top="30px" font-size="13px" color="#666666">
+    Have questions? Check out our <a href="https://fifi-alert.com/help" style="color: #007bff;">Help Center</a> or reply to this email.
+  </mj-text>
+{% endblock %}

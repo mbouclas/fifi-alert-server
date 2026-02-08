@@ -1,0 +1,94 @@
+{% extends "common/layout.nunj" %}
+
+{% block title %}Sighting Report Update - FiFi Alert{% endblock %}
+
+{% block header %}📋 Sighting Update{% endblock %}
+
+{% block content %}
+  <mj-text font-size="18px" font-weight="bold" color="#333333" padding-bottom="20px">
+    Hi {{ user.firstName|default('there') }},
+  </mj-text>
+  
+  <mj-text padding-bottom="20px" font-size="16px">
+    Thank you for reporting a sighting for <strong>{{ alert.petName }}</strong>. We wanted to update you on the status of your report.
+  </mj-text>
+  
+  <mj-divider border-width="2px" border-color="#6c757d" padding="20px 0px" />
+  
+  <mj-text font-size="18px" font-weight="bold" color="#6c757d" padding-bottom="20px" align="center">
+    Sighting Report Dismissed
+  </mj-text>
+  
+  <mj-text padding-bottom="20px">
+    <strong>Your Sighting Report:</strong><br/>
+    <strong>Location:</strong> {{ sighting.location|default('Not specified') }}<br/>
+    <strong>Reported:</strong> {{ sighting.sightingTime }}<br/>
+    <strong>Sighting ID:</strong> #{{ sighting.id }}
+  </mj-text>
+  
+  <mj-divider border-width="1px" border-color="#e0e0e0" padding="20px 0px" />
+  
+  <mj-text font-size="15px" font-weight="bold" padding-bottom="10px">
+    Update from Pet Owner:
+  </mj-text>
+  
+  <mj-text padding-bottom="20px" background-color="#f8f9fa" padding="15px">
+    {{ dismissReason }}
+  </mj-text>
+  
+  <mj-divider border-width="1px" border-color="#e0e0e0" padding="20px 0px" />
+  
+  <mj-text padding-bottom="20px">
+    <strong>Why was this sighting dismissed?</strong><br/><br/>
+    
+    The pet owner reviewed your report and determined it wasn't {{ alert.petName }}. This could be because:<br/><br/>
+    
+    • The animal was a different species or breed<br/>
+    • Physical characteristics didn't match<br/>
+    • The pet has already been found<br/>
+    • The location or timing didn't fit<br/>
+    • Another confirmed sighting was more promising
+  </mj-text>
+  
+  <mj-text padding-bottom="20px" background-color="#d1ecf1" padding="15px" color="#0c5460">
+    <strong>💙 Your Help Matters!</strong><br/>
+    Even if this particular sighting wasn't a match, your vigilance and willingness to help are greatly appreciated. Every report helps narrow down the search and brings us closer to reuniting lost pets with their families.
+  </mj-text>
+  
+  <mj-text font-size="15px" font-weight="bold" padding-bottom="10px">
+    Keep Making a Difference
+  </mj-text>
+  
+  <mj-text padding-bottom="20px">
+    👀 Continue watching for missing pets in your area<br/>
+    📱 Enable notifications for new alerts near you<br/>
+    🤝 Share FiFi Alert with friends and neighbors<br/>
+    📸 Always include photos when reporting sightings
+  </mj-text>
+  
+  <mj-button background-color="#007bff" color="#ffffff" href="{{ appUrl }}/alerts/active" padding="15px 0px">
+    View Active Alerts
+  </mj-button>
+  
+  <mj-divider border-width="1px" border-color="#e0e0e0" padding="20px 0px" />
+  
+  <mj-text padding-bottom="10px" font-size="14px">
+    <strong>Tips for Accurate Sighting Reports:</strong>
+  </mj-text>
+  
+  <mj-text padding-bottom="20px" font-size="14px">
+    ✓ Take a clear photo if safe to do so<br/>
+    ✓ Note the exact location and time<br/>
+    ✓ Describe any distinguishing features<br/>
+    ✓ Mention which direction the animal was heading<br/>
+    ✓ Include any behavior you observed
+  </mj-text>
+  
+  <mj-text padding-bottom="10px" font-size="14px" color="#666666">
+    💚 <strong>Thank you for being part of the solution. Together, we bring pets home!</strong>
+  </mj-text>
+  
+  <mj-text padding-top="20px" font-size="12px" color="#999999">
+    You're receiving this email because you reported a sighting that has been reviewed by the pet owner. Keep up the great work!
+  </mj-text>
+{% endblock %}

@@ -26,7 +26,12 @@ import { ListAdminsCommand } from './subcommands/list-admins.command';
 @Command({
   name: 'admin',
   description: 'Administrative commands for user management',
-  subCommands: [CreateAdminCommand, UpdatePasswordCommand, ConvertToAdminCommand, ListAdminsCommand],
+  subCommands: [
+    CreateAdminCommand,
+    UpdatePasswordCommand,
+    ConvertToAdminCommand,
+    ListAdminsCommand,
+  ],
 })
 @Injectable()
 export class AdminCommand extends CommandRunner {

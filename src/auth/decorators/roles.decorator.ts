@@ -8,7 +8,7 @@ export const ROLES_KEY = 'roles';
 /**
  * Decorator to specify required roles for a route
  * Used in conjunction with RolesGuard
- * 
+ *
  * @example
  * ```typescript
  * @Roles('admin', 'moderator')

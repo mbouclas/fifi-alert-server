@@ -162,6 +162,7 @@ exports.Prisma.RoleScalarFieldEnum = {
   active: 'active',
   permissions: 'permissions',
   meta: 'meta',
+  settings: 'settings',
   conditions: 'conditions',
   rules: 'rules',
   created_at: 'created_at',
@@ -195,6 +196,8 @@ exports.Prisma.AccountScalarFieldEnum = {
   refreshTokenExpiresAt: 'refreshTokenExpiresAt',
   scope: 'scope',
   password: 'password',
+  meta: 'meta',
+  settings: 'settings',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };
@@ -224,15 +227,54 @@ exports.Prisma.AuditLogScalarFieldEnum = {
   action: 'action',
   userId: 'userId',
   actorId: 'actorId',
+  actorType: 'actorType',
   metadata: 'metadata',
   ipAddress: 'ipAddress',
   userAgent: 'userAgent',
-  createdAt: 'createdAt'
+  createdAt: 'createdAt',
+  eventType: 'eventType',
+  entityType: 'entityType',
+  entityId: 'entityId',
+  description: 'description',
+  oldValues: 'oldValues',
+  newValues: 'newValues',
+  sessionId: 'sessionId',
+  requestId: 'requestId',
+  success: 'success',
+  errorMessage: 'errorMessage',
+  errorStack: 'errorStack',
+  timestamp: 'timestamp'
+};
+
+exports.Prisma.PetTypeScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  slug: 'slug',
+  meta: 'meta',
+  settings: 'settings',
+  created_at: 'created_at',
+  updated_at: 'updated_at'
+};
+
+exports.Prisma.PetScalarFieldEnum = {
+  id: 'id',
+  tagId: 'tagId',
+  userId: 'userId',
+  petTypeId: 'petTypeId',
+  name: 'name',
+  gender: 'gender',
+  photos: 'photos',
+  size: 'size',
+  isMissing: 'isMissing',
+  birthday: 'birthday',
+  created_at: 'created_at',
+  updated_at: 'updated_at'
 };
 
 exports.Prisma.AlertScalarFieldEnum = {
   id: 'id',
   creator_id: 'creator_id',
+  pet_id: 'pet_id',
   pet_name: 'pet_name',
   pet_species: 'pet_species',
   pet_breed: 'pet_breed',
@@ -257,7 +299,9 @@ exports.Prisma.AlertScalarFieldEnum = {
   affected_postal_codes: 'affected_postal_codes',
   notes: 'notes',
   reward_offered: 'reward_offered',
-  reward_amount: 'reward_amount'
+  reward_amount: 'reward_amount',
+  meta: 'meta',
+  settings: 'settings'
 };
 
 exports.Prisma.DeviceScalarFieldEnum = {
@@ -299,6 +343,19 @@ exports.Prisma.SavedZoneScalarFieldEnum = {
   updated_at: 'updated_at'
 };
 
+exports.Prisma.AlertZoneScalarFieldEnum = {
+  id: 'id',
+  user_id: 'user_id',
+  name: 'name',
+  lat: 'lat',
+  lon: 'lon',
+  radius_meters: 'radius_meters',
+  is_active: 'is_active',
+  priority: 'priority',
+  created_at: 'created_at',
+  updated_at: 'updated_at'
+};
+
 exports.Prisma.SightingScalarFieldEnum = {
   id: 'id',
   alert_id: 'alert_id',
@@ -314,6 +371,8 @@ exports.Prisma.SightingScalarFieldEnum = {
   dismissed: 'dismissed',
   dismissed_at: 'dismissed_at',
   dismissed_reason: 'dismissed_reason',
+  meta: 'meta',
+  settings: 'settings',
   created_at: 'created_at',
   updated_at: 'updated_at'
 };
@@ -336,6 +395,8 @@ exports.Prisma.NotificationScalarFieldEnum = {
   exclusion_reason: 'exclusion_reason',
   push_message_id: 'push_message_id',
   push_response: 'push_response',
+  meta: 'meta',
+  settings: 'settings',
   created_at: 'created_at',
   updated_at: 'updated_at'
 };
@@ -365,6 +426,56 @@ exports.Prisma.NullsOrder = {
   first: 'first',
   last: 'last'
 };
+exports.AuditEventType = exports.$Enums.AuditEventType = {
+  CREATE: 'CREATE',
+  UPDATE: 'UPDATE',
+  DELETE: 'DELETE',
+  LOGIN: 'LOGIN',
+  LOGOUT: 'LOGOUT',
+  ACCESS: 'ACCESS',
+  EXPORT: 'EXPORT',
+  IMPORT: 'IMPORT',
+  APPROVAL: 'APPROVAL',
+  REJECTION: 'REJECTION',
+  SEND: 'SEND',
+  RECEIVE: 'RECEIVE',
+  ACTIVATION: 'ACTIVATION',
+  DEACTIVATION: 'DEACTIVATION',
+  ROTATION: 'ROTATION',
+  REVOCATION: 'REVOCATION',
+  RESET: 'RESET',
+  FAILURE: 'FAILURE',
+  SUCCESS: 'SUCCESS',
+  SYSTEM: 'SYSTEM'
+};
+
+exports.AuditEntityType = exports.$Enums.AuditEntityType = {
+  USER: 'USER',
+  ALERT: 'ALERT',
+  SIGHTING: 'SIGHTING',
+  DEVICE: 'DEVICE',
+  SAVED_ZONE: 'SAVED_ZONE',
+  ALERT_ZONE: 'ALERT_ZONE',
+  NOTIFICATION: 'NOTIFICATION',
+  SESSION: 'SESSION',
+  ROLE: 'ROLE',
+  GATE: 'GATE',
+  EMAIL: 'EMAIL',
+  LOCATION: 'LOCATION',
+  SYSTEM: 'SYSTEM'
+};
+
+exports.Gender = exports.$Enums.Gender = {
+  MALE: 'MALE',
+  FEMALE: 'FEMALE'
+};
+
+exports.Size = exports.$Enums.Size = {
+  SMALL: 'SMALL',
+  MEDIUM: 'MEDIUM',
+  LARGE: 'LARGE'
+};
+
 exports.PetSpecies = exports.$Enums.PetSpecies = {
   DOG: 'DOG',
   CAT: 'CAT',
@@ -411,9 +522,12 @@ exports.Prisma.ModelName = {
   Gate: 'Gate',
   Verification: 'Verification',
   AuditLog: 'AuditLog',
+  PetType: 'PetType',
+  Pet: 'Pet',
   Alert: 'Alert',
   Device: 'Device',
   SavedZone: 'SavedZone',
+  AlertZone: 'AlertZone',
   Sighting: 'Sighting',
   Notification: 'Notification'
 };

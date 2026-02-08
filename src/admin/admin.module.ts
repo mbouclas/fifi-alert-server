@@ -5,7 +5,7 @@ import { UserModule } from '../user/user.module';
 import { AuthEndpointsModule } from '../auth/auth.module';
 
 @Module({
-    imports: [SharedModule, UserModule, AuthEndpointsModule],
-    controllers: [AdminController],
+  imports: [SharedModule, UserModule, AuthEndpointsModule],
+  controllers: [AdminController],
 })
-export class AdminModule { }
+export class AdminModule {}

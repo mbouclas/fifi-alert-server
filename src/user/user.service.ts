@@ -4,8 +4,10 @@ import {
   BadRequestException,
   NotFoundException,
   Logger,
+  Inject,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { PrismaService } from '@services/prisma.service';
 import {
   formatResultToPaginatedResponse,
@@ -20,6 +22,10 @@ import {
 import { hashPassword } from 'better-auth/crypto';
 import { auth } from '../auth';
 import { SharedModule } from '@shared/shared.module';
+import { AUDIT_EVENT_NAMES } from '../audit/audit-event-names';
+import { IAuditEventPayload } from '../audit/interfaces/audit-event-payload.interface';
+import { EmailService, IEmailTemplate } from '@shared/email/email.service';
+import type { IEmailProvider } from '@shared/email/interfaces/email-provider.interface';
 
 /**
  * Data transfer object for creating a new user
@@ -50,6 +56,25 @@ export enum UserServiceEventNames {
   PASSWORD_UPDATED = 'PASSWORD_UPDATED',
 }
 
+const userServiceEmailTemplateNames: Record<string, IEmailTemplate> = {
+  welcome: {
+    subject: 'Welcome to Our Service!',
+    file: `notifications/email/user/welcome.njk`,
+  },
+  passwordReset: {
+    subject: 'Password Reset Request',
+    file: `notifications/email/user/passwordReset.njk`,
+  },
+  invite: {
+    subject: 'Invitation to Join Our Service',
+    file: `notifications/email/user/invite.njk`,
+  },
+  forgotPassword: {
+    subject: 'Forgot Your Password?',
+    file: `notifications/email/user/forgotPassword.njk`,
+  },
+};
+
 /**
  * UserService handles user management operations including
  * creating users with Better Auth and assigning roles via Prisma.
@@ -61,6 +86,8 @@ export class UserService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly configService: ConfigService,
+    private readonly eventEmitter: EventEmitter2,
+    @Inject('IEmailProvider') private readonly emailProvider: IEmailProvider,
   ) { }
 
   /**
@@ -139,7 +166,43 @@ export class UserService {
         `User created successfully: ${userWithRoles?.email} with ${rolesToAssign.length} role(s)`,
       );
 
-      SharedModule.eventEmitter.emit(UserServiceEventNames.CREATED, { id: userWithRoles?.id, ...data });
+      // Emit audit event
+      try {
+        const auditPayload: IAuditEventPayload = {
+          eventType: 'CREATE',
+          entityType: 'USER',
+          entityId: updatedUser.id,
+          userId: updatedUser.id,
+          action: 'user_created',
+          description: `User account created: ${data.email}`,
+          newValues: {
+            email: data.email,
+            firstName: data.firstName,
+            lastName: data.lastName,
+            roles: rolesToAssign.map((r) => r.slug),
+            emailVerified: data.emailVerified ?? false,
+          },
+          success: true,
+        };
+        this.eventEmitter.emit(AUDIT_EVENT_NAMES.ENTITY.CREATED, auditPayload);
+      } catch (error) {
+        this.logger.error(
+          'Failed to emit audit event for user creation:',
+          error,
+        );
+      }
+
+      // Send welcome email (non-blocking - log error but don't fail user creation)
+      if (userWithRoles) {
+        try {
+          await this.sendWelcomeEmail(userWithRoles);
+        } catch (error) {
+          this.logger.error(
+            `Welcome email send failed for user ${userWithRoles.id} but user creation succeeded:`,
+            error,
+          );
+        }
+      }
 
       return userWithRoles;
     } catch (error) {
@@ -197,7 +260,10 @@ export class UserService {
     }
 
     // Extract password from userData if present (password is stored in Account, not User)
-    const { password, ...userDataWithoutPassword } = userData as Record<string, unknown> & { password?: string };
+    const { password, ...userDataWithoutPassword } = userData as Record<
+      string,
+      unknown
+    > & { password?: string };
 
     // Handle password update separately (stored in Account table)
     if (password !== undefined && password !== null && password !== '') {
@@ -223,6 +289,12 @@ export class UserService {
       return existingUser;
     }
 
+    // Capture oldValues for audit
+    const oldValues: any = {};
+    for (const key of Object.keys(sanitizedData)) {
+      oldValues[key] = existingUser[key];
+    }
+
     // Perform the update
     const updatedUser = await this.prisma.user.update({
       where: data,
@@ -231,7 +303,24 @@ export class UserService {
 
     this.logger.log(`User updated successfully: ${updatedUser.email}`);
 
-    SharedModule.eventEmitter.emit(UserServiceEventNames.UPDATED, { id: updatedUser.id, ...userData });
+    // Emit audit event
+    try {
+      const auditPayload: IAuditEventPayload = {
+        eventType: 'UPDATE',
+        entityType: 'USER',
+        entityId: updatedUser.id,
+        userId: updatedUser.id,
+        action: 'user_updated',
+        description: `User profile updated: ${updatedUser.email}`,
+        oldValues,
+        newValues: sanitizedData,
+        success: true,
+      };
+      this.eventEmitter.emit(AUDIT_EVENT_NAMES.ENTITY.UPDATED, auditPayload);
+    } catch (error) {
+      this.logger.error('Failed to emit audit event for user update:', error);
+    }
+
     return updatedUser;
   }
 
@@ -244,9 +333,15 @@ export class UserService {
    * @throws BadRequestException if no credential account exists for the user
    * @throws BadRequestException if password doesn't meet minimum length requirements
    */
-  private async updateUserPassword(userId: number, newPassword: string): Promise<void> {
+  private async updateUserPassword(
+    userId: number,
+    newPassword: string,
+  ): Promise<void> {
     // Validate password length
-    const minPasswordLength = this.configService.get<number>('auth.password.minLength', 4);
+    const minPasswordLength = this.configService.get<number>(
+      'auth.password.minLength',
+      4,
+    );
     if (newPassword.length < minPasswordLength) {
       throw new BadRequestException(
         `Password must be at least ${minPasswordLength} characters long`,
@@ -278,9 +373,28 @@ export class UserService {
     });
 
     this.logger.log(`Password updated for user ID: ${userId}`);
-    SharedModule.eventEmitter.emit(UserServiceEventNames.PASSWORD_UPDATED, { id: userId });
 
-
+    // Emit audit event for password change
+    try {
+      const auditPayload: IAuditEventPayload = {
+        eventType: 'UPDATE',
+        entityType: 'USER',
+        entityId: userId,
+        userId: userId,
+        action: 'user_password_changed',
+        description: `Password changed for user ID ${userId}`,
+        success: true,
+      };
+      this.eventEmitter.emit(
+        AUDIT_EVENT_NAMES.USER.PASSWORD_CHANGED,
+        auditPayload,
+      );
+    } catch (error) {
+      this.logger.error(
+        'Failed to emit audit event for password change:',
+        error,
+      );
+    }
   }
 
   /**
@@ -302,10 +416,7 @@ export class UserService {
    * // Find with multiple relationships
    * const user = await userService.findOne({ id: 1 }, ['roles', 'sessions', 'accounts']);
    */
-  async findOne(
-    data: Prisma.UserWhereUniqueInput,
-    include: string[] = [],
-  ) {
+  async findOne(data: Prisma.UserWhereUniqueInput, include: string[] = []) {
     const includeObject = buildIncludeObject<Prisma.UserInclude>(include);
 
     const user = await this.prisma.user.findUnique({
@@ -437,7 +548,10 @@ export class UserService {
     }
 
     // Password length validation
-    const minPasswordLength = this.configService.get<number>('auth.password.minLength', 4);
+    const minPasswordLength = this.configService.get<number>(
+      'auth.password.minLength',
+      4,
+    );
     if (data.password.length < minPasswordLength) {
       throw new BadRequestException(
         `Password must be at least ${minPasswordLength} characters long`,
@@ -539,12 +653,36 @@ export class UserService {
       );
     }
 
+    // Capture oldValues for audit
+    const oldValues = {
+      email: existingUser.email,
+      firstName: existingUser.firstName,
+      lastName: existingUser.lastName,
+      emailVerified: existingUser.emailVerified,
+    };
+
     // Delete the user (cascades to related records based on schema)
     const deletedUser = await this.prisma.user.delete({
       where: data,
     });
 
     this.logger.log(`User deleted successfully: ${deletedUser.email}`);
+
+    // Emit audit event
+    try {
+      const auditPayload: IAuditEventPayload = {
+        eventType: 'DELETE',
+        entityType: 'USER',
+        entityId: deletedUser.id,
+        action: 'user_deleted',
+        description: `User account deleted: ${deletedUser.email}`,
+        oldValues,
+        success: true,
+      };
+      this.eventEmitter.emit(AUDIT_EVENT_NAMES.ENTITY.DELETED, auditPayload);
+    } catch (error) {
+      this.logger.error('Failed to emit audit event for user deletion:', error);
+    }
 
     return deletedUser;
   }
@@ -553,7 +691,7 @@ export class UserService {
     if (!user['roles'] || !Array.isArray(user['roles'])) {
       // get the user roles from the database
 
-      const userWithRoles = await (new PrismaService()).user.findUnique({
+      const userWithRoles = await new PrismaService().user.findUnique({
         where: { id: parseInt(user.id as any, 10) },
         include: {
           roles: {
@@ -727,9 +865,237 @@ export class UserService {
     return {
       userId,
       userEmail: user.email,
-      gates: userGates.map(ug => ug.gate),
+      gates: userGates.map((ug) => ug.gate),
       count: userGates.length,
     };
+  }
+
+  /**
+ * Check if user has a role with at least the specified level
+ * @param user User object with roles included
+ * @param minLevel Minimum role level required
+ * @returns true if user has a role with level >= minLevel
+ */
+  static userHasMinLevel(user: User, minLevel: number): boolean {
+    if (!user['roles'] || !Array.isArray(user['roles'])) {
+      return false;
+    }
+
+    return user['roles'].some((r) => r.role.level >= minLevel);
+  }
+
+  // ============================================================
+  // Email Methods
+  // ============================================================
+
+  /**
+   * Send welcome email to a newly registered user
+   * @param user User to send welcome email to
+   * @returns Success message
+   */
+  async sendWelcomeEmail(user: User): Promise<{ success: boolean; message: string }> {
+    this.logger.log(`Sending welcome email to user ${user.id}: ${user.email}`);
+
+    // Instantiate EmailService with local templates
+    const emailService = new EmailService(
+      this.emailProvider,
+      this.eventEmitter,
+      userServiceEmailTemplateNames,
+    );
+
+    try {
+      await emailService.sendHtml('welcome', {
+        from: String(process.env.MAIL_NOTIFICATIONS_FROM),
+        to: user.email,
+        templateData: {
+          user: {
+            id: user.id,
+            email: user.email,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            name: user.name,
+          },
+          appUrl: process.env.APP_URL || 'https://fifi-alert.com',
+        },
+      });
+
+      this.logger.log(`Welcome email sent successfully to user ${user.id}`);
+
+      return {
+        success: true,
+        message: `Welcome email sent to ${user.email}`,
+      };
+    } catch (error) {
+      this.logger.error(`Failed to send welcome email to user ${user.id}:`, error);
+      throw new Error('FAILED_TO_SEND_WELCOME_EMAIL');
+    }
+  }
+
+  /**
+   * Send forgot password email with reset link
+   * @param user User requesting password reset
+   * @param resetToken Password reset token
+   * @param expiresIn Token expiration duration (e.g., "24 hours")
+   * @returns Success message
+   */
+  async sendForgotPasswordEmail(
+    user: User,
+    resetToken: string,
+    expiresIn: string = '24 hours',
+  ): Promise<{ success: boolean; message: string }> {
+    this.logger.log(`Sending forgot password email to user ${user.id}: ${user.email}`);
+
+    const appUrl = process.env.APP_URL || 'https://fifi-alert.com';
+    const resetLink = `${appUrl}/reset-password?token=${resetToken}`;
+
+    // Instantiate EmailService with local templates
+    const emailService = new EmailService(
+      this.emailProvider,
+      this.eventEmitter,
+      userServiceEmailTemplateNames,
+    );
+
+    try {
+      await emailService.sendHtml('forgotPassword', {
+        from: String(process.env.MAIL_NOTIFICATIONS_FROM),
+        to: user.email,
+        templateData: {
+          user: {
+            id: user.id,
+            email: user.email,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            name: user.name,
+          },
+          resetLink,
+          expiresIn,
+        },
+      });
+
+      this.logger.log(`Forgot password email sent successfully to user ${user.id}`);
+
+      return {
+        success: true,
+        message: `Password reset email sent to ${user.email}`,
+      };
+    } catch (error) {
+      this.logger.error(`Failed to send forgot password email to user ${user.id}:`, error);
+      throw new Error('FAILED_TO_SEND_FORGOT_PASSWORD_EMAIL');
+    }
+  }
+
+  /**
+   * Send password reset confirmation email
+   * @param user User whose password was reset
+   * @param resetToken Password reset token
+   * @param expiresIn Token expiration duration (e.g., "24 hours")
+   * @returns Success message
+   */
+  async sendPasswordResetEmail(
+    user: User,
+    resetToken: string,
+    expiresIn: string = '24 hours',
+  ): Promise<{ success: boolean; message: string }> {
+    this.logger.log(`Sending password reset email to user ${user.id}: ${user.email}`);
+
+    const appUrl = process.env.APP_URL || 'https://fifi-alert.com';
+    const resetLink = `${appUrl}/reset-password?token=${resetToken}`;
+
+    // Instantiate EmailService with local templates
+    const emailService = new EmailService(
+      this.emailProvider,
+      this.eventEmitter,
+      userServiceEmailTemplateNames,
+    );
+
+    try {
+      await emailService.sendHtml('passwordReset', {
+        from: String(process.env.MAIL_NOTIFICATIONS_FROM),
+        to: user.email,
+        templateData: {
+          user: {
+            id: user.id,
+            email: user.email,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            name: user.name,
+          },
+          resetLink,
+          expiresIn,
+        },
+      });
+
+      this.logger.log(`Password reset email sent successfully to user ${user.id}`);
+
+      return {
+        success: true,
+        message: `Password reset email sent to ${user.email}`,
+      };
+    } catch (error) {
+      this.logger.error(`Failed to send password reset email to user ${user.id}:`, error);
+      throw new Error('FAILED_TO_SEND_PASSWORD_RESET_EMAIL');
+    }
+  }
+
+  /**
+   * Send invitation email to a new user
+   * @param user User being invited
+   * @param inviteToken Invitation token
+   * @param invitedBy User who sent the invitation
+   * @param expiresIn Token expiration duration (e.g., "7 days")
+   * @returns Success message
+   */
+  async sendInviteEmail(
+    user: User,
+    inviteToken: string,
+    invitedBy?: User,
+    expiresIn: string = '7 days',
+  ): Promise<{ success: boolean; message: string }> {
+    this.logger.log(`Sending invite email to user ${user.id}: ${user.email}`);
+
+    const appUrl = process.env.APP_URL || 'https://fifi-alert.com';
+    const inviteLink = `${appUrl}/accept-invite?token=${inviteToken}`;
+
+    // Instantiate EmailService with local templates
+    const emailService = new EmailService(
+      this.emailProvider,
+      this.eventEmitter,
+      userServiceEmailTemplateNames,
+    );
+
+    try {
+      await emailService.sendHtml('invite', {
+        from: String(process.env.MAIL_NOTIFICATIONS_FROM),
+        to: user.email,
+        templateData: {
+          user: {
+            id: user.id,
+            email: user.email,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            name: user.name,
+          },
+          inviteLink,
+          expiresIn,
+          invitedBy: invitedBy ? {
+            firstName: invitedBy.firstName,
+            lastName: invitedBy.lastName,
+            name: invitedBy.name,
+            email: invitedBy.email,
+          } : undefined,
+        },
+      });
+
+      this.logger.log(`Invite email sent successfully to user ${user.id}`);
+
+      return {
+        success: true,
+        message: `Invitation email sent to ${user.email}`,
+      };
+    } catch (error) {
+      this.logger.error(`Failed to send invite email to user ${user.id}:`, error);
+      throw new Error('FAILED_TO_SEND_INVITE_EMAIL');
+    }
   }
 
 

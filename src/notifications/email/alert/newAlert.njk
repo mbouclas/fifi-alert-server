@@ -1,0 +1,75 @@
+{% extends "common/layout.nunj" %}
+
+{% block title %}New Pet Alert Near You - FiFi Alert{% endblock %}
+
+{% block header %}🚨 New Pet Alert Nearby{% endblock %}
+
+{% block content %}
+  <mj-text font-size="18px" font-weight="bold" color="#333333" padding-bottom="20px">
+    Hi {{ user.firstName|default('there') }},
+  </mj-text>
+  
+  <mj-text padding-bottom="20px">
+    A pet has gone missing near your location. Your help could make all the difference!
+  </mj-text>
+  
+  <mj-divider border-width="2px" border-color="#007bff" padding="20px 0px" />
+  
+  <mj-text font-size="16px" font-weight="bold" color="#007bff" padding-bottom="10px">
+    Lost Pet Details:
+  </mj-text>
+  
+  <mj-text padding-bottom="10px">
+    <strong>Name:</strong> {{ alert.petName }}<br/>
+    <strong>Type:</strong> {{ alert.petType|default('Pet') }}<br/>
+    {% if alert.breed %}<strong>Breed:</strong> {{ alert.breed }}<br/>{% endif %}
+    {% if alert.color %}<strong>Color:</strong> {{ alert.color }}<br/>{% endif %}
+    {% if alert.age %}<strong>Age:</strong> {{ alert.age }}<br/>{% endif %}
+  </mj-text>
+  
+  <mj-text padding-bottom="10px">
+    <strong>📍 Last Seen:</strong> {{ alert.location }}<br/>
+    <strong>📏 Distance from you:</strong> {{ alert.distance|default('nearby') }}
+  </mj-text>
+  
+  {% if alert.description %}
+  <mj-text padding-bottom="10px">
+    <strong>Description:</strong><br/>
+    {{ alert.description }}
+  </mj-text>
+  {% endif %}
+  
+  {% if alert.photoUrl %}
+  <mj-text padding-bottom="10px" font-size="13px" color="#666666">
+    <strong>Photo:</strong>
+  </mj-text>
+  <mj-image src="{{ alert.photoUrl }}" alt="{{ alert.petName }}" padding-bottom="20px" border-radius="8px" />
+  {% endif %}
+  
+  <mj-divider border-width="1px" border-color="#e0e0e0" padding="20px 0px" />
+  
+  <mj-text font-size="15px" font-weight="bold" padding-bottom="10px">
+    How You Can Help:
+  </mj-text>
+  
+  <mj-text padding-bottom="20px">
+    👀 Keep an eye out for {{ alert.petName }}<br/>
+    📸 Report a sighting if you see them<br/>
+    🔗 Share this alert with others nearby<br/>
+    💙 Help bring {{ alert.petName }} home safely
+  </mj-text>
+  
+  <mj-button background-color="#007bff" color="#ffffff" href="{{ alert.viewUrl|default('https://fifi-alert.com/alerts') }}" padding="15px 0px">
+    View Full Alert
+  </mj-button>
+  
+  {% if alert.reportSightingUrl %}
+  <mj-button background-color="#28a745" color="#ffffff" href="{{ alert.reportSightingUrl }}" padding="15px 0px">
+    Report a Sighting
+  </mj-button>
+  {% endif %}
+  
+  <mj-text padding-top="30px" font-size="12px" color="#999999">
+    You're receiving this because a pet went missing within your notification radius. To adjust your alert settings, visit your account preferences.
+  </mj-text>
+{% endblock %}

@@ -67,14 +67,20 @@ export class HelpCommand extends CommandRunner implements OnModuleInit {
     const providers = this.discoveryService.getProviders();
 
     this.commands = providers
-      .filter((wrapper): wrapper is typeof wrapper & { metatype: NonNullable<typeof wrapper.metatype> } => {
-        if (!wrapper.metatype) return false;
-        const metadata = this.reflector.get<CommandMetadata>(
-          COMMAND_META_KEY,
-          wrapper.metatype,
-        );
-        return !!metadata;
-      })
+      .filter(
+        (
+          wrapper,
+        ): wrapper is typeof wrapper & {
+          metatype: NonNullable<typeof wrapper.metatype>;
+        } => {
+          if (!wrapper.metatype) return false;
+          const metadata = this.reflector.get<CommandMetadata>(
+            COMMAND_META_KEY,
+            wrapper.metatype,
+          );
+          return !!metadata;
+        },
+      )
       .map((wrapper) => {
         const metadata = this.reflector.get<CommandMetadata>(
           COMMAND_META_KEY,

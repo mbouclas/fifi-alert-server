@@ -6,9 +6,9 @@ import { PrismaService } from '../services/prisma.service';
 import { AuthEndpointsModule } from '../auth/auth.module';
 
 @Module({
-    imports: [AuthEndpointsModule],
-    controllers: [DeviceController],
-    providers: [DeviceService, SavedZoneService, PrismaService],
-    exports: [DeviceService, SavedZoneService],
+  imports: [AuthEndpointsModule],
+  controllers: [DeviceController],
+  providers: [DeviceService, SavedZoneService, PrismaService],
+  exports: [DeviceService, SavedZoneService],
 })
-export class DeviceModule { }
+export class DeviceModule {}

@@ -1,0 +1,79 @@
+{% extends "common/layout.nunj" %}
+
+{% block title %}Pet Alert Resolved - FiFi Alert{% endblock %}
+
+{% block header %}🎉 Great News!{% endblock %}
+
+{% block content %}
+  <mj-text font-size="18px" font-weight="bold" color="#333333" padding-bottom="20px">
+    Hi {{ user.firstName|default('there') }},
+  </mj-text>
+  
+  <mj-text padding-bottom="20px" font-size="16px">
+    We have wonderful news to share!
+  </mj-text>
+  
+  <mj-divider border-width="2px" border-color="#28a745" padding="20px 0px" />
+  
+  <mj-text font-size="18px" font-weight="bold" color="#28a745" padding-bottom="20px" align="center">
+    {{ alert.petName }} has been found! 🎊
+  </mj-text>
+  
+  {% if alert.photoUrl %}
+  <mj-image src="{{ alert.photoUrl }}" alt="{{ alert.petName }}" padding-bottom="20px" border-radius="8px" />
+  {% endif %}
+  
+  <mj-text padding-bottom="10px">
+    <strong>Pet:</strong> {{ alert.petName }}<br/>
+    {% if alert.petType %}<strong>Type:</strong> {{ alert.petType }}<br/>{% endif %}
+    <strong>Location:</strong> {{ alert.location }}<br/>
+    {% if alert.daysLost %}<strong>Time Lost:</strong> {{ alert.daysLost }}<br/>{% endif %}
+  </mj-text>
+  
+  {% if alert.resolution %}
+  <mj-divider border-width="1px" border-color="#e0e0e0" padding="20px 0px" />
+  
+  <mj-text font-size="15px" font-weight="bold" padding-bottom="10px">
+    Happy Ending:
+  </mj-text>
+  
+  <mj-text padding-bottom="20px">
+    {{ alert.resolution }}
+  </mj-text>
+  {% endif %}
+  
+  <mj-divider border-width="1px" border-color="#e0e0e0" padding="20px 0px" />
+  
+  <mj-text font-size="15px" padding-bottom="10px">
+    💙 <strong>Thank you for being part of the FiFi Alert community!</strong>
+  </mj-text>
+  
+  <mj-text padding-bottom="20px">
+    Your vigilance and support help reunite lost pets with their families. Stories like this remind us why we do what we do.
+  </mj-text>
+  
+  {% if alert.thanksMessage %}
+  <mj-text padding-bottom="20px" font-style="italic" color="#666666">
+    "{{ alert.thanksMessage }}"
+  </mj-text>
+  {% endif %}
+  
+  <mj-text padding-bottom="10px">
+    Keep making a difference:
+  </mj-text>
+  
+  <mj-text padding-bottom="20px">
+    👀 Continue watching for other lost pets<br/>
+    🔔 Keep your alert notifications enabled<br/>
+    🤝 Share FiFi Alert with friends and neighbors<br/>
+    💚 Together, we bring pets home
+  </mj-text>
+  
+  <mj-button background-color="#007bff" color="#ffffff" href="https://fifi-alert.com/app" padding="15px 0px">
+    View Active Alerts
+  </mj-button>
+  
+  <mj-text padding-top="30px" font-size="12px" color="#999999">
+    You're receiving this update because you were notified about this alert. No pet should stay lost - thank you for being there!
+  </mj-text>
+{% endblock %}

@@ -6,120 +6,151 @@ import { AlertStatus, PetSpecies } from '../../generated/prisma';
  * Response format for alert data returned from API
  */
 export class AlertResponseDto {
-    @ApiProperty({ description: 'Alert ID', example: 1 })
-    id: number;
+  @ApiProperty({ description: 'Alert ID', example: 1 })
+  id: number;
 
-    @ApiProperty({ description: 'Creator user ID', example: 42 })
-    creatorId: number;
+  @ApiProperty({ description: 'Creator user ID', example: 42 })
+  creatorId: number;
 
-    // Pet Details
-    @ApiProperty({ description: 'Pet name', example: 'Max' })
-    petName: string;
+  @ApiPropertyOptional({
+    description: 'Associated pet ID (if linked to registered pet)',
+    example: 5,
+  })
+  petId?: number;
 
-    @ApiProperty({
-        enum: PetSpecies,
-        description: 'Pet species',
-        example: PetSpecies.DOG
-    })
-    petSpecies: PetSpecies;
+  // Pet Details
+  @ApiProperty({ description: 'Pet name', example: 'Max' })
+  petName: string;
 
-    @ApiPropertyOptional({ description: 'Pet breed', example: 'Golden Retriever' })
-    petBreed?: string;
+  @ApiProperty({
+    enum: PetSpecies,
+    description: 'Pet species',
+    example: PetSpecies.DOG,
+  })
+  petSpecies: PetSpecies;
 
-    @ApiProperty({ description: 'Pet description' })
-    petDescription: string;
+  @ApiPropertyOptional({
+    description: 'Pet breed',
+    example: 'Golden Retriever',
+  })
+  petBreed?: string;
 
-    @ApiPropertyOptional({ description: 'Pet color', example: 'Golden' })
-    petColor?: string;
+  @ApiProperty({ description: 'Pet description' })
+  petDescription: string;
 
-    @ApiPropertyOptional({ description: 'Pet age in years', example: 3 })
-    petAgeYears?: number;
+  @ApiPropertyOptional({ description: 'Pet color', example: 'Golden' })
+  petColor?: string;
 
-    @ApiProperty({ description: 'Pet photo URLs', type: [String] })
-    petPhotos: string[];
+  @ApiPropertyOptional({ description: 'Pet age in years', example: 3 })
+  petAgeYears?: number;
 
-    // Location Details
-    @ApiProperty({ description: 'Last seen latitude', example: 37.7749 })
-    lastSeenLat: number;
+  @ApiProperty({ description: 'Pet photo URLs', type: [String] })
+  petPhotos: string[];
 
-    @ApiProperty({ description: 'Last seen longitude', example: -122.4194 })
-    lastSeenLon: number;
+  // Location Details
+  @ApiProperty({ description: 'Last seen latitude', example: 37.7749 })
+  lastSeenLat: number;
 
-    @ApiPropertyOptional({
-        description: 'Last seen address',
-        example: '123 Market St, San Francisco, CA 94102'
-    })
-    locationAddress?: string;
+  @ApiProperty({ description: 'Last seen longitude', example: -122.4194 })
+  lastSeenLon: number;
 
-    @ApiProperty({ description: 'Alert radius in kilometers', example: 5.0 })
-    alertRadiusKm: number;
+  @ApiPropertyOptional({
+    description: 'Last seen address',
+    example: '123 Market St, San Francisco, CA 94102',
+  })
+  locationAddress?: string;
 
-    // Lifecycle
-    @ApiProperty({
-        enum: AlertStatus,
-        description: 'Alert status',
-        example: AlertStatus.ACTIVE
-    })
-    status: AlertStatus;
+  @ApiProperty({ description: 'Alert radius in kilometers', example: 5.0 })
+  alertRadiusKm: number;
 
-    @ApiProperty({ description: 'When pet was last seen', example: '2026-02-05T10:30:00Z' })
-    timeLastSeen: Date;
+  // Lifecycle
+  @ApiProperty({
+    enum: AlertStatus,
+    description: 'Alert status',
+    example: AlertStatus.ACTIVE,
+  })
+  status: AlertStatus;
 
-    @ApiProperty({ description: 'When alert was created', example: '2026-02-05T10:35:00Z' })
-    createdAt: Date;
+  @ApiProperty({
+    description: 'When pet was last seen',
+    example: '2026-02-05T10:30:00Z',
+  })
+  timeLastSeen: Date;
 
-    @ApiProperty({ description: 'When alert was last updated', example: '2026-02-05T10:35:00Z' })
-    updatedAt: Date;
+  @ApiProperty({
+    description: 'When alert was created',
+    example: '2026-02-05T10:35:00Z',
+  })
+  createdAt: Date;
 
-    @ApiProperty({ description: 'When alert expires', example: '2026-02-12T10:35:00Z' })
-    expiresAt: Date;
+  @ApiProperty({
+    description: 'When alert was last updated',
+    example: '2026-02-05T10:35:00Z',
+  })
+  updatedAt: Date;
 
-    @ApiPropertyOptional({ description: 'When alert was resolved' })
-    resolvedAt?: Date;
+  @ApiProperty({
+    description: 'When alert expires',
+    example: '2026-02-12T10:35:00Z',
+  })
+  expiresAt: Date;
 
-    @ApiProperty({ description: 'Number of times alert has been renewed', example: 0 })
-    renewalCount: number;
+  @ApiPropertyOptional({ description: 'When alert was resolved' })
+  resolvedAt?: Date;
 
-    // Contact (conditional based on permissions)
-    @ApiPropertyOptional({ description: 'Contact phone (if public or requester is creator)' })
-    contactPhone?: string;
+  @ApiProperty({
+    description: 'Number of times alert has been renewed',
+    example: 0,
+  })
+  renewalCount: number;
 
-    @ApiPropertyOptional({ description: 'Contact email (if requester is creator)' })
-    contactEmail?: string;
+  // Contact (conditional based on permissions)
+  @ApiPropertyOptional({
+    description: 'Contact phone (if public or requester is creator)',
+  })
+  contactPhone?: string;
 
-    @ApiProperty({ description: 'Whether phone is publicly visible', example: false })
-    isPhonePublic: boolean;
+  @ApiPropertyOptional({
+    description: 'Contact email (if requester is creator)',
+  })
+  contactEmail?: string;
 
-    // Metadata
-    @ApiProperty({ description: 'Affected postal codes', type: [String] })
-    affectedPostalCodes: string[];
+  @ApiProperty({
+    description: 'Whether phone is publicly visible',
+    example: false,
+  })
+  isPhonePublic: boolean;
 
-    @ApiPropertyOptional({ description: 'Additional notes' })
-    notes?: string;
+  // Metadata
+  @ApiProperty({ description: 'Affected postal codes', type: [String] })
+  affectedPostalCodes: string[];
 
-    @ApiProperty({ description: 'Whether reward is offered', example: true })
-    rewardOffered: boolean;
+  @ApiPropertyOptional({ description: 'Additional notes' })
+  notes?: string;
 
-    @ApiPropertyOptional({ description: 'Reward amount (USD)', example: 500.00 })
-    rewardAmount?: number;
+  @ApiProperty({ description: 'Whether reward is offered', example: true })
+  rewardOffered: boolean;
 
-    // Distance (included in search results)
-    @ApiPropertyOptional({
-        description: 'Distance from search location (km)',
-        example: 2.5
-    })
-    distanceKm?: number;
+  @ApiPropertyOptional({ description: 'Reward amount (USD)', example: 500.0 })
+  rewardAmount?: number;
 
-    // Counts
-    @ApiPropertyOptional({
-        description: 'Number of sightings reported',
-        example: 3
-    })
-    sightingCount?: number;
+  // Distance (included in search results)
+  @ApiPropertyOptional({
+    description: 'Distance from search location (km)',
+    example: 2.5,
+  })
+  distanceKm?: number;
 
-    @ApiPropertyOptional({
-        description: 'Estimated number of devices that will receive notification',
-        example: 1250
-    })
-    estimatedReach?: number;
+  // Counts
+  @ApiPropertyOptional({
+    description: 'Number of sightings reported',
+    example: 3,
+  })
+  sightingCount?: number;
+
+  @ApiPropertyOptional({
+    description: 'Estimated number of devices that will receive notification',
+    example: 1250,
+  })
+  estimatedReach?: number;
 }

@@ -1,8 +1,4 @@
-import {
-  QuestionSet,
-  Question,
-  ValidateFor,
-} from 'nest-commander';
+import { QuestionSet, Question, ValidateFor } from 'nest-commander';
 
 /**
  * Question set for converting a user to admin.

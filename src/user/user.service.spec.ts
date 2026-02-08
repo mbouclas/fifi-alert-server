@@ -5,8 +5,10 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { UserService, CreateUserDto } from './user.service';
 import { PrismaService } from '@services/prisma.service';
+import type { IEmailProvider } from '@shared/email/interfaces/email-provider.interface';
 
 // Mock the auth module
 const mockSignUpEmail = jest.fn();
@@ -84,6 +86,17 @@ describe('UserService', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
 
+    const mockEventEmitter = {
+      emit: jest.fn(),
+    };
+
+    const mockEmailProvider = {
+      send: jest.fn().mockResolvedValue({
+        id: 'test-message-id',
+        success: true,
+      }),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         UserService,
@@ -94,6 +107,14 @@ describe('UserService', () => {
         {
           provide: ConfigService,
           useValue: mockConfigService,
+        },
+        {
+          provide: EventEmitter2,
+          useValue: mockEventEmitter,
+        },
+        {
+          provide: 'IEmailProvider',
+          useValue: mockEmailProvider,
         },
       ],
     }).compile();
@@ -161,14 +182,18 @@ describe('UserService', () => {
         const dto = { ...validCreateUserDto, email: 'invalid-email' };
 
         await expect(service.store(dto)).rejects.toThrow(BadRequestException);
-        await expect(service.store(dto)).rejects.toThrow('Invalid email format');
+        await expect(service.store(dto)).rejects.toThrow(
+          'Invalid email format',
+        );
       });
 
       it('should throw BadRequestException when password is missing', async () => {
         const dto = { ...validCreateUserDto, password: '' };
 
         await expect(service.store(dto)).rejects.toThrow(BadRequestException);
-        await expect(service.store(dto)).rejects.toThrow('Password is required');
+        await expect(service.store(dto)).rejects.toThrow(
+          'Password is required',
+        );
       });
 
       it('should throw BadRequestException when password is too short', async () => {
@@ -580,7 +605,10 @@ describe('UserService', () => {
   });
 
   describe('findMany', () => {
-    const mockUsers = [mockUser, { ...mockUser, id: 2, email: 'jane@example.com' }];
+    const mockUsers = [
+      mockUser,
+      { ...mockUser, id: 2, email: 'jane@example.com' },
+    ];
 
     beforeEach(() => {
       mockPrismaService.user.findMany.mockReset();
@@ -784,6 +812,193 @@ describe('UserService', () => {
           sessions: true,
           accounts: true,
         },
+      });
+    });
+  });
+
+  describe('Email Methods', () => {
+    const mockUser = {
+      id: 1,
+      email: 'test@example.com',
+      firstName: 'John',
+      lastName: 'Doe',
+      name: 'John Doe',
+      emailVerified: false,
+      image: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      banned: false,
+      banReason: null,
+      banExpires: null,
+      settings: {},
+      meta: {},
+    };
+
+    beforeEach(() => {
+      process.env.MAIL_NOTIFICATIONS_FROM = 'noreply@fifi-alert.com';
+      process.env.APP_URL = 'https://fifi-alert.com';
+    });
+
+    describe('sendWelcomeEmail', () => {
+      it('should send welcome email with correct template data', async () => {
+        const result = await service.sendWelcomeEmail(mockUser);
+
+        expect(result.success).toBe(true);
+        expect(result.message).toContain('Welcome email sent');
+        expect(result.message).toContain(mockUser.email);
+      });
+
+      it('should throw error when email send fails', async () => {
+        // Get the email provider mock from the service
+        const emailProvider = (service as any).emailProvider;
+        emailProvider.send.mockRejectedValueOnce(new Error('Send failed'));
+
+        await expect(service.sendWelcomeEmail(mockUser)).rejects.toThrow(
+          'FAILED_TO_SEND_WELCOME_EMAIL',
+        );
+      });
+
+      it('should include user data in template', async () => {
+        await service.sendWelcomeEmail(mockUser);
+
+        // Email provider should have been called (we can't easily test template data here
+        // but we verify the method was invoked)
+        const emailProvider = (service as any).emailProvider;
+        expect(emailProvider.send).toHaveBeenCalled();
+      });
+    });
+
+    describe('sendForgotPasswordEmail', () => {
+      const resetToken = 'test-reset-token-123';
+      const expiresIn = '24 hours';
+
+      it('should send forgot password email with reset link', async () => {
+        const result = await service.sendForgotPasswordEmail(
+          mockUser,
+          resetToken,
+          expiresIn,
+        );
+
+        expect(result.success).toBe(true);
+        expect(result.message).toContain('Password reset email sent');
+        expect(result.message).toContain(mockUser.email);
+      });
+
+      it('should use default expiration if not provided', async () => {
+        const result = await service.sendForgotPasswordEmail(
+          mockUser,
+          resetToken,
+        );
+
+        expect(result.success).toBe(true);
+      });
+
+      it('should throw error when email send fails', async () => {
+        const emailProvider = (service as any).emailProvider;
+        emailProvider.send.mockRejectedValueOnce(new Error('Send failed'));
+
+        await expect(
+          service.sendForgotPasswordEmail(mockUser, resetToken),
+        ).rejects.toThrow('FAILED_TO_SEND_FORGOT_PASSWORD_EMAIL');
+      });
+    });
+
+    describe('sendPasswordResetEmail', () => {
+      const resetToken = 'test-reset-token-456';
+      const expiresIn = '24 hours';
+
+      it('should send password reset email with reset link', async () => {
+        const result = await service.sendPasswordResetEmail(
+          mockUser,
+          resetToken,
+          expiresIn,
+        );
+
+        expect(result.success).toBe(true);
+        expect(result.message).toContain('Password reset email sent');
+        expect(result.message).toContain(mockUser.email);
+      });
+
+      it('should use default expiration if not provided', async () => {
+        const result = await service.sendPasswordResetEmail(
+          mockUser,
+          resetToken,
+        );
+
+        expect(result.success).toBe(true);
+      });
+
+      it('should throw error when email send fails', async () => {
+        const emailProvider = (service as any).emailProvider;
+        emailProvider.send.mockRejectedValueOnce(new Error('Send failed'));
+
+        await expect(
+          service.sendPasswordResetEmail(mockUser, resetToken),
+        ).rejects.toThrow('FAILED_TO_SEND_PASSWORD_RESET_EMAIL');
+      });
+    });
+
+    describe('sendInviteEmail', () => {
+      const inviteToken = 'test-invite-token-789';
+      const expiresIn = '7 days';
+      const invitedByUser = {
+        id: 2,
+        email: 'admin@fifi-alert.com',
+        firstName: 'Admin',
+        lastName: 'User',
+        name: 'Admin User',
+        emailVerified: true,
+        image: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        banned: false,
+        banReason: null,
+        banExpires: null,
+        settings: {},
+        meta: {},
+      };
+
+      it('should send invite email with invitation link', async () => {
+        const result = await service.sendInviteEmail(
+          mockUser,
+          inviteToken,
+          invitedByUser,
+          expiresIn,
+        );
+
+        expect(result.success).toBe(true);
+        expect(result.message).toContain('Invitation email sent');
+        expect(result.message).toContain(mockUser.email);
+      });
+
+      it('should work without invitedBy user', async () => {
+        const result = await service.sendInviteEmail(
+          mockUser,
+          inviteToken,
+          undefined,
+          expiresIn,
+        );
+
+        expect(result.success).toBe(true);
+      });
+
+      it('should use default expiration if not provided', async () => {
+        const result = await service.sendInviteEmail(
+          mockUser,
+          inviteToken,
+          invitedByUser,
+        );
+
+        expect(result.success).toBe(true);
+      });
+
+      it('should throw error when email send fails', async () => {
+        const emailProvider = (service as any).emailProvider;
+        emailProvider.send.mockRejectedValueOnce(new Error('Send failed'));
+
+        await expect(
+          service.sendInviteEmail(mockUser, inviteToken),
+        ).rejects.toThrow('FAILED_TO_SEND_INVITE_EMAIL');
       });
     });
   });

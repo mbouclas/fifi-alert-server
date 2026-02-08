@@ -46,6 +46,16 @@
             "key": "deviceId",
             "value": "",
             "type": "string"
+        },
+        {
+            "key": "petId",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "petTagId",
+            "value": "",
+            "type": "string"
         }
     ],
     "item": [
@@ -580,6 +590,228 @@
                 }
             ],
             "description": "Missing pet alert management including creation, updates, resolution, and photo uploads."
+        },
+        {
+            "name": "Pets",
+            "item": [
+                {
+                    "name": "Register Pet",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "if (pm.response.code === 201) {",
+                                    "    const response = pm.response.json();",
+                                    "    pm.collectionVariables.set('petId', response.id);",
+                                    "    pm.collectionVariables.set('petTagId', response.tagId);",
+                                    "}"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"type\": \"DOG\",\n  \"name\": \"Max\",\n  \"gender\": \"MALE\",\n  \"size\": \"MEDIUM\",\n  \"photos\": [\"https://example.com/max1.jpg\"],\n  \"birthday\": \"2020-05-15T00:00:00.000Z\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/pets",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "pets"
+                            ]
+                        },
+                        "description": "Register a new pet. A unique 9-character tag ID will be automatically generated."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get All Pets",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/pets",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "pets"
+                            ]
+                        },
+                        "description": "Get all pets for the authenticated user."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get Pet by ID",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/pets/{{petId}}",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "pets",
+                                "{{petId}}"
+                            ]
+                        },
+                        "description": "Get details of a specific pet by ID. User must own the pet."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get Pet by Tag ID (Public)",
+                    "request": {
+                        "auth": {
+                            "type": "noauth"
+                        },
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/pets/tag/{{petTagId}}",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "pets",
+                                "tag",
+                                "{{petTagId}}"
+                            ]
+                        },
+                        "description": "Public endpoint to look up a pet by its unique tag ID. No authentication required. Rate limited to 20 requests per minute."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Update Pet",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"name\": \"Maximus\",\n  \"size\": \"LARGE\",\n  \"photos\": [\"https://example.com/max-updated.jpg\"]\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/pets/{{petId}}",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "pets",
+                                "{{petId}}"
+                            ]
+                        },
+                        "description": "Update pet details. User must own the pet."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Mark Pet as Missing",
+                    "request": {
+                        "method": "PATCH",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/pets/{{petId}}/missing",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "pets",
+                                "{{petId}}",
+                                "missing"
+                            ]
+                        },
+                        "description": "Mark a pet as missing. User must own the pet."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Mark Pet as Found",
+                    "request": {
+                        "method": "PATCH",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/pets/{{petId}}/found",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "pets",
+                                "{{petId}}",
+                                "found"
+                            ]
+                        },
+                        "description": "Mark a pet as found. Automatically resolves any active alerts for this pet. User must own the pet."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Delete Pet",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/pets/{{petId}}",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "pets",
+                                "{{petId}}"
+                            ]
+                        },
+                        "description": "Delete a pet. User must own the pet. Returns 204 No Content on success."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Create Alert for Pet",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"petId\": {{petId}},\n  \"pet\": {\n    \"name\": \"Max\",\n    \"species\": \"DOG\",\n    \"description\": \"Friendly golden retriever with blue collar\"\n  },\n  \"location\": {\n    \"lat\": 37.7749,\n    \"lon\": -122.4194,\n    \"lastSeenTime\": \"2026-02-07T10:00:00Z\",\n    \"radiusKm\": 5\n  },\n  \"contact\": {\n    \"isPhonePublic\": false\n  }\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/alerts",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "alerts"
+                            ]
+                        },
+                        "description": "Create an alert for a registered pet by including petId. The pet will be automatically marked as missing."
+                    },
+                    "response": []
+                }
+            ],
+            "description": "Pet management including registration, updates, and missing/found status tracking."
         },
         {
             "name": "Devices",

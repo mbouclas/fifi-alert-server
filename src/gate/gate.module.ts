@@ -5,9 +5,9 @@ import { SharedModule } from '../shared/shared.module';
 import { AuthEndpointsModule } from '../auth/auth.module';
 
 @Module({
-    imports: [SharedModule, AuthEndpointsModule],
-    controllers: [GateController],
-    providers: [GateService],
-    exports: [GateService],
+  imports: [SharedModule, AuthEndpointsModule],
+  controllers: [GateController],
+  providers: [GateService],
+  exports: [GateService],
 })
-export class GateModule { }
+export class GateModule {}

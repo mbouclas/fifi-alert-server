@@ -1,9 +1,10 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { SharedModule } from './shared/shared.module';
-import { CommandsModule } from './commands/commands.module';
-import { UserModule } from './user/user.module';
-import { authConfig } from './config';
+import { SharedModule } from './shared/shared.module.js';
+import { CommandsModule } from './commands/commands.module.js';
+import { UserModule } from './user/user.module.js';
+import { SimulationModule } from './simulation/simulation.module.js';
+import { authConfig } from './config/index.js';
 
 /**
  * CLI Application Module
@@ -25,6 +26,7 @@ import { authConfig } from './config';
     }),
     SharedModule,
     UserModule,
+    SimulationModule,
     CommandsModule,
   ],
 })

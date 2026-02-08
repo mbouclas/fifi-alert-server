@@ -1,0 +1,82 @@
+{% extends "common/layout.nunj" %}
+
+{% block title %}Your Pet Alert is Now Live - FiFi Alert{% endblock %}
+
+{% block header %}🚀 Alert Published Successfully{% endblock %}
+
+{% block content %}
+  <mj-text font-size="18px" font-weight="bold" color="#333333" padding-bottom="20px">
+    Hi {{ user.firstName|default('there') }},
+  </mj-text>
+  
+  <mj-text padding-bottom="20px" font-size="16px">
+    Great news! Your alert for <strong>{{ alert.petName }}</strong> has been reviewed and is now live to the entire FiFi Alert community.
+  </mj-text>
+  
+  <mj-divider border-width="2px" border-color="#28a745" padding="20px 0px" />
+  
+  <mj-text font-size="18px" font-weight="bold" color="#28a745" padding-bottom="20px" align="center">
+    Your Alert is Now Active! 🎯
+  </mj-text>
+  
+  <mj-text padding-bottom="20px">
+    <strong>Alert ID:</strong> #{{ alert.id }}<br/>
+    <strong>Pet Name:</strong> {{ alert.petName }}<br/>
+    <strong>Species:</strong> {{ alert.petSpecies }}<br/>
+    <strong>Search Area:</strong> {{ alert.location }}<br/>
+    <strong>Radius:</strong> {{ alert.radiusKm }} km<br/>
+    <strong>Status:</strong> <span style="color: #28a745; font-weight: bold;">PUBLISHED</span>
+  </mj-text>
+  
+  <mj-divider border-width="1px" border-color="#e0e0e0" padding="20px 0px" />
+  
+  <mj-text font-size="16px" font-weight="bold" padding-bottom="10px" color="#333333">
+    📢 Community Reach
+  </mj-text>
+  
+  <mj-text padding-bottom="20px">
+    {% if alert.estimatedReach %}
+    📱 <strong>{{ alert.estimatedReach }} people</strong> in the area have been notified<br/><br/>
+    {% else %}
+    📱 <strong>Nearby users</strong> in your area have been notified<br/><br/>
+    {% endif %}
+    
+    👥 All FiFi Alert users within {{ alert.radiusKm }} km are now watching<br/><br/>
+    
+    🔔 You'll receive instant notifications when someone reports a sighting<br/><br/>
+    
+    📍 Every sighting report includes GPS location to help you search
+  </mj-text>
+  
+  <mj-divider border-width="1px" border-color="#e0e0e0" padding="20px 0px" />
+  
+  <mj-text font-size="16px" font-weight="bold" padding-bottom="10px" color="#333333">
+    Maximize Your Alert's Reach
+  </mj-text>
+  
+  <mj-text padding-bottom="20px">
+    🌐 Share on social media (Facebook, Twitter, Instagram)<br/>
+    📲 Share your alert link: {{ appUrl }}/alerts/{{ alert.id }}<br/>
+    🏘️ Post in local community groups and forums<br/>
+    📋 Print flyers and post in your neighborhood<br/>
+    🗣️ Tell neighbors, local businesses, and animal shelters
+  </mj-text>
+  
+  <mj-button background-color="#007bff" color="#ffffff" href="{{ appUrl }}/alerts/{{ alert.id }}/share" padding="15px 0px">
+    Share Your Alert
+  </mj-button>
+  
+  <mj-divider border-width="1px" border-color="#e0e0e0" padding="20px 0px" />
+  
+  <mj-text padding-bottom="20px" font-size="14px">
+    <strong>Stay Active:</strong> Check the app regularly for sighting updates, respond quickly to reports, and keep your alert information up-to-date.
+  </mj-text>
+  
+  <mj-text padding-bottom="10px" font-size="14px" color="#666666">
+    💚 <strong>The community is with you. Together, we'll bring {{ alert.petName }} home.</strong>
+  </mj-text>
+  
+  <mj-text padding-top="20px" font-size="12px" color="#999999">
+    Your alert will remain active for 7 days. You can renew, update, or resolve it anytime in the app.
+  </mj-text>
+{% endblock %}

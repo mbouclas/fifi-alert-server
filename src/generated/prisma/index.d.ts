@@ -59,6 +59,16 @@ export type Verification = $Result.DefaultSelection<Prisma.$VerificationPayload>
  */
 export type AuditLog = $Result.DefaultSelection<Prisma.$AuditLogPayload>
 /**
+ * Model PetType
+ * 
+ */
+export type PetType = $Result.DefaultSelection<Prisma.$PetTypePayload>
+/**
+ * Model Pet
+ * 
+ */
+export type Pet = $Result.DefaultSelection<Prisma.$PetPayload>
+/**
  * Model Alert
  * 
  */
@@ -74,6 +84,11 @@ export type Device = $Result.DefaultSelection<Prisma.$DevicePayload>
  */
 export type SavedZone = $Result.DefaultSelection<Prisma.$SavedZonePayload>
 /**
+ * Model AlertZone
+ * 
+ */
+export type AlertZone = $Result.DefaultSelection<Prisma.$AlertZonePayload>
+/**
  * Model Sighting
  * 
  */
@@ -88,7 +103,52 @@ export type Notification = $Result.DefaultSelection<Prisma.$NotificationPayload>
  * Enums
  */
 export namespace $Enums {
-  export const AlertStatus: {
+  export const AuditEventType: {
+  CREATE: 'CREATE',
+  UPDATE: 'UPDATE',
+  DELETE: 'DELETE',
+  LOGIN: 'LOGIN',
+  LOGOUT: 'LOGOUT',
+  ACCESS: 'ACCESS',
+  EXPORT: 'EXPORT',
+  IMPORT: 'IMPORT',
+  APPROVAL: 'APPROVAL',
+  REJECTION: 'REJECTION',
+  SEND: 'SEND',
+  RECEIVE: 'RECEIVE',
+  ACTIVATION: 'ACTIVATION',
+  DEACTIVATION: 'DEACTIVATION',
+  ROTATION: 'ROTATION',
+  REVOCATION: 'REVOCATION',
+  RESET: 'RESET',
+  FAILURE: 'FAILURE',
+  SUCCESS: 'SUCCESS',
+  SYSTEM: 'SYSTEM'
+};
+
+export type AuditEventType = (typeof AuditEventType)[keyof typeof AuditEventType]
+
+
+export const AuditEntityType: {
+  USER: 'USER',
+  ALERT: 'ALERT',
+  SIGHTING: 'SIGHTING',
+  DEVICE: 'DEVICE',
+  SAVED_ZONE: 'SAVED_ZONE',
+  ALERT_ZONE: 'ALERT_ZONE',
+  NOTIFICATION: 'NOTIFICATION',
+  SESSION: 'SESSION',
+  ROLE: 'ROLE',
+  GATE: 'GATE',
+  EMAIL: 'EMAIL',
+  LOCATION: 'LOCATION',
+  SYSTEM: 'SYSTEM'
+};
+
+export type AuditEntityType = (typeof AuditEntityType)[keyof typeof AuditEntityType]
+
+
+export const AlertStatus: {
   DRAFT: 'DRAFT',
   ACTIVE: 'ACTIVE',
   RESOLVED: 'RESOLVED',
@@ -107,6 +167,23 @@ export const PetSpecies: {
 };
 
 export type PetSpecies = (typeof PetSpecies)[keyof typeof PetSpecies]
+
+
+export const Gender: {
+  MALE: 'MALE',
+  FEMALE: 'FEMALE'
+};
+
+export type Gender = (typeof Gender)[keyof typeof Gender]
+
+
+export const Size: {
+  SMALL: 'SMALL',
+  MEDIUM: 'MEDIUM',
+  LARGE: 'LARGE'
+};
+
+export type Size = (typeof Size)[keyof typeof Size]
 
 
 export const DevicePlatform: {
@@ -150,6 +227,14 @@ export type NotificationStatus = (typeof NotificationStatus)[keyof typeof Notifi
 
 }
 
+export type AuditEventType = $Enums.AuditEventType
+
+export const AuditEventType: typeof $Enums.AuditEventType
+
+export type AuditEntityType = $Enums.AuditEntityType
+
+export const AuditEntityType: typeof $Enums.AuditEntityType
+
 export type AlertStatus = $Enums.AlertStatus
 
 export const AlertStatus: typeof $Enums.AlertStatus
@@ -157,6 +242,14 @@ export const AlertStatus: typeof $Enums.AlertStatus
 export type PetSpecies = $Enums.PetSpecies
 
 export const PetSpecies: typeof $Enums.PetSpecies
+
+export type Gender = $Enums.Gender
+
+export const Gender: typeof $Enums.Gender
+
+export type Size = $Enums.Size
+
+export const Size: typeof $Enums.Size
 
 export type DevicePlatform = $Enums.DevicePlatform
 
@@ -382,6 +475,26 @@ export class PrismaClient<
   get auditLog(): Prisma.AuditLogDelegate<ExtArgs, ClientOptions>;
 
   /**
+   * `prisma.petType`: Exposes CRUD operations for the **PetType** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more PetTypes
+    * const petTypes = await prisma.petType.findMany()
+    * ```
+    */
+  get petType(): Prisma.PetTypeDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.pet`: Exposes CRUD operations for the **Pet** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more Pets
+    * const pets = await prisma.pet.findMany()
+    * ```
+    */
+  get pet(): Prisma.PetDelegate<ExtArgs, ClientOptions>;
+
+  /**
    * `prisma.alert`: Exposes CRUD operations for the **Alert** model.
     * Example usage:
     * ```ts
@@ -410,6 +523,16 @@ export class PrismaClient<
     * ```
     */
   get savedZone(): Prisma.SavedZoneDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.alertZone`: Exposes CRUD operations for the **AlertZone** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more AlertZones
+    * const alertZones = await prisma.alertZone.findMany()
+    * ```
+    */
+  get alertZone(): Prisma.AlertZoneDelegate<ExtArgs, ClientOptions>;
 
   /**
    * `prisma.sighting`: Exposes CRUD operations for the **Sighting** model.
@@ -873,9 +996,12 @@ export namespace Prisma {
     Gate: 'Gate',
     Verification: 'Verification',
     AuditLog: 'AuditLog',
+    PetType: 'PetType',
+    Pet: 'Pet',
     Alert: 'Alert',
     Device: 'Device',
     SavedZone: 'SavedZone',
+    AlertZone: 'AlertZone',
     Sighting: 'Sighting',
     Notification: 'Notification'
   };
@@ -893,7 +1019,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "user" | "userRole" | "userGate" | "role" | "session" | "account" | "gate" | "verification" | "auditLog" | "alert" | "device" | "savedZone" | "sighting" | "notification"
+      modelProps: "user" | "userRole" | "userGate" | "role" | "session" | "account" | "gate" | "verification" | "auditLog" | "petType" | "pet" | "alert" | "device" | "savedZone" | "alertZone" | "sighting" | "notification"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -1563,6 +1689,154 @@ export namespace Prisma {
           }
         }
       }
+      PetType: {
+        payload: Prisma.$PetTypePayload<ExtArgs>
+        fields: Prisma.PetTypeFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.PetTypeFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PetTypePayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.PetTypeFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PetTypePayload>
+          }
+          findFirst: {
+            args: Prisma.PetTypeFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PetTypePayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.PetTypeFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PetTypePayload>
+          }
+          findMany: {
+            args: Prisma.PetTypeFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PetTypePayload>[]
+          }
+          create: {
+            args: Prisma.PetTypeCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PetTypePayload>
+          }
+          createMany: {
+            args: Prisma.PetTypeCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.PetTypeCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PetTypePayload>[]
+          }
+          delete: {
+            args: Prisma.PetTypeDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PetTypePayload>
+          }
+          update: {
+            args: Prisma.PetTypeUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PetTypePayload>
+          }
+          deleteMany: {
+            args: Prisma.PetTypeDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.PetTypeUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.PetTypeUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PetTypePayload>[]
+          }
+          upsert: {
+            args: Prisma.PetTypeUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PetTypePayload>
+          }
+          aggregate: {
+            args: Prisma.PetTypeAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregatePetType>
+          }
+          groupBy: {
+            args: Prisma.PetTypeGroupByArgs<ExtArgs>
+            result: $Utils.Optional<PetTypeGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.PetTypeCountArgs<ExtArgs>
+            result: $Utils.Optional<PetTypeCountAggregateOutputType> | number
+          }
+        }
+      }
+      Pet: {
+        payload: Prisma.$PetPayload<ExtArgs>
+        fields: Prisma.PetFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.PetFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PetPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.PetFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PetPayload>
+          }
+          findFirst: {
+            args: Prisma.PetFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PetPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.PetFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PetPayload>
+          }
+          findMany: {
+            args: Prisma.PetFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PetPayload>[]
+          }
+          create: {
+            args: Prisma.PetCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PetPayload>
+          }
+          createMany: {
+            args: Prisma.PetCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.PetCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PetPayload>[]
+          }
+          delete: {
+            args: Prisma.PetDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PetPayload>
+          }
+          update: {
+            args: Prisma.PetUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PetPayload>
+          }
+          deleteMany: {
+            args: Prisma.PetDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.PetUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.PetUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PetPayload>[]
+          }
+          upsert: {
+            args: Prisma.PetUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PetPayload>
+          }
+          aggregate: {
+            args: Prisma.PetAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregatePet>
+          }
+          groupBy: {
+            args: Prisma.PetGroupByArgs<ExtArgs>
+            result: $Utils.Optional<PetGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.PetCountArgs<ExtArgs>
+            result: $Utils.Optional<PetCountAggregateOutputType> | number
+          }
+        }
+      }
       Alert: {
         payload: Prisma.$AlertPayload<ExtArgs>
         fields: Prisma.AlertFieldRefs
@@ -1750,6 +2024,64 @@ export namespace Prisma {
           count: {
             args: Prisma.SavedZoneCountArgs<ExtArgs>
             result: $Utils.Optional<SavedZoneCountAggregateOutputType> | number
+          }
+        }
+      }
+      AlertZone: {
+        payload: Prisma.$AlertZonePayload<ExtArgs>
+        fields: Prisma.AlertZoneFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.AlertZoneFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AlertZonePayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.AlertZoneFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AlertZonePayload>
+          }
+          findFirst: {
+            args: Prisma.AlertZoneFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AlertZonePayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.AlertZoneFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AlertZonePayload>
+          }
+          findMany: {
+            args: Prisma.AlertZoneFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AlertZonePayload>[]
+          }
+          delete: {
+            args: Prisma.AlertZoneDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AlertZonePayload>
+          }
+          update: {
+            args: Prisma.AlertZoneUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AlertZonePayload>
+          }
+          deleteMany: {
+            args: Prisma.AlertZoneDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.AlertZoneUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.AlertZoneUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AlertZonePayload>[]
+          }
+          aggregate: {
+            args: Prisma.AlertZoneAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateAlertZone>
+          }
+          groupBy: {
+            args: Prisma.AlertZoneGroupByArgs<ExtArgs>
+            result: $Utils.Optional<AlertZoneGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.AlertZoneCountArgs<ExtArgs>
+            result: $Utils.Optional<AlertZoneCountAggregateOutputType> | number
           }
         }
       }
@@ -2002,9 +2334,12 @@ export namespace Prisma {
     gate?: GateOmit
     verification?: VerificationOmit
     auditLog?: AuditLogOmit
+    petType?: PetTypeOmit
+    pet?: PetOmit
     alert?: AlertOmit
     device?: DeviceOmit
     savedZone?: SavedZoneOmit
+    alertZone?: AlertZoneOmit
     sighting?: SightingOmit
     notification?: NotificationOmit
   }
@@ -2094,6 +2429,9 @@ export namespace Prisma {
     devices: number
     created_alerts: number
     reported_sightings: number
+    auditLogs: number
+    pets: number
+    alert_zones: number
   }
 
   export type UserCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -2104,6 +2442,9 @@ export namespace Prisma {
     devices?: boolean | UserCountOutputTypeCountDevicesArgs
     created_alerts?: boolean | UserCountOutputTypeCountCreated_alertsArgs
     reported_sightings?: boolean | UserCountOutputTypeCountReported_sightingsArgs
+    auditLogs?: boolean | UserCountOutputTypeCountAuditLogsArgs
+    pets?: boolean | UserCountOutputTypeCountPetsArgs
+    alert_zones?: boolean | UserCountOutputTypeCountAlert_zonesArgs
   }
 
   // Custom InputTypes
@@ -2166,6 +2507,27 @@ export namespace Prisma {
     where?: SightingWhereInput
   }
 
+  /**
+   * UserCountOutputType without action
+   */
+  export type UserCountOutputTypeCountAuditLogsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: AuditLogWhereInput
+  }
+
+  /**
+   * UserCountOutputType without action
+   */
+  export type UserCountOutputTypeCountPetsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: PetWhereInput
+  }
+
+  /**
+   * UserCountOutputType without action
+   */
+  export type UserCountOutputTypeCountAlert_zonesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: AlertZoneWhereInput
+  }
+
 
   /**
    * Count Type RoleCountOutputType
@@ -2226,6 +2588,68 @@ export namespace Prisma {
    */
   export type GateCountOutputTypeCountUsersArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: UserGateWhereInput
+  }
+
+
+  /**
+   * Count Type PetTypeCountOutputType
+   */
+
+  export type PetTypeCountOutputType = {
+    pets: number
+  }
+
+  export type PetTypeCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    pets?: boolean | PetTypeCountOutputTypeCountPetsArgs
+  }
+
+  // Custom InputTypes
+  /**
+   * PetTypeCountOutputType without action
+   */
+  export type PetTypeCountOutputTypeDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PetTypeCountOutputType
+     */
+    select?: PetTypeCountOutputTypeSelect<ExtArgs> | null
+  }
+
+  /**
+   * PetTypeCountOutputType without action
+   */
+  export type PetTypeCountOutputTypeCountPetsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: PetWhereInput
+  }
+
+
+  /**
+   * Count Type PetCountOutputType
+   */
+
+  export type PetCountOutputType = {
+    alerts: number
+  }
+
+  export type PetCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    alerts?: boolean | PetCountOutputTypeCountAlertsArgs
+  }
+
+  // Custom InputTypes
+  /**
+   * PetCountOutputType without action
+   */
+  export type PetCountOutputTypeDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PetCountOutputType
+     */
+    select?: PetCountOutputTypeSelect<ExtArgs> | null
+  }
+
+  /**
+   * PetCountOutputType without action
+   */
+  export type PetCountOutputTypeCountAlertsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: AlertWhereInput
   }
 
 
@@ -2582,6 +3006,9 @@ export namespace Prisma {
     devices?: boolean | User$devicesArgs<ExtArgs>
     created_alerts?: boolean | User$created_alertsArgs<ExtArgs>
     reported_sightings?: boolean | User$reported_sightingsArgs<ExtArgs>
+    auditLogs?: boolean | User$auditLogsArgs<ExtArgs>
+    pets?: boolean | User$petsArgs<ExtArgs>
+    alert_zones?: boolean | User$alert_zonesArgs<ExtArgs>
     _count?: boolean | UserCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["user"]>
 
@@ -2645,6 +3072,9 @@ export namespace Prisma {
     devices?: boolean | User$devicesArgs<ExtArgs>
     created_alerts?: boolean | User$created_alertsArgs<ExtArgs>
     reported_sightings?: boolean | User$reported_sightingsArgs<ExtArgs>
+    auditLogs?: boolean | User$auditLogsArgs<ExtArgs>
+    pets?: boolean | User$petsArgs<ExtArgs>
+    alert_zones?: boolean | User$alert_zonesArgs<ExtArgs>
     _count?: boolean | UserCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type UserIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
@@ -2660,6 +3090,9 @@ export namespace Prisma {
       devices: Prisma.$DevicePayload<ExtArgs>[]
       created_alerts: Prisma.$AlertPayload<ExtArgs>[]
       reported_sightings: Prisma.$SightingPayload<ExtArgs>[]
+      auditLogs: Prisma.$AuditLogPayload<ExtArgs>[]
+      pets: Prisma.$PetPayload<ExtArgs>[]
+      alert_zones: Prisma.$AlertZonePayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       id: number
@@ -3077,6 +3510,9 @@ export namespace Prisma {
     devices<T extends User$devicesArgs<ExtArgs> = {}>(args?: Subset<T, User$devicesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$DevicePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     created_alerts<T extends User$created_alertsArgs<ExtArgs> = {}>(args?: Subset<T, User$created_alertsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AlertPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     reported_sightings<T extends User$reported_sightingsArgs<ExtArgs> = {}>(args?: Subset<T, User$reported_sightingsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SightingPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    auditLogs<T extends User$auditLogsArgs<ExtArgs> = {}>(args?: Subset<T, User$auditLogsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AuditLogPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    pets<T extends User$petsArgs<ExtArgs> = {}>(args?: Subset<T, User$petsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PetPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    alert_zones<T extends User$alert_zonesArgs<ExtArgs> = {}>(args?: Subset<T, User$alert_zonesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AlertZonePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -3673,6 +4109,78 @@ export namespace Prisma {
     take?: number
     skip?: number
     distinct?: SightingScalarFieldEnum | SightingScalarFieldEnum[]
+  }
+
+  /**
+   * User.auditLogs
+   */
+  export type User$auditLogsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AuditLog
+     */
+    select?: AuditLogSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AuditLog
+     */
+    omit?: AuditLogOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AuditLogInclude<ExtArgs> | null
+    where?: AuditLogWhereInput
+    orderBy?: AuditLogOrderByWithRelationInput | AuditLogOrderByWithRelationInput[]
+    cursor?: AuditLogWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: AuditLogScalarFieldEnum | AuditLogScalarFieldEnum[]
+  }
+
+  /**
+   * User.pets
+   */
+  export type User$petsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Pet
+     */
+    select?: PetSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Pet
+     */
+    omit?: PetOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PetInclude<ExtArgs> | null
+    where?: PetWhereInput
+    orderBy?: PetOrderByWithRelationInput | PetOrderByWithRelationInput[]
+    cursor?: PetWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: PetScalarFieldEnum | PetScalarFieldEnum[]
+  }
+
+  /**
+   * User.alert_zones
+   */
+  export type User$alert_zonesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AlertZone
+     */
+    select?: AlertZoneSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AlertZone
+     */
+    omit?: AlertZoneOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AlertZoneInclude<ExtArgs> | null
+    where?: AlertZoneWhereInput
+    orderBy?: AlertZoneOrderByWithRelationInput | AlertZoneOrderByWithRelationInput[]
+    cursor?: AlertZoneWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: AlertZoneScalarFieldEnum | AlertZoneScalarFieldEnum[]
   }
 
   /**
@@ -5963,6 +6471,7 @@ export namespace Prisma {
     active: number
     permissions: number
     meta: number
+    settings: number
     conditions: number
     rules: number
     created_at: number
@@ -6012,6 +6521,7 @@ export namespace Prisma {
     active?: true
     permissions?: true
     meta?: true
+    settings?: true
     conditions?: true
     rules?: true
     created_at?: true
@@ -6114,6 +6624,7 @@ export namespace Prisma {
     active: boolean
     permissions: JsonValue | null
     meta: JsonValue | null
+    settings: JsonValue | null
     conditions: JsonValue | null
     rules: JsonValue | null
     created_at: Date
@@ -6148,6 +6659,7 @@ export namespace Prisma {
     active?: boolean
     permissions?: boolean
     meta?: boolean
+    settings?: boolean
     conditions?: boolean
     rules?: boolean
     created_at?: boolean
@@ -6165,6 +6677,7 @@ export namespace Prisma {
     active?: boolean
     permissions?: boolean
     meta?: boolean
+    settings?: boolean
     conditions?: boolean
     rules?: boolean
     created_at?: boolean
@@ -6180,6 +6693,7 @@ export namespace Prisma {
     active?: boolean
     permissions?: boolean
     meta?: boolean
+    settings?: boolean
     conditions?: boolean
     rules?: boolean
     created_at?: boolean
@@ -6195,13 +6709,14 @@ export namespace Prisma {
     active?: boolean
     permissions?: boolean
     meta?: boolean
+    settings?: boolean
     conditions?: boolean
     rules?: boolean
     created_at?: boolean
     updated_at?: boolean
   }
 
-  export type RoleOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "name" | "slug" | "level" | "description" | "active" | "permissions" | "meta" | "conditions" | "rules" | "created_at" | "updated_at", ExtArgs["result"]["role"]>
+  export type RoleOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "name" | "slug" | "level" | "description" | "active" | "permissions" | "meta" | "settings" | "conditions" | "rules" | "created_at" | "updated_at", ExtArgs["result"]["role"]>
   export type RoleInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     users?: boolean | Role$usersArgs<ExtArgs>
     _count?: boolean | RoleCountOutputTypeDefaultArgs<ExtArgs>
@@ -6223,6 +6738,7 @@ export namespace Prisma {
       active: boolean
       permissions: Prisma.JsonValue | null
       meta: Prisma.JsonValue | null
+      settings: Prisma.JsonValue | null
       conditions: Prisma.JsonValue | null
       rules: Prisma.JsonValue | null
       created_at: Date
@@ -6659,6 +7175,7 @@ export namespace Prisma {
     readonly active: FieldRef<"Role", 'Boolean'>
     readonly permissions: FieldRef<"Role", 'Json'>
     readonly meta: FieldRef<"Role", 'Json'>
+    readonly settings: FieldRef<"Role", 'Json'>
     readonly conditions: FieldRef<"Role", 'Json'>
     readonly rules: FieldRef<"Role", 'Json'>
     readonly created_at: FieldRef<"Role", 'DateTime'>
@@ -8350,6 +8867,8 @@ export namespace Prisma {
     refreshTokenExpiresAt: number
     scope: number
     password: number
+    meta: number
+    settings: number
     createdAt: number
     updatedAt: number
     _all: number
@@ -8410,6 +8929,8 @@ export namespace Prisma {
     refreshTokenExpiresAt?: true
     scope?: true
     password?: true
+    meta?: true
+    settings?: true
     createdAt?: true
     updatedAt?: true
     _all?: true
@@ -8513,6 +9034,8 @@ export namespace Prisma {
     refreshTokenExpiresAt: Date | null
     scope: string | null
     password: string | null
+    meta: JsonValue | null
+    settings: JsonValue | null
     createdAt: Date
     updatedAt: Date
     _count: AccountCountAggregateOutputType | null
@@ -8548,6 +9071,8 @@ export namespace Prisma {
     refreshTokenExpiresAt?: boolean
     scope?: boolean
     password?: boolean
+    meta?: boolean
+    settings?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     user?: boolean | UserDefaultArgs<ExtArgs>
@@ -8565,6 +9090,8 @@ export namespace Prisma {
     refreshTokenExpiresAt?: boolean
     scope?: boolean
     password?: boolean
+    meta?: boolean
+    settings?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     user?: boolean | UserDefaultArgs<ExtArgs>
@@ -8582,6 +9109,8 @@ export namespace Prisma {
     refreshTokenExpiresAt?: boolean
     scope?: boolean
     password?: boolean
+    meta?: boolean
+    settings?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     user?: boolean | UserDefaultArgs<ExtArgs>
@@ -8599,11 +9128,13 @@ export namespace Prisma {
     refreshTokenExpiresAt?: boolean
     scope?: boolean
     password?: boolean
+    meta?: boolean
+    settings?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }
 
-  export type AccountOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "accountId" | "providerId" | "userId" | "accessToken" | "refreshToken" | "idToken" | "accessTokenExpiresAt" | "refreshTokenExpiresAt" | "scope" | "password" | "createdAt" | "updatedAt", ExtArgs["result"]["account"]>
+  export type AccountOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "accountId" | "providerId" | "userId" | "accessToken" | "refreshToken" | "idToken" | "accessTokenExpiresAt" | "refreshTokenExpiresAt" | "scope" | "password" | "meta" | "settings" | "createdAt" | "updatedAt", ExtArgs["result"]["account"]>
   export type AccountInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     user?: boolean | UserDefaultArgs<ExtArgs>
   }
@@ -8631,6 +9162,8 @@ export namespace Prisma {
       refreshTokenExpiresAt: Date | null
       scope: string | null
       password: string | null
+      meta: Prisma.JsonValue | null
+      settings: Prisma.JsonValue | null
       createdAt: Date
       updatedAt: Date
     }, ExtArgs["result"]["account"]>
@@ -9068,6 +9601,8 @@ export namespace Prisma {
     readonly refreshTokenExpiresAt: FieldRef<"Account", 'DateTime'>
     readonly scope: FieldRef<"Account", 'String'>
     readonly password: FieldRef<"Account", 'String'>
+    readonly meta: FieldRef<"Account", 'Json'>
+    readonly settings: FieldRef<"Account", 'Json'>
     readonly createdAt: FieldRef<"Account", 'DateTime'>
     readonly updatedAt: FieldRef<"Account", 'DateTime'>
   }
@@ -11654,33 +12189,55 @@ export namespace Prisma {
   export type AuditLogAvgAggregateOutputType = {
     id: number | null
     userId: number | null
-    actorId: number | null
+    entityId: number | null
   }
 
   export type AuditLogSumAggregateOutputType = {
     id: number | null
     userId: number | null
-    actorId: number | null
+    entityId: number | null
   }
 
   export type AuditLogMinAggregateOutputType = {
     id: number | null
     action: string | null
     userId: number | null
-    actorId: number | null
+    actorId: string | null
+    actorType: string | null
     ipAddress: string | null
     userAgent: string | null
     createdAt: Date | null
+    eventType: $Enums.AuditEventType | null
+    entityType: $Enums.AuditEntityType | null
+    entityId: number | null
+    description: string | null
+    sessionId: string | null
+    requestId: string | null
+    success: boolean | null
+    errorMessage: string | null
+    errorStack: string | null
+    timestamp: Date | null
   }
 
   export type AuditLogMaxAggregateOutputType = {
     id: number | null
     action: string | null
     userId: number | null
-    actorId: number | null
+    actorId: string | null
+    actorType: string | null
     ipAddress: string | null
     userAgent: string | null
     createdAt: Date | null
+    eventType: $Enums.AuditEventType | null
+    entityType: $Enums.AuditEntityType | null
+    entityId: number | null
+    description: string | null
+    sessionId: string | null
+    requestId: string | null
+    success: boolean | null
+    errorMessage: string | null
+    errorStack: string | null
+    timestamp: Date | null
   }
 
   export type AuditLogCountAggregateOutputType = {
@@ -11688,10 +12245,23 @@ export namespace Prisma {
     action: number
     userId: number
     actorId: number
+    actorType: number
     metadata: number
     ipAddress: number
     userAgent: number
     createdAt: number
+    eventType: number
+    entityType: number
+    entityId: number
+    description: number
+    oldValues: number
+    newValues: number
+    sessionId: number
+    requestId: number
+    success: number
+    errorMessage: number
+    errorStack: number
+    timestamp: number
     _all: number
   }
 
@@ -11699,13 +12269,13 @@ export namespace Prisma {
   export type AuditLogAvgAggregateInputType = {
     id?: true
     userId?: true
-    actorId?: true
+    entityId?: true
   }
 
   export type AuditLogSumAggregateInputType = {
     id?: true
     userId?: true
-    actorId?: true
+    entityId?: true
   }
 
   export type AuditLogMinAggregateInputType = {
@@ -11713,9 +12283,20 @@ export namespace Prisma {
     action?: true
     userId?: true
     actorId?: true
+    actorType?: true
     ipAddress?: true
     userAgent?: true
     createdAt?: true
+    eventType?: true
+    entityType?: true
+    entityId?: true
+    description?: true
+    sessionId?: true
+    requestId?: true
+    success?: true
+    errorMessage?: true
+    errorStack?: true
+    timestamp?: true
   }
 
   export type AuditLogMaxAggregateInputType = {
@@ -11723,9 +12304,20 @@ export namespace Prisma {
     action?: true
     userId?: true
     actorId?: true
+    actorType?: true
     ipAddress?: true
     userAgent?: true
     createdAt?: true
+    eventType?: true
+    entityType?: true
+    entityId?: true
+    description?: true
+    sessionId?: true
+    requestId?: true
+    success?: true
+    errorMessage?: true
+    errorStack?: true
+    timestamp?: true
   }
 
   export type AuditLogCountAggregateInputType = {
@@ -11733,10 +12325,23 @@ export namespace Prisma {
     action?: true
     userId?: true
     actorId?: true
+    actorType?: true
     metadata?: true
     ipAddress?: true
     userAgent?: true
     createdAt?: true
+    eventType?: true
+    entityType?: true
+    entityId?: true
+    description?: true
+    oldValues?: true
+    newValues?: true
+    sessionId?: true
+    requestId?: true
+    success?: true
+    errorMessage?: true
+    errorStack?: true
+    timestamp?: true
     _all?: true
   }
 
@@ -11830,11 +12435,24 @@ export namespace Prisma {
     id: number
     action: string
     userId: number | null
-    actorId: number | null
+    actorId: string | null
+    actorType: string | null
     metadata: JsonValue | null
     ipAddress: string | null
     userAgent: string | null
     createdAt: Date
+    eventType: $Enums.AuditEventType
+    entityType: $Enums.AuditEntityType | null
+    entityId: number | null
+    description: string | null
+    oldValues: JsonValue | null
+    newValues: JsonValue | null
+    sessionId: string | null
+    requestId: string | null
+    success: boolean
+    errorMessage: string | null
+    errorStack: string | null
+    timestamp: Date
     _count: AuditLogCountAggregateOutputType | null
     _avg: AuditLogAvgAggregateOutputType | null
     _sum: AuditLogSumAggregateOutputType | null
@@ -11861,10 +12479,24 @@ export namespace Prisma {
     action?: boolean
     userId?: boolean
     actorId?: boolean
+    actorType?: boolean
     metadata?: boolean
     ipAddress?: boolean
     userAgent?: boolean
     createdAt?: boolean
+    eventType?: boolean
+    entityType?: boolean
+    entityId?: boolean
+    description?: boolean
+    oldValues?: boolean
+    newValues?: boolean
+    sessionId?: boolean
+    requestId?: boolean
+    success?: boolean
+    errorMessage?: boolean
+    errorStack?: boolean
+    timestamp?: boolean
+    user?: boolean | AuditLog$userArgs<ExtArgs>
   }, ExtArgs["result"]["auditLog"]>
 
   export type AuditLogSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
@@ -11872,10 +12504,24 @@ export namespace Prisma {
     action?: boolean
     userId?: boolean
     actorId?: boolean
+    actorType?: boolean
     metadata?: boolean
     ipAddress?: boolean
     userAgent?: boolean
     createdAt?: boolean
+    eventType?: boolean
+    entityType?: boolean
+    entityId?: boolean
+    description?: boolean
+    oldValues?: boolean
+    newValues?: boolean
+    sessionId?: boolean
+    requestId?: boolean
+    success?: boolean
+    errorMessage?: boolean
+    errorStack?: boolean
+    timestamp?: boolean
+    user?: boolean | AuditLog$userArgs<ExtArgs>
   }, ExtArgs["result"]["auditLog"]>
 
   export type AuditLogSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
@@ -11883,10 +12529,24 @@ export namespace Prisma {
     action?: boolean
     userId?: boolean
     actorId?: boolean
+    actorType?: boolean
     metadata?: boolean
     ipAddress?: boolean
     userAgent?: boolean
     createdAt?: boolean
+    eventType?: boolean
+    entityType?: boolean
+    entityId?: boolean
+    description?: boolean
+    oldValues?: boolean
+    newValues?: boolean
+    sessionId?: boolean
+    requestId?: boolean
+    success?: boolean
+    errorMessage?: boolean
+    errorStack?: boolean
+    timestamp?: boolean
+    user?: boolean | AuditLog$userArgs<ExtArgs>
   }, ExtArgs["result"]["auditLog"]>
 
   export type AuditLogSelectScalar = {
@@ -11894,26 +12554,63 @@ export namespace Prisma {
     action?: boolean
     userId?: boolean
     actorId?: boolean
+    actorType?: boolean
     metadata?: boolean
     ipAddress?: boolean
     userAgent?: boolean
     createdAt?: boolean
+    eventType?: boolean
+    entityType?: boolean
+    entityId?: boolean
+    description?: boolean
+    oldValues?: boolean
+    newValues?: boolean
+    sessionId?: boolean
+    requestId?: boolean
+    success?: boolean
+    errorMessage?: boolean
+    errorStack?: boolean
+    timestamp?: boolean
   }
 
-  export type AuditLogOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "action" | "userId" | "actorId" | "metadata" | "ipAddress" | "userAgent" | "createdAt", ExtArgs["result"]["auditLog"]>
+  export type AuditLogOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "action" | "userId" | "actorId" | "actorType" | "metadata" | "ipAddress" | "userAgent" | "createdAt" | "eventType" | "entityType" | "entityId" | "description" | "oldValues" | "newValues" | "sessionId" | "requestId" | "success" | "errorMessage" | "errorStack" | "timestamp", ExtArgs["result"]["auditLog"]>
+  export type AuditLogInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    user?: boolean | AuditLog$userArgs<ExtArgs>
+  }
+  export type AuditLogIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    user?: boolean | AuditLog$userArgs<ExtArgs>
+  }
+  export type AuditLogIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    user?: boolean | AuditLog$userArgs<ExtArgs>
+  }
 
   export type $AuditLogPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     name: "AuditLog"
-    objects: {}
+    objects: {
+      user: Prisma.$UserPayload<ExtArgs> | null
+    }
     scalars: $Extensions.GetPayloadResult<{
       id: number
       action: string
       userId: number | null
-      actorId: number | null
+      actorId: string | null
+      actorType: string | null
       metadata: Prisma.JsonValue | null
       ipAddress: string | null
       userAgent: string | null
       createdAt: Date
+      eventType: $Enums.AuditEventType
+      entityType: $Enums.AuditEntityType | null
+      entityId: number | null
+      description: string | null
+      oldValues: Prisma.JsonValue | null
+      newValues: Prisma.JsonValue | null
+      sessionId: string | null
+      requestId: string | null
+      success: boolean
+      errorMessage: string | null
+      errorStack: string | null
+      timestamp: Date
     }, ExtArgs["result"]["auditLog"]>
     composites: {}
   }
@@ -12308,6 +13005,7 @@ export namespace Prisma {
    */
   export interface Prisma__AuditLogClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
     readonly [Symbol.toStringTag]: "PrismaPromise"
+    user<T extends AuditLog$userArgs<ExtArgs> = {}>(args?: Subset<T, AuditLog$userArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -12340,11 +13038,24 @@ export namespace Prisma {
     readonly id: FieldRef<"AuditLog", 'Int'>
     readonly action: FieldRef<"AuditLog", 'String'>
     readonly userId: FieldRef<"AuditLog", 'Int'>
-    readonly actorId: FieldRef<"AuditLog", 'Int'>
+    readonly actorId: FieldRef<"AuditLog", 'String'>
+    readonly actorType: FieldRef<"AuditLog", 'String'>
     readonly metadata: FieldRef<"AuditLog", 'Json'>
     readonly ipAddress: FieldRef<"AuditLog", 'String'>
     readonly userAgent: FieldRef<"AuditLog", 'String'>
     readonly createdAt: FieldRef<"AuditLog", 'DateTime'>
+    readonly eventType: FieldRef<"AuditLog", 'AuditEventType'>
+    readonly entityType: FieldRef<"AuditLog", 'AuditEntityType'>
+    readonly entityId: FieldRef<"AuditLog", 'Int'>
+    readonly description: FieldRef<"AuditLog", 'String'>
+    readonly oldValues: FieldRef<"AuditLog", 'Json'>
+    readonly newValues: FieldRef<"AuditLog", 'Json'>
+    readonly sessionId: FieldRef<"AuditLog", 'String'>
+    readonly requestId: FieldRef<"AuditLog", 'String'>
+    readonly success: FieldRef<"AuditLog", 'Boolean'>
+    readonly errorMessage: FieldRef<"AuditLog", 'String'>
+    readonly errorStack: FieldRef<"AuditLog", 'String'>
+    readonly timestamp: FieldRef<"AuditLog", 'DateTime'>
   }
     
 
@@ -12361,6 +13072,10 @@ export namespace Prisma {
      * Omit specific fields from the AuditLog
      */
     omit?: AuditLogOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AuditLogInclude<ExtArgs> | null
     /**
      * Filter, which AuditLog to fetch.
      */
@@ -12380,6 +13095,10 @@ export namespace Prisma {
      */
     omit?: AuditLogOmit<ExtArgs> | null
     /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AuditLogInclude<ExtArgs> | null
+    /**
      * Filter, which AuditLog to fetch.
      */
     where: AuditLogWhereUniqueInput
@@ -12397,6 +13116,10 @@ export namespace Prisma {
      * Omit specific fields from the AuditLog
      */
     omit?: AuditLogOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AuditLogInclude<ExtArgs> | null
     /**
      * Filter, which AuditLog to fetch.
      */
@@ -12446,6 +13169,10 @@ export namespace Prisma {
      */
     omit?: AuditLogOmit<ExtArgs> | null
     /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AuditLogInclude<ExtArgs> | null
+    /**
      * Filter, which AuditLog to fetch.
      */
     where?: AuditLogWhereInput
@@ -12494,6 +13221,10 @@ export namespace Prisma {
      */
     omit?: AuditLogOmit<ExtArgs> | null
     /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AuditLogInclude<ExtArgs> | null
+    /**
      * Filter, which AuditLogs to fetch.
      */
     where?: AuditLogWhereInput
@@ -12537,6 +13268,10 @@ export namespace Prisma {
      */
     omit?: AuditLogOmit<ExtArgs> | null
     /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AuditLogInclude<ExtArgs> | null
+    /**
      * The data needed to create a AuditLog.
      */
     data: XOR<AuditLogCreateInput, AuditLogUncheckedCreateInput>
@@ -12570,6 +13305,10 @@ export namespace Prisma {
      */
     data: AuditLogCreateManyInput | AuditLogCreateManyInput[]
     skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AuditLogIncludeCreateManyAndReturn<ExtArgs> | null
   }
 
   /**
@@ -12584,6 +13323,10 @@ export namespace Prisma {
      * Omit specific fields from the AuditLog
      */
     omit?: AuditLogOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AuditLogInclude<ExtArgs> | null
     /**
      * The data needed to update a AuditLog.
      */
@@ -12636,6 +13379,10 @@ export namespace Prisma {
      * Limit how many AuditLogs to update.
      */
     limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AuditLogIncludeUpdateManyAndReturn<ExtArgs> | null
   }
 
   /**
@@ -12650,6 +13397,10 @@ export namespace Prisma {
      * Omit specific fields from the AuditLog
      */
     omit?: AuditLogOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AuditLogInclude<ExtArgs> | null
     /**
      * The filter to search for the AuditLog to update in case it exists.
      */
@@ -12677,6 +13428,10 @@ export namespace Prisma {
      */
     omit?: AuditLogOmit<ExtArgs> | null
     /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AuditLogInclude<ExtArgs> | null
+    /**
      * Filter which AuditLog to delete.
      */
     where: AuditLogWhereUniqueInput
@@ -12697,6 +13452,25 @@ export namespace Prisma {
   }
 
   /**
+   * AuditLog.user
+   */
+  export type AuditLog$userArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the User
+     */
+    select?: UserSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the User
+     */
+    omit?: UserOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserInclude<ExtArgs> | null
+    where?: UserWhereInput
+  }
+
+  /**
    * AuditLog without action
    */
   export type AuditLogDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -12708,6 +13482,2357 @@ export namespace Prisma {
      * Omit specific fields from the AuditLog
      */
     omit?: AuditLogOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AuditLogInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model PetType
+   */
+
+  export type AggregatePetType = {
+    _count: PetTypeCountAggregateOutputType | null
+    _avg: PetTypeAvgAggregateOutputType | null
+    _sum: PetTypeSumAggregateOutputType | null
+    _min: PetTypeMinAggregateOutputType | null
+    _max: PetTypeMaxAggregateOutputType | null
+  }
+
+  export type PetTypeAvgAggregateOutputType = {
+    id: number | null
+  }
+
+  export type PetTypeSumAggregateOutputType = {
+    id: number | null
+  }
+
+  export type PetTypeMinAggregateOutputType = {
+    id: number | null
+    name: string | null
+    slug: string | null
+    created_at: Date | null
+    updated_at: Date | null
+  }
+
+  export type PetTypeMaxAggregateOutputType = {
+    id: number | null
+    name: string | null
+    slug: string | null
+    created_at: Date | null
+    updated_at: Date | null
+  }
+
+  export type PetTypeCountAggregateOutputType = {
+    id: number
+    name: number
+    slug: number
+    meta: number
+    settings: number
+    created_at: number
+    updated_at: number
+    _all: number
+  }
+
+
+  export type PetTypeAvgAggregateInputType = {
+    id?: true
+  }
+
+  export type PetTypeSumAggregateInputType = {
+    id?: true
+  }
+
+  export type PetTypeMinAggregateInputType = {
+    id?: true
+    name?: true
+    slug?: true
+    created_at?: true
+    updated_at?: true
+  }
+
+  export type PetTypeMaxAggregateInputType = {
+    id?: true
+    name?: true
+    slug?: true
+    created_at?: true
+    updated_at?: true
+  }
+
+  export type PetTypeCountAggregateInputType = {
+    id?: true
+    name?: true
+    slug?: true
+    meta?: true
+    settings?: true
+    created_at?: true
+    updated_at?: true
+    _all?: true
+  }
+
+  export type PetTypeAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which PetType to aggregate.
+     */
+    where?: PetTypeWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of PetTypes to fetch.
+     */
+    orderBy?: PetTypeOrderByWithRelationInput | PetTypeOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: PetTypeWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` PetTypes from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` PetTypes.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned PetTypes
+    **/
+    _count?: true | PetTypeCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: PetTypeAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: PetTypeSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: PetTypeMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: PetTypeMaxAggregateInputType
+  }
+
+  export type GetPetTypeAggregateType<T extends PetTypeAggregateArgs> = {
+        [P in keyof T & keyof AggregatePetType]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregatePetType[P]>
+      : GetScalarType<T[P], AggregatePetType[P]>
+  }
+
+
+
+
+  export type PetTypeGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: PetTypeWhereInput
+    orderBy?: PetTypeOrderByWithAggregationInput | PetTypeOrderByWithAggregationInput[]
+    by: PetTypeScalarFieldEnum[] | PetTypeScalarFieldEnum
+    having?: PetTypeScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: PetTypeCountAggregateInputType | true
+    _avg?: PetTypeAvgAggregateInputType
+    _sum?: PetTypeSumAggregateInputType
+    _min?: PetTypeMinAggregateInputType
+    _max?: PetTypeMaxAggregateInputType
+  }
+
+  export type PetTypeGroupByOutputType = {
+    id: number
+    name: string
+    slug: string
+    meta: JsonValue | null
+    settings: JsonValue | null
+    created_at: Date
+    updated_at: Date
+    _count: PetTypeCountAggregateOutputType | null
+    _avg: PetTypeAvgAggregateOutputType | null
+    _sum: PetTypeSumAggregateOutputType | null
+    _min: PetTypeMinAggregateOutputType | null
+    _max: PetTypeMaxAggregateOutputType | null
+  }
+
+  type GetPetTypeGroupByPayload<T extends PetTypeGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<PetTypeGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof PetTypeGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], PetTypeGroupByOutputType[P]>
+            : GetScalarType<T[P], PetTypeGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type PetTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    name?: boolean
+    slug?: boolean
+    meta?: boolean
+    settings?: boolean
+    created_at?: boolean
+    updated_at?: boolean
+    pets?: boolean | PetType$petsArgs<ExtArgs>
+    _count?: boolean | PetTypeCountOutputTypeDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["petType"]>
+
+  export type PetTypeSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    name?: boolean
+    slug?: boolean
+    meta?: boolean
+    settings?: boolean
+    created_at?: boolean
+    updated_at?: boolean
+  }, ExtArgs["result"]["petType"]>
+
+  export type PetTypeSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    name?: boolean
+    slug?: boolean
+    meta?: boolean
+    settings?: boolean
+    created_at?: boolean
+    updated_at?: boolean
+  }, ExtArgs["result"]["petType"]>
+
+  export type PetTypeSelectScalar = {
+    id?: boolean
+    name?: boolean
+    slug?: boolean
+    meta?: boolean
+    settings?: boolean
+    created_at?: boolean
+    updated_at?: boolean
+  }
+
+  export type PetTypeOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "name" | "slug" | "meta" | "settings" | "created_at" | "updated_at", ExtArgs["result"]["petType"]>
+  export type PetTypeInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    pets?: boolean | PetType$petsArgs<ExtArgs>
+    _count?: boolean | PetTypeCountOutputTypeDefaultArgs<ExtArgs>
+  }
+  export type PetTypeIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
+  export type PetTypeIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
+
+  export type $PetTypePayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "PetType"
+    objects: {
+      pets: Prisma.$PetPayload<ExtArgs>[]
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: number
+      name: string
+      slug: string
+      meta: Prisma.JsonValue | null
+      settings: Prisma.JsonValue | null
+      created_at: Date
+      updated_at: Date
+    }, ExtArgs["result"]["petType"]>
+    composites: {}
+  }
+
+  type PetTypeGetPayload<S extends boolean | null | undefined | PetTypeDefaultArgs> = $Result.GetResult<Prisma.$PetTypePayload, S>
+
+  type PetTypeCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<PetTypeFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: PetTypeCountAggregateInputType | true
+    }
+
+  export interface PetTypeDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['PetType'], meta: { name: 'PetType' } }
+    /**
+     * Find zero or one PetType that matches the filter.
+     * @param {PetTypeFindUniqueArgs} args - Arguments to find a PetType
+     * @example
+     * // Get one PetType
+     * const petType = await prisma.petType.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends PetTypeFindUniqueArgs>(args: SelectSubset<T, PetTypeFindUniqueArgs<ExtArgs>>): Prisma__PetTypeClient<$Result.GetResult<Prisma.$PetTypePayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one PetType that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {PetTypeFindUniqueOrThrowArgs} args - Arguments to find a PetType
+     * @example
+     * // Get one PetType
+     * const petType = await prisma.petType.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends PetTypeFindUniqueOrThrowArgs>(args: SelectSubset<T, PetTypeFindUniqueOrThrowArgs<ExtArgs>>): Prisma__PetTypeClient<$Result.GetResult<Prisma.$PetTypePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first PetType that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PetTypeFindFirstArgs} args - Arguments to find a PetType
+     * @example
+     * // Get one PetType
+     * const petType = await prisma.petType.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends PetTypeFindFirstArgs>(args?: SelectSubset<T, PetTypeFindFirstArgs<ExtArgs>>): Prisma__PetTypeClient<$Result.GetResult<Prisma.$PetTypePayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first PetType that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PetTypeFindFirstOrThrowArgs} args - Arguments to find a PetType
+     * @example
+     * // Get one PetType
+     * const petType = await prisma.petType.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends PetTypeFindFirstOrThrowArgs>(args?: SelectSubset<T, PetTypeFindFirstOrThrowArgs<ExtArgs>>): Prisma__PetTypeClient<$Result.GetResult<Prisma.$PetTypePayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more PetTypes that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PetTypeFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all PetTypes
+     * const petTypes = await prisma.petType.findMany()
+     * 
+     * // Get first 10 PetTypes
+     * const petTypes = await prisma.petType.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const petTypeWithIdOnly = await prisma.petType.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends PetTypeFindManyArgs>(args?: SelectSubset<T, PetTypeFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PetTypePayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a PetType.
+     * @param {PetTypeCreateArgs} args - Arguments to create a PetType.
+     * @example
+     * // Create one PetType
+     * const PetType = await prisma.petType.create({
+     *   data: {
+     *     // ... data to create a PetType
+     *   }
+     * })
+     * 
+     */
+    create<T extends PetTypeCreateArgs>(args: SelectSubset<T, PetTypeCreateArgs<ExtArgs>>): Prisma__PetTypeClient<$Result.GetResult<Prisma.$PetTypePayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many PetTypes.
+     * @param {PetTypeCreateManyArgs} args - Arguments to create many PetTypes.
+     * @example
+     * // Create many PetTypes
+     * const petType = await prisma.petType.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends PetTypeCreateManyArgs>(args?: SelectSubset<T, PetTypeCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many PetTypes and returns the data saved in the database.
+     * @param {PetTypeCreateManyAndReturnArgs} args - Arguments to create many PetTypes.
+     * @example
+     * // Create many PetTypes
+     * const petType = await prisma.petType.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many PetTypes and only return the `id`
+     * const petTypeWithIdOnly = await prisma.petType.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends PetTypeCreateManyAndReturnArgs>(args?: SelectSubset<T, PetTypeCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PetTypePayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a PetType.
+     * @param {PetTypeDeleteArgs} args - Arguments to delete one PetType.
+     * @example
+     * // Delete one PetType
+     * const PetType = await prisma.petType.delete({
+     *   where: {
+     *     // ... filter to delete one PetType
+     *   }
+     * })
+     * 
+     */
+    delete<T extends PetTypeDeleteArgs>(args: SelectSubset<T, PetTypeDeleteArgs<ExtArgs>>): Prisma__PetTypeClient<$Result.GetResult<Prisma.$PetTypePayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one PetType.
+     * @param {PetTypeUpdateArgs} args - Arguments to update one PetType.
+     * @example
+     * // Update one PetType
+     * const petType = await prisma.petType.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends PetTypeUpdateArgs>(args: SelectSubset<T, PetTypeUpdateArgs<ExtArgs>>): Prisma__PetTypeClient<$Result.GetResult<Prisma.$PetTypePayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more PetTypes.
+     * @param {PetTypeDeleteManyArgs} args - Arguments to filter PetTypes to delete.
+     * @example
+     * // Delete a few PetTypes
+     * const { count } = await prisma.petType.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends PetTypeDeleteManyArgs>(args?: SelectSubset<T, PetTypeDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more PetTypes.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PetTypeUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many PetTypes
+     * const petType = await prisma.petType.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends PetTypeUpdateManyArgs>(args: SelectSubset<T, PetTypeUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more PetTypes and returns the data updated in the database.
+     * @param {PetTypeUpdateManyAndReturnArgs} args - Arguments to update many PetTypes.
+     * @example
+     * // Update many PetTypes
+     * const petType = await prisma.petType.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more PetTypes and only return the `id`
+     * const petTypeWithIdOnly = await prisma.petType.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends PetTypeUpdateManyAndReturnArgs>(args: SelectSubset<T, PetTypeUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PetTypePayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one PetType.
+     * @param {PetTypeUpsertArgs} args - Arguments to update or create a PetType.
+     * @example
+     * // Update or create a PetType
+     * const petType = await prisma.petType.upsert({
+     *   create: {
+     *     // ... data to create a PetType
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the PetType we want to update
+     *   }
+     * })
+     */
+    upsert<T extends PetTypeUpsertArgs>(args: SelectSubset<T, PetTypeUpsertArgs<ExtArgs>>): Prisma__PetTypeClient<$Result.GetResult<Prisma.$PetTypePayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of PetTypes.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PetTypeCountArgs} args - Arguments to filter PetTypes to count.
+     * @example
+     * // Count the number of PetTypes
+     * const count = await prisma.petType.count({
+     *   where: {
+     *     // ... the filter for the PetTypes we want to count
+     *   }
+     * })
+    **/
+    count<T extends PetTypeCountArgs>(
+      args?: Subset<T, PetTypeCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], PetTypeCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a PetType.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PetTypeAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends PetTypeAggregateArgs>(args: Subset<T, PetTypeAggregateArgs>): Prisma.PrismaPromise<GetPetTypeAggregateType<T>>
+
+    /**
+     * Group by PetType.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PetTypeGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends PetTypeGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: PetTypeGroupByArgs['orderBy'] }
+        : { orderBy?: PetTypeGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, PetTypeGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetPetTypeGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the PetType model
+   */
+  readonly fields: PetTypeFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for PetType.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__PetTypeClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    pets<T extends PetType$petsArgs<ExtArgs> = {}>(args?: Subset<T, PetType$petsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PetPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the PetType model
+   */
+  interface PetTypeFieldRefs {
+    readonly id: FieldRef<"PetType", 'Int'>
+    readonly name: FieldRef<"PetType", 'String'>
+    readonly slug: FieldRef<"PetType", 'String'>
+    readonly meta: FieldRef<"PetType", 'Json'>
+    readonly settings: FieldRef<"PetType", 'Json'>
+    readonly created_at: FieldRef<"PetType", 'DateTime'>
+    readonly updated_at: FieldRef<"PetType", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * PetType findUnique
+   */
+  export type PetTypeFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PetType
+     */
+    select?: PetTypeSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PetType
+     */
+    omit?: PetTypeOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PetTypeInclude<ExtArgs> | null
+    /**
+     * Filter, which PetType to fetch.
+     */
+    where: PetTypeWhereUniqueInput
+  }
+
+  /**
+   * PetType findUniqueOrThrow
+   */
+  export type PetTypeFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PetType
+     */
+    select?: PetTypeSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PetType
+     */
+    omit?: PetTypeOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PetTypeInclude<ExtArgs> | null
+    /**
+     * Filter, which PetType to fetch.
+     */
+    where: PetTypeWhereUniqueInput
+  }
+
+  /**
+   * PetType findFirst
+   */
+  export type PetTypeFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PetType
+     */
+    select?: PetTypeSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PetType
+     */
+    omit?: PetTypeOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PetTypeInclude<ExtArgs> | null
+    /**
+     * Filter, which PetType to fetch.
+     */
+    where?: PetTypeWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of PetTypes to fetch.
+     */
+    orderBy?: PetTypeOrderByWithRelationInput | PetTypeOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for PetTypes.
+     */
+    cursor?: PetTypeWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` PetTypes from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` PetTypes.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of PetTypes.
+     */
+    distinct?: PetTypeScalarFieldEnum | PetTypeScalarFieldEnum[]
+  }
+
+  /**
+   * PetType findFirstOrThrow
+   */
+  export type PetTypeFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PetType
+     */
+    select?: PetTypeSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PetType
+     */
+    omit?: PetTypeOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PetTypeInclude<ExtArgs> | null
+    /**
+     * Filter, which PetType to fetch.
+     */
+    where?: PetTypeWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of PetTypes to fetch.
+     */
+    orderBy?: PetTypeOrderByWithRelationInput | PetTypeOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for PetTypes.
+     */
+    cursor?: PetTypeWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` PetTypes from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` PetTypes.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of PetTypes.
+     */
+    distinct?: PetTypeScalarFieldEnum | PetTypeScalarFieldEnum[]
+  }
+
+  /**
+   * PetType findMany
+   */
+  export type PetTypeFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PetType
+     */
+    select?: PetTypeSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PetType
+     */
+    omit?: PetTypeOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PetTypeInclude<ExtArgs> | null
+    /**
+     * Filter, which PetTypes to fetch.
+     */
+    where?: PetTypeWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of PetTypes to fetch.
+     */
+    orderBy?: PetTypeOrderByWithRelationInput | PetTypeOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing PetTypes.
+     */
+    cursor?: PetTypeWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` PetTypes from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` PetTypes.
+     */
+    skip?: number
+    distinct?: PetTypeScalarFieldEnum | PetTypeScalarFieldEnum[]
+  }
+
+  /**
+   * PetType create
+   */
+  export type PetTypeCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PetType
+     */
+    select?: PetTypeSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PetType
+     */
+    omit?: PetTypeOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PetTypeInclude<ExtArgs> | null
+    /**
+     * The data needed to create a PetType.
+     */
+    data: XOR<PetTypeCreateInput, PetTypeUncheckedCreateInput>
+  }
+
+  /**
+   * PetType createMany
+   */
+  export type PetTypeCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many PetTypes.
+     */
+    data: PetTypeCreateManyInput | PetTypeCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * PetType createManyAndReturn
+   */
+  export type PetTypeCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PetType
+     */
+    select?: PetTypeSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the PetType
+     */
+    omit?: PetTypeOmit<ExtArgs> | null
+    /**
+     * The data used to create many PetTypes.
+     */
+    data: PetTypeCreateManyInput | PetTypeCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * PetType update
+   */
+  export type PetTypeUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PetType
+     */
+    select?: PetTypeSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PetType
+     */
+    omit?: PetTypeOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PetTypeInclude<ExtArgs> | null
+    /**
+     * The data needed to update a PetType.
+     */
+    data: XOR<PetTypeUpdateInput, PetTypeUncheckedUpdateInput>
+    /**
+     * Choose, which PetType to update.
+     */
+    where: PetTypeWhereUniqueInput
+  }
+
+  /**
+   * PetType updateMany
+   */
+  export type PetTypeUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update PetTypes.
+     */
+    data: XOR<PetTypeUpdateManyMutationInput, PetTypeUncheckedUpdateManyInput>
+    /**
+     * Filter which PetTypes to update
+     */
+    where?: PetTypeWhereInput
+    /**
+     * Limit how many PetTypes to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * PetType updateManyAndReturn
+   */
+  export type PetTypeUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PetType
+     */
+    select?: PetTypeSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the PetType
+     */
+    omit?: PetTypeOmit<ExtArgs> | null
+    /**
+     * The data used to update PetTypes.
+     */
+    data: XOR<PetTypeUpdateManyMutationInput, PetTypeUncheckedUpdateManyInput>
+    /**
+     * Filter which PetTypes to update
+     */
+    where?: PetTypeWhereInput
+    /**
+     * Limit how many PetTypes to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * PetType upsert
+   */
+  export type PetTypeUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PetType
+     */
+    select?: PetTypeSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PetType
+     */
+    omit?: PetTypeOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PetTypeInclude<ExtArgs> | null
+    /**
+     * The filter to search for the PetType to update in case it exists.
+     */
+    where: PetTypeWhereUniqueInput
+    /**
+     * In case the PetType found by the `where` argument doesn't exist, create a new PetType with this data.
+     */
+    create: XOR<PetTypeCreateInput, PetTypeUncheckedCreateInput>
+    /**
+     * In case the PetType was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<PetTypeUpdateInput, PetTypeUncheckedUpdateInput>
+  }
+
+  /**
+   * PetType delete
+   */
+  export type PetTypeDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PetType
+     */
+    select?: PetTypeSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PetType
+     */
+    omit?: PetTypeOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PetTypeInclude<ExtArgs> | null
+    /**
+     * Filter which PetType to delete.
+     */
+    where: PetTypeWhereUniqueInput
+  }
+
+  /**
+   * PetType deleteMany
+   */
+  export type PetTypeDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which PetTypes to delete
+     */
+    where?: PetTypeWhereInput
+    /**
+     * Limit how many PetTypes to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * PetType.pets
+   */
+  export type PetType$petsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Pet
+     */
+    select?: PetSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Pet
+     */
+    omit?: PetOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PetInclude<ExtArgs> | null
+    where?: PetWhereInput
+    orderBy?: PetOrderByWithRelationInput | PetOrderByWithRelationInput[]
+    cursor?: PetWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: PetScalarFieldEnum | PetScalarFieldEnum[]
+  }
+
+  /**
+   * PetType without action
+   */
+  export type PetTypeDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PetType
+     */
+    select?: PetTypeSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PetType
+     */
+    omit?: PetTypeOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PetTypeInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model Pet
+   */
+
+  export type AggregatePet = {
+    _count: PetCountAggregateOutputType | null
+    _avg: PetAvgAggregateOutputType | null
+    _sum: PetSumAggregateOutputType | null
+    _min: PetMinAggregateOutputType | null
+    _max: PetMaxAggregateOutputType | null
+  }
+
+  export type PetAvgAggregateOutputType = {
+    id: number | null
+    userId: number | null
+    petTypeId: number | null
+  }
+
+  export type PetSumAggregateOutputType = {
+    id: number | null
+    userId: number | null
+    petTypeId: number | null
+  }
+
+  export type PetMinAggregateOutputType = {
+    id: number | null
+    tagId: string | null
+    userId: number | null
+    petTypeId: number | null
+    name: string | null
+    gender: $Enums.Gender | null
+    size: $Enums.Size | null
+    isMissing: boolean | null
+    birthday: Date | null
+    created_at: Date | null
+    updated_at: Date | null
+  }
+
+  export type PetMaxAggregateOutputType = {
+    id: number | null
+    tagId: string | null
+    userId: number | null
+    petTypeId: number | null
+    name: string | null
+    gender: $Enums.Gender | null
+    size: $Enums.Size | null
+    isMissing: boolean | null
+    birthday: Date | null
+    created_at: Date | null
+    updated_at: Date | null
+  }
+
+  export type PetCountAggregateOutputType = {
+    id: number
+    tagId: number
+    userId: number
+    petTypeId: number
+    name: number
+    gender: number
+    photos: number
+    size: number
+    isMissing: number
+    birthday: number
+    created_at: number
+    updated_at: number
+    _all: number
+  }
+
+
+  export type PetAvgAggregateInputType = {
+    id?: true
+    userId?: true
+    petTypeId?: true
+  }
+
+  export type PetSumAggregateInputType = {
+    id?: true
+    userId?: true
+    petTypeId?: true
+  }
+
+  export type PetMinAggregateInputType = {
+    id?: true
+    tagId?: true
+    userId?: true
+    petTypeId?: true
+    name?: true
+    gender?: true
+    size?: true
+    isMissing?: true
+    birthday?: true
+    created_at?: true
+    updated_at?: true
+  }
+
+  export type PetMaxAggregateInputType = {
+    id?: true
+    tagId?: true
+    userId?: true
+    petTypeId?: true
+    name?: true
+    gender?: true
+    size?: true
+    isMissing?: true
+    birthday?: true
+    created_at?: true
+    updated_at?: true
+  }
+
+  export type PetCountAggregateInputType = {
+    id?: true
+    tagId?: true
+    userId?: true
+    petTypeId?: true
+    name?: true
+    gender?: true
+    photos?: true
+    size?: true
+    isMissing?: true
+    birthday?: true
+    created_at?: true
+    updated_at?: true
+    _all?: true
+  }
+
+  export type PetAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which Pet to aggregate.
+     */
+    where?: PetWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Pets to fetch.
+     */
+    orderBy?: PetOrderByWithRelationInput | PetOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: PetWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Pets from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Pets.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned Pets
+    **/
+    _count?: true | PetCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: PetAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: PetSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: PetMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: PetMaxAggregateInputType
+  }
+
+  export type GetPetAggregateType<T extends PetAggregateArgs> = {
+        [P in keyof T & keyof AggregatePet]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregatePet[P]>
+      : GetScalarType<T[P], AggregatePet[P]>
+  }
+
+
+
+
+  export type PetGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: PetWhereInput
+    orderBy?: PetOrderByWithAggregationInput | PetOrderByWithAggregationInput[]
+    by: PetScalarFieldEnum[] | PetScalarFieldEnum
+    having?: PetScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: PetCountAggregateInputType | true
+    _avg?: PetAvgAggregateInputType
+    _sum?: PetSumAggregateInputType
+    _min?: PetMinAggregateInputType
+    _max?: PetMaxAggregateInputType
+  }
+
+  export type PetGroupByOutputType = {
+    id: number
+    tagId: string
+    userId: number
+    petTypeId: number
+    name: string
+    gender: $Enums.Gender | null
+    photos: string[]
+    size: $Enums.Size | null
+    isMissing: boolean
+    birthday: Date | null
+    created_at: Date
+    updated_at: Date
+    _count: PetCountAggregateOutputType | null
+    _avg: PetAvgAggregateOutputType | null
+    _sum: PetSumAggregateOutputType | null
+    _min: PetMinAggregateOutputType | null
+    _max: PetMaxAggregateOutputType | null
+  }
+
+  type GetPetGroupByPayload<T extends PetGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<PetGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof PetGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], PetGroupByOutputType[P]>
+            : GetScalarType<T[P], PetGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type PetSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    tagId?: boolean
+    userId?: boolean
+    petTypeId?: boolean
+    name?: boolean
+    gender?: boolean
+    photos?: boolean
+    size?: boolean
+    isMissing?: boolean
+    birthday?: boolean
+    created_at?: boolean
+    updated_at?: boolean
+    user?: boolean | UserDefaultArgs<ExtArgs>
+    petType?: boolean | PetTypeDefaultArgs<ExtArgs>
+    alerts?: boolean | Pet$alertsArgs<ExtArgs>
+    _count?: boolean | PetCountOutputTypeDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["pet"]>
+
+  export type PetSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    tagId?: boolean
+    userId?: boolean
+    petTypeId?: boolean
+    name?: boolean
+    gender?: boolean
+    photos?: boolean
+    size?: boolean
+    isMissing?: boolean
+    birthday?: boolean
+    created_at?: boolean
+    updated_at?: boolean
+    user?: boolean | UserDefaultArgs<ExtArgs>
+    petType?: boolean | PetTypeDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["pet"]>
+
+  export type PetSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    tagId?: boolean
+    userId?: boolean
+    petTypeId?: boolean
+    name?: boolean
+    gender?: boolean
+    photos?: boolean
+    size?: boolean
+    isMissing?: boolean
+    birthday?: boolean
+    created_at?: boolean
+    updated_at?: boolean
+    user?: boolean | UserDefaultArgs<ExtArgs>
+    petType?: boolean | PetTypeDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["pet"]>
+
+  export type PetSelectScalar = {
+    id?: boolean
+    tagId?: boolean
+    userId?: boolean
+    petTypeId?: boolean
+    name?: boolean
+    gender?: boolean
+    photos?: boolean
+    size?: boolean
+    isMissing?: boolean
+    birthday?: boolean
+    created_at?: boolean
+    updated_at?: boolean
+  }
+
+  export type PetOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "tagId" | "userId" | "petTypeId" | "name" | "gender" | "photos" | "size" | "isMissing" | "birthday" | "created_at" | "updated_at", ExtArgs["result"]["pet"]>
+  export type PetInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    user?: boolean | UserDefaultArgs<ExtArgs>
+    petType?: boolean | PetTypeDefaultArgs<ExtArgs>
+    alerts?: boolean | Pet$alertsArgs<ExtArgs>
+    _count?: boolean | PetCountOutputTypeDefaultArgs<ExtArgs>
+  }
+  export type PetIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    user?: boolean | UserDefaultArgs<ExtArgs>
+    petType?: boolean | PetTypeDefaultArgs<ExtArgs>
+  }
+  export type PetIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    user?: boolean | UserDefaultArgs<ExtArgs>
+    petType?: boolean | PetTypeDefaultArgs<ExtArgs>
+  }
+
+  export type $PetPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "Pet"
+    objects: {
+      user: Prisma.$UserPayload<ExtArgs>
+      petType: Prisma.$PetTypePayload<ExtArgs>
+      alerts: Prisma.$AlertPayload<ExtArgs>[]
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: number
+      tagId: string
+      userId: number
+      petTypeId: number
+      name: string
+      gender: $Enums.Gender | null
+      photos: string[]
+      size: $Enums.Size | null
+      isMissing: boolean
+      birthday: Date | null
+      created_at: Date
+      updated_at: Date
+    }, ExtArgs["result"]["pet"]>
+    composites: {}
+  }
+
+  type PetGetPayload<S extends boolean | null | undefined | PetDefaultArgs> = $Result.GetResult<Prisma.$PetPayload, S>
+
+  type PetCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<PetFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: PetCountAggregateInputType | true
+    }
+
+  export interface PetDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['Pet'], meta: { name: 'Pet' } }
+    /**
+     * Find zero or one Pet that matches the filter.
+     * @param {PetFindUniqueArgs} args - Arguments to find a Pet
+     * @example
+     * // Get one Pet
+     * const pet = await prisma.pet.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends PetFindUniqueArgs>(args: SelectSubset<T, PetFindUniqueArgs<ExtArgs>>): Prisma__PetClient<$Result.GetResult<Prisma.$PetPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one Pet that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {PetFindUniqueOrThrowArgs} args - Arguments to find a Pet
+     * @example
+     * // Get one Pet
+     * const pet = await prisma.pet.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends PetFindUniqueOrThrowArgs>(args: SelectSubset<T, PetFindUniqueOrThrowArgs<ExtArgs>>): Prisma__PetClient<$Result.GetResult<Prisma.$PetPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first Pet that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PetFindFirstArgs} args - Arguments to find a Pet
+     * @example
+     * // Get one Pet
+     * const pet = await prisma.pet.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends PetFindFirstArgs>(args?: SelectSubset<T, PetFindFirstArgs<ExtArgs>>): Prisma__PetClient<$Result.GetResult<Prisma.$PetPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first Pet that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PetFindFirstOrThrowArgs} args - Arguments to find a Pet
+     * @example
+     * // Get one Pet
+     * const pet = await prisma.pet.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends PetFindFirstOrThrowArgs>(args?: SelectSubset<T, PetFindFirstOrThrowArgs<ExtArgs>>): Prisma__PetClient<$Result.GetResult<Prisma.$PetPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more Pets that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PetFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all Pets
+     * const pets = await prisma.pet.findMany()
+     * 
+     * // Get first 10 Pets
+     * const pets = await prisma.pet.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const petWithIdOnly = await prisma.pet.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends PetFindManyArgs>(args?: SelectSubset<T, PetFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PetPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a Pet.
+     * @param {PetCreateArgs} args - Arguments to create a Pet.
+     * @example
+     * // Create one Pet
+     * const Pet = await prisma.pet.create({
+     *   data: {
+     *     // ... data to create a Pet
+     *   }
+     * })
+     * 
+     */
+    create<T extends PetCreateArgs>(args: SelectSubset<T, PetCreateArgs<ExtArgs>>): Prisma__PetClient<$Result.GetResult<Prisma.$PetPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many Pets.
+     * @param {PetCreateManyArgs} args - Arguments to create many Pets.
+     * @example
+     * // Create many Pets
+     * const pet = await prisma.pet.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends PetCreateManyArgs>(args?: SelectSubset<T, PetCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many Pets and returns the data saved in the database.
+     * @param {PetCreateManyAndReturnArgs} args - Arguments to create many Pets.
+     * @example
+     * // Create many Pets
+     * const pet = await prisma.pet.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many Pets and only return the `id`
+     * const petWithIdOnly = await prisma.pet.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends PetCreateManyAndReturnArgs>(args?: SelectSubset<T, PetCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PetPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a Pet.
+     * @param {PetDeleteArgs} args - Arguments to delete one Pet.
+     * @example
+     * // Delete one Pet
+     * const Pet = await prisma.pet.delete({
+     *   where: {
+     *     // ... filter to delete one Pet
+     *   }
+     * })
+     * 
+     */
+    delete<T extends PetDeleteArgs>(args: SelectSubset<T, PetDeleteArgs<ExtArgs>>): Prisma__PetClient<$Result.GetResult<Prisma.$PetPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one Pet.
+     * @param {PetUpdateArgs} args - Arguments to update one Pet.
+     * @example
+     * // Update one Pet
+     * const pet = await prisma.pet.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends PetUpdateArgs>(args: SelectSubset<T, PetUpdateArgs<ExtArgs>>): Prisma__PetClient<$Result.GetResult<Prisma.$PetPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more Pets.
+     * @param {PetDeleteManyArgs} args - Arguments to filter Pets to delete.
+     * @example
+     * // Delete a few Pets
+     * const { count } = await prisma.pet.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends PetDeleteManyArgs>(args?: SelectSubset<T, PetDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more Pets.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PetUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many Pets
+     * const pet = await prisma.pet.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends PetUpdateManyArgs>(args: SelectSubset<T, PetUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more Pets and returns the data updated in the database.
+     * @param {PetUpdateManyAndReturnArgs} args - Arguments to update many Pets.
+     * @example
+     * // Update many Pets
+     * const pet = await prisma.pet.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more Pets and only return the `id`
+     * const petWithIdOnly = await prisma.pet.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends PetUpdateManyAndReturnArgs>(args: SelectSubset<T, PetUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PetPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one Pet.
+     * @param {PetUpsertArgs} args - Arguments to update or create a Pet.
+     * @example
+     * // Update or create a Pet
+     * const pet = await prisma.pet.upsert({
+     *   create: {
+     *     // ... data to create a Pet
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the Pet we want to update
+     *   }
+     * })
+     */
+    upsert<T extends PetUpsertArgs>(args: SelectSubset<T, PetUpsertArgs<ExtArgs>>): Prisma__PetClient<$Result.GetResult<Prisma.$PetPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of Pets.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PetCountArgs} args - Arguments to filter Pets to count.
+     * @example
+     * // Count the number of Pets
+     * const count = await prisma.pet.count({
+     *   where: {
+     *     // ... the filter for the Pets we want to count
+     *   }
+     * })
+    **/
+    count<T extends PetCountArgs>(
+      args?: Subset<T, PetCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], PetCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a Pet.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PetAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends PetAggregateArgs>(args: Subset<T, PetAggregateArgs>): Prisma.PrismaPromise<GetPetAggregateType<T>>
+
+    /**
+     * Group by Pet.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PetGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends PetGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: PetGroupByArgs['orderBy'] }
+        : { orderBy?: PetGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, PetGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetPetGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the Pet model
+   */
+  readonly fields: PetFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for Pet.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__PetClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    user<T extends UserDefaultArgs<ExtArgs> = {}>(args?: Subset<T, UserDefaultArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    petType<T extends PetTypeDefaultArgs<ExtArgs> = {}>(args?: Subset<T, PetTypeDefaultArgs<ExtArgs>>): Prisma__PetTypeClient<$Result.GetResult<Prisma.$PetTypePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    alerts<T extends Pet$alertsArgs<ExtArgs> = {}>(args?: Subset<T, Pet$alertsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AlertPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the Pet model
+   */
+  interface PetFieldRefs {
+    readonly id: FieldRef<"Pet", 'Int'>
+    readonly tagId: FieldRef<"Pet", 'String'>
+    readonly userId: FieldRef<"Pet", 'Int'>
+    readonly petTypeId: FieldRef<"Pet", 'Int'>
+    readonly name: FieldRef<"Pet", 'String'>
+    readonly gender: FieldRef<"Pet", 'Gender'>
+    readonly photos: FieldRef<"Pet", 'String[]'>
+    readonly size: FieldRef<"Pet", 'Size'>
+    readonly isMissing: FieldRef<"Pet", 'Boolean'>
+    readonly birthday: FieldRef<"Pet", 'DateTime'>
+    readonly created_at: FieldRef<"Pet", 'DateTime'>
+    readonly updated_at: FieldRef<"Pet", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * Pet findUnique
+   */
+  export type PetFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Pet
+     */
+    select?: PetSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Pet
+     */
+    omit?: PetOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PetInclude<ExtArgs> | null
+    /**
+     * Filter, which Pet to fetch.
+     */
+    where: PetWhereUniqueInput
+  }
+
+  /**
+   * Pet findUniqueOrThrow
+   */
+  export type PetFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Pet
+     */
+    select?: PetSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Pet
+     */
+    omit?: PetOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PetInclude<ExtArgs> | null
+    /**
+     * Filter, which Pet to fetch.
+     */
+    where: PetWhereUniqueInput
+  }
+
+  /**
+   * Pet findFirst
+   */
+  export type PetFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Pet
+     */
+    select?: PetSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Pet
+     */
+    omit?: PetOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PetInclude<ExtArgs> | null
+    /**
+     * Filter, which Pet to fetch.
+     */
+    where?: PetWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Pets to fetch.
+     */
+    orderBy?: PetOrderByWithRelationInput | PetOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for Pets.
+     */
+    cursor?: PetWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Pets from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Pets.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of Pets.
+     */
+    distinct?: PetScalarFieldEnum | PetScalarFieldEnum[]
+  }
+
+  /**
+   * Pet findFirstOrThrow
+   */
+  export type PetFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Pet
+     */
+    select?: PetSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Pet
+     */
+    omit?: PetOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PetInclude<ExtArgs> | null
+    /**
+     * Filter, which Pet to fetch.
+     */
+    where?: PetWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Pets to fetch.
+     */
+    orderBy?: PetOrderByWithRelationInput | PetOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for Pets.
+     */
+    cursor?: PetWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Pets from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Pets.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of Pets.
+     */
+    distinct?: PetScalarFieldEnum | PetScalarFieldEnum[]
+  }
+
+  /**
+   * Pet findMany
+   */
+  export type PetFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Pet
+     */
+    select?: PetSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Pet
+     */
+    omit?: PetOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PetInclude<ExtArgs> | null
+    /**
+     * Filter, which Pets to fetch.
+     */
+    where?: PetWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Pets to fetch.
+     */
+    orderBy?: PetOrderByWithRelationInput | PetOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing Pets.
+     */
+    cursor?: PetWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Pets from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Pets.
+     */
+    skip?: number
+    distinct?: PetScalarFieldEnum | PetScalarFieldEnum[]
+  }
+
+  /**
+   * Pet create
+   */
+  export type PetCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Pet
+     */
+    select?: PetSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Pet
+     */
+    omit?: PetOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PetInclude<ExtArgs> | null
+    /**
+     * The data needed to create a Pet.
+     */
+    data: XOR<PetCreateInput, PetUncheckedCreateInput>
+  }
+
+  /**
+   * Pet createMany
+   */
+  export type PetCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many Pets.
+     */
+    data: PetCreateManyInput | PetCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * Pet createManyAndReturn
+   */
+  export type PetCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Pet
+     */
+    select?: PetSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the Pet
+     */
+    omit?: PetOmit<ExtArgs> | null
+    /**
+     * The data used to create many Pets.
+     */
+    data: PetCreateManyInput | PetCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PetIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * Pet update
+   */
+  export type PetUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Pet
+     */
+    select?: PetSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Pet
+     */
+    omit?: PetOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PetInclude<ExtArgs> | null
+    /**
+     * The data needed to update a Pet.
+     */
+    data: XOR<PetUpdateInput, PetUncheckedUpdateInput>
+    /**
+     * Choose, which Pet to update.
+     */
+    where: PetWhereUniqueInput
+  }
+
+  /**
+   * Pet updateMany
+   */
+  export type PetUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update Pets.
+     */
+    data: XOR<PetUpdateManyMutationInput, PetUncheckedUpdateManyInput>
+    /**
+     * Filter which Pets to update
+     */
+    where?: PetWhereInput
+    /**
+     * Limit how many Pets to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * Pet updateManyAndReturn
+   */
+  export type PetUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Pet
+     */
+    select?: PetSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the Pet
+     */
+    omit?: PetOmit<ExtArgs> | null
+    /**
+     * The data used to update Pets.
+     */
+    data: XOR<PetUpdateManyMutationInput, PetUncheckedUpdateManyInput>
+    /**
+     * Filter which Pets to update
+     */
+    where?: PetWhereInput
+    /**
+     * Limit how many Pets to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PetIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * Pet upsert
+   */
+  export type PetUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Pet
+     */
+    select?: PetSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Pet
+     */
+    omit?: PetOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PetInclude<ExtArgs> | null
+    /**
+     * The filter to search for the Pet to update in case it exists.
+     */
+    where: PetWhereUniqueInput
+    /**
+     * In case the Pet found by the `where` argument doesn't exist, create a new Pet with this data.
+     */
+    create: XOR<PetCreateInput, PetUncheckedCreateInput>
+    /**
+     * In case the Pet was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<PetUpdateInput, PetUncheckedUpdateInput>
+  }
+
+  /**
+   * Pet delete
+   */
+  export type PetDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Pet
+     */
+    select?: PetSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Pet
+     */
+    omit?: PetOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PetInclude<ExtArgs> | null
+    /**
+     * Filter which Pet to delete.
+     */
+    where: PetWhereUniqueInput
+  }
+
+  /**
+   * Pet deleteMany
+   */
+  export type PetDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which Pets to delete
+     */
+    where?: PetWhereInput
+    /**
+     * Limit how many Pets to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * Pet.alerts
+   */
+  export type Pet$alertsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Alert
+     */
+    select?: AlertSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Alert
+     */
+    omit?: AlertOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AlertInclude<ExtArgs> | null
+    where?: AlertWhereInput
+    orderBy?: AlertOrderByWithRelationInput | AlertOrderByWithRelationInput[]
+    cursor?: AlertWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: AlertScalarFieldEnum | AlertScalarFieldEnum[]
+  }
+
+  /**
+   * Pet without action
+   */
+  export type PetDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Pet
+     */
+    select?: PetSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Pet
+     */
+    omit?: PetOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PetInclude<ExtArgs> | null
   }
 
 
@@ -12726,6 +15851,7 @@ export namespace Prisma {
   export type AlertAvgAggregateOutputType = {
     id: number | null
     creator_id: number | null
+    pet_id: number | null
     pet_age_years: number | null
     last_seen_lat: number | null
     last_seen_lon: number | null
@@ -12737,6 +15863,7 @@ export namespace Prisma {
   export type AlertSumAggregateOutputType = {
     id: number | null
     creator_id: number | null
+    pet_id: number | null
     pet_age_years: number | null
     last_seen_lat: number | null
     last_seen_lon: number | null
@@ -12748,6 +15875,7 @@ export namespace Prisma {
   export type AlertMinAggregateOutputType = {
     id: number | null
     creator_id: number | null
+    pet_id: number | null
     pet_name: string | null
     pet_species: $Enums.PetSpecies | null
     pet_breed: string | null
@@ -12776,6 +15904,7 @@ export namespace Prisma {
   export type AlertMaxAggregateOutputType = {
     id: number | null
     creator_id: number | null
+    pet_id: number | null
     pet_name: string | null
     pet_species: $Enums.PetSpecies | null
     pet_breed: string | null
@@ -12804,6 +15933,7 @@ export namespace Prisma {
   export type AlertCountAggregateOutputType = {
     id: number
     creator_id: number
+    pet_id: number
     pet_name: number
     pet_species: number
     pet_breed: number
@@ -12829,6 +15959,8 @@ export namespace Prisma {
     notes: number
     reward_offered: number
     reward_amount: number
+    meta: number
+    settings: number
     _all: number
   }
 
@@ -12836,6 +15968,7 @@ export namespace Prisma {
   export type AlertAvgAggregateInputType = {
     id?: true
     creator_id?: true
+    pet_id?: true
     pet_age_years?: true
     last_seen_lat?: true
     last_seen_lon?: true
@@ -12847,6 +15980,7 @@ export namespace Prisma {
   export type AlertSumAggregateInputType = {
     id?: true
     creator_id?: true
+    pet_id?: true
     pet_age_years?: true
     last_seen_lat?: true
     last_seen_lon?: true
@@ -12858,6 +15992,7 @@ export namespace Prisma {
   export type AlertMinAggregateInputType = {
     id?: true
     creator_id?: true
+    pet_id?: true
     pet_name?: true
     pet_species?: true
     pet_breed?: true
@@ -12886,6 +16021,7 @@ export namespace Prisma {
   export type AlertMaxAggregateInputType = {
     id?: true
     creator_id?: true
+    pet_id?: true
     pet_name?: true
     pet_species?: true
     pet_breed?: true
@@ -12914,6 +16050,7 @@ export namespace Prisma {
   export type AlertCountAggregateInputType = {
     id?: true
     creator_id?: true
+    pet_id?: true
     pet_name?: true
     pet_species?: true
     pet_breed?: true
@@ -12939,6 +16076,8 @@ export namespace Prisma {
     notes?: true
     reward_offered?: true
     reward_amount?: true
+    meta?: true
+    settings?: true
     _all?: true
   }
 
@@ -13031,6 +16170,7 @@ export namespace Prisma {
   export type AlertGroupByOutputType = {
     id: number
     creator_id: number
+    pet_id: number | null
     pet_name: string
     pet_species: $Enums.PetSpecies
     pet_breed: string | null
@@ -13056,6 +16196,8 @@ export namespace Prisma {
     notes: string | null
     reward_offered: boolean
     reward_amount: Decimal | null
+    meta: JsonValue | null
+    settings: JsonValue | null
     _count: AlertCountAggregateOutputType | null
     _avg: AlertAvgAggregateOutputType | null
     _sum: AlertSumAggregateOutputType | null
@@ -13080,6 +16222,7 @@ export namespace Prisma {
   export type AlertSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
     creator_id?: boolean
+    pet_id?: boolean
     pet_name?: boolean
     pet_species?: boolean
     pet_breed?: boolean
@@ -13105,7 +16248,10 @@ export namespace Prisma {
     notes?: boolean
     reward_offered?: boolean
     reward_amount?: boolean
+    meta?: boolean
+    settings?: boolean
     creator?: boolean | UserDefaultArgs<ExtArgs>
+    pet?: boolean | Alert$petArgs<ExtArgs>
     sightings?: boolean | Alert$sightingsArgs<ExtArgs>
     notifications?: boolean | Alert$notificationsArgs<ExtArgs>
     _count?: boolean | AlertCountOutputTypeDefaultArgs<ExtArgs>
@@ -13115,6 +16261,7 @@ export namespace Prisma {
   export type AlertSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
     creator_id?: boolean
+    pet_id?: boolean
     pet_name?: boolean
     pet_species?: boolean
     pet_breed?: boolean
@@ -13140,12 +16287,16 @@ export namespace Prisma {
     notes?: boolean
     reward_offered?: boolean
     reward_amount?: boolean
+    meta?: boolean
+    settings?: boolean
     creator?: boolean | UserDefaultArgs<ExtArgs>
+    pet?: boolean | Alert$petArgs<ExtArgs>
   }, ExtArgs["result"]["alert"]>
 
   export type AlertSelectScalar = {
     id?: boolean
     creator_id?: boolean
+    pet_id?: boolean
     pet_name?: boolean
     pet_species?: boolean
     pet_breed?: boolean
@@ -13171,29 +16322,35 @@ export namespace Prisma {
     notes?: boolean
     reward_offered?: boolean
     reward_amount?: boolean
+    meta?: boolean
+    settings?: boolean
   }
 
-  export type AlertOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "creator_id" | "pet_name" | "pet_species" | "pet_breed" | "pet_description" | "pet_color" | "pet_age_years" | "pet_photos" | "last_seen_lat" | "last_seen_lon" | "location_address" | "alert_radius_km" | "status" | "time_last_seen" | "created_at" | "updated_at" | "expires_at" | "resolved_at" | "renewal_count" | "contact_phone" | "contact_email" | "is_phone_public" | "affected_postal_codes" | "notes" | "reward_offered" | "reward_amount", ExtArgs["result"]["alert"]>
+  export type AlertOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "creator_id" | "pet_id" | "pet_name" | "pet_species" | "pet_breed" | "pet_description" | "pet_color" | "pet_age_years" | "pet_photos" | "last_seen_lat" | "last_seen_lon" | "location_address" | "alert_radius_km" | "status" | "time_last_seen" | "created_at" | "updated_at" | "expires_at" | "resolved_at" | "renewal_count" | "contact_phone" | "contact_email" | "is_phone_public" | "affected_postal_codes" | "notes" | "reward_offered" | "reward_amount" | "meta" | "settings", ExtArgs["result"]["alert"]>
   export type AlertInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     creator?: boolean | UserDefaultArgs<ExtArgs>
+    pet?: boolean | Alert$petArgs<ExtArgs>
     sightings?: boolean | Alert$sightingsArgs<ExtArgs>
     notifications?: boolean | Alert$notificationsArgs<ExtArgs>
     _count?: boolean | AlertCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type AlertIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     creator?: boolean | UserDefaultArgs<ExtArgs>
+    pet?: boolean | Alert$petArgs<ExtArgs>
   }
 
   export type $AlertPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     name: "Alert"
     objects: {
       creator: Prisma.$UserPayload<ExtArgs>
+      pet: Prisma.$PetPayload<ExtArgs> | null
       sightings: Prisma.$SightingPayload<ExtArgs>[]
       notifications: Prisma.$NotificationPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       id: number
       creator_id: number
+      pet_id: number | null
       pet_name: string
       pet_species: $Enums.PetSpecies
       pet_breed: string | null
@@ -13219,6 +16376,8 @@ export namespace Prisma {
       notes: string | null
       reward_offered: boolean
       reward_amount: Prisma.Decimal | null
+      meta: Prisma.JsonValue | null
+      settings: Prisma.JsonValue | null
     }, ExtArgs["result"]["alert"]>
     composites: {}
   }
@@ -13543,6 +16702,7 @@ export namespace Prisma {
   export interface Prisma__AlertClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
     readonly [Symbol.toStringTag]: "PrismaPromise"
     creator<T extends UserDefaultArgs<ExtArgs> = {}>(args?: Subset<T, UserDefaultArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    pet<T extends Alert$petArgs<ExtArgs> = {}>(args?: Subset<T, Alert$petArgs<ExtArgs>>): Prisma__PetClient<$Result.GetResult<Prisma.$PetPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
     sightings<T extends Alert$sightingsArgs<ExtArgs> = {}>(args?: Subset<T, Alert$sightingsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SightingPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     notifications<T extends Alert$notificationsArgs<ExtArgs> = {}>(args?: Subset<T, Alert$notificationsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$NotificationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     /**
@@ -13576,6 +16736,7 @@ export namespace Prisma {
   interface AlertFieldRefs {
     readonly id: FieldRef<"Alert", 'Int'>
     readonly creator_id: FieldRef<"Alert", 'Int'>
+    readonly pet_id: FieldRef<"Alert", 'Int'>
     readonly pet_name: FieldRef<"Alert", 'String'>
     readonly pet_species: FieldRef<"Alert", 'PetSpecies'>
     readonly pet_breed: FieldRef<"Alert", 'String'>
@@ -13601,6 +16762,8 @@ export namespace Prisma {
     readonly notes: FieldRef<"Alert", 'String'>
     readonly reward_offered: FieldRef<"Alert", 'Boolean'>
     readonly reward_amount: FieldRef<"Alert", 'Decimal'>
+    readonly meta: FieldRef<"Alert", 'Json'>
+    readonly settings: FieldRef<"Alert", 'Json'>
   }
     
 
@@ -13908,6 +17071,25 @@ export namespace Prisma {
      * Limit how many Alerts to delete.
      */
     limit?: number
+  }
+
+  /**
+   * Alert.pet
+   */
+  export type Alert$petArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Pet
+     */
+    select?: PetSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Pet
+     */
+    omit?: PetOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PetInclude<ExtArgs> | null
+    where?: PetWhereInput
   }
 
   /**
@@ -16386,6 +19568,1010 @@ export namespace Prisma {
 
 
   /**
+   * Model AlertZone
+   */
+
+  export type AggregateAlertZone = {
+    _count: AlertZoneCountAggregateOutputType | null
+    _avg: AlertZoneAvgAggregateOutputType | null
+    _sum: AlertZoneSumAggregateOutputType | null
+    _min: AlertZoneMinAggregateOutputType | null
+    _max: AlertZoneMaxAggregateOutputType | null
+  }
+
+  export type AlertZoneAvgAggregateOutputType = {
+    id: number | null
+    user_id: number | null
+    lat: number | null
+    lon: number | null
+    radius_meters: number | null
+    priority: number | null
+  }
+
+  export type AlertZoneSumAggregateOutputType = {
+    id: number | null
+    user_id: number | null
+    lat: number | null
+    lon: number | null
+    radius_meters: number | null
+    priority: number | null
+  }
+
+  export type AlertZoneMinAggregateOutputType = {
+    id: number | null
+    user_id: number | null
+    name: string | null
+    lat: number | null
+    lon: number | null
+    radius_meters: number | null
+    is_active: boolean | null
+    priority: number | null
+    created_at: Date | null
+    updated_at: Date | null
+  }
+
+  export type AlertZoneMaxAggregateOutputType = {
+    id: number | null
+    user_id: number | null
+    name: string | null
+    lat: number | null
+    lon: number | null
+    radius_meters: number | null
+    is_active: boolean | null
+    priority: number | null
+    created_at: Date | null
+    updated_at: Date | null
+  }
+
+  export type AlertZoneCountAggregateOutputType = {
+    id: number
+    user_id: number
+    name: number
+    lat: number
+    lon: number
+    radius_meters: number
+    is_active: number
+    priority: number
+    created_at: number
+    updated_at: number
+    _all: number
+  }
+
+
+  export type AlertZoneAvgAggregateInputType = {
+    id?: true
+    user_id?: true
+    lat?: true
+    lon?: true
+    radius_meters?: true
+    priority?: true
+  }
+
+  export type AlertZoneSumAggregateInputType = {
+    id?: true
+    user_id?: true
+    lat?: true
+    lon?: true
+    radius_meters?: true
+    priority?: true
+  }
+
+  export type AlertZoneMinAggregateInputType = {
+    id?: true
+    user_id?: true
+    name?: true
+    lat?: true
+    lon?: true
+    radius_meters?: true
+    is_active?: true
+    priority?: true
+    created_at?: true
+    updated_at?: true
+  }
+
+  export type AlertZoneMaxAggregateInputType = {
+    id?: true
+    user_id?: true
+    name?: true
+    lat?: true
+    lon?: true
+    radius_meters?: true
+    is_active?: true
+    priority?: true
+    created_at?: true
+    updated_at?: true
+  }
+
+  export type AlertZoneCountAggregateInputType = {
+    id?: true
+    user_id?: true
+    name?: true
+    lat?: true
+    lon?: true
+    radius_meters?: true
+    is_active?: true
+    priority?: true
+    created_at?: true
+    updated_at?: true
+    _all?: true
+  }
+
+  export type AlertZoneAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which AlertZone to aggregate.
+     */
+    where?: AlertZoneWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of AlertZones to fetch.
+     */
+    orderBy?: AlertZoneOrderByWithRelationInput | AlertZoneOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: AlertZoneWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` AlertZones from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` AlertZones.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned AlertZones
+    **/
+    _count?: true | AlertZoneCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: AlertZoneAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: AlertZoneSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: AlertZoneMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: AlertZoneMaxAggregateInputType
+  }
+
+  export type GetAlertZoneAggregateType<T extends AlertZoneAggregateArgs> = {
+        [P in keyof T & keyof AggregateAlertZone]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateAlertZone[P]>
+      : GetScalarType<T[P], AggregateAlertZone[P]>
+  }
+
+
+
+
+  export type AlertZoneGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: AlertZoneWhereInput
+    orderBy?: AlertZoneOrderByWithAggregationInput | AlertZoneOrderByWithAggregationInput[]
+    by: AlertZoneScalarFieldEnum[] | AlertZoneScalarFieldEnum
+    having?: AlertZoneScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: AlertZoneCountAggregateInputType | true
+    _avg?: AlertZoneAvgAggregateInputType
+    _sum?: AlertZoneSumAggregateInputType
+    _min?: AlertZoneMinAggregateInputType
+    _max?: AlertZoneMaxAggregateInputType
+  }
+
+  export type AlertZoneGroupByOutputType = {
+    id: number
+    user_id: number
+    name: string
+    lat: number
+    lon: number
+    radius_meters: number
+    is_active: boolean
+    priority: number
+    created_at: Date
+    updated_at: Date
+    _count: AlertZoneCountAggregateOutputType | null
+    _avg: AlertZoneAvgAggregateOutputType | null
+    _sum: AlertZoneSumAggregateOutputType | null
+    _min: AlertZoneMinAggregateOutputType | null
+    _max: AlertZoneMaxAggregateOutputType | null
+  }
+
+  type GetAlertZoneGroupByPayload<T extends AlertZoneGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<AlertZoneGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof AlertZoneGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], AlertZoneGroupByOutputType[P]>
+            : GetScalarType<T[P], AlertZoneGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type AlertZoneSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    user_id?: boolean
+    name?: boolean
+    lat?: boolean
+    lon?: boolean
+    radius_meters?: boolean
+    is_active?: boolean
+    priority?: boolean
+    created_at?: boolean
+    updated_at?: boolean
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["alertZone"]>
+
+
+  export type AlertZoneSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    user_id?: boolean
+    name?: boolean
+    lat?: boolean
+    lon?: boolean
+    radius_meters?: boolean
+    is_active?: boolean
+    priority?: boolean
+    created_at?: boolean
+    updated_at?: boolean
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["alertZone"]>
+
+  export type AlertZoneSelectScalar = {
+    id?: boolean
+    user_id?: boolean
+    name?: boolean
+    lat?: boolean
+    lon?: boolean
+    radius_meters?: boolean
+    is_active?: boolean
+    priority?: boolean
+    created_at?: boolean
+    updated_at?: boolean
+  }
+
+  export type AlertZoneOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "user_id" | "name" | "lat" | "lon" | "radius_meters" | "is_active" | "priority" | "created_at" | "updated_at", ExtArgs["result"]["alertZone"]>
+  export type AlertZoneInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }
+  export type AlertZoneIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }
+
+  export type $AlertZonePayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "AlertZone"
+    objects: {
+      user: Prisma.$UserPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: number
+      user_id: number
+      name: string
+      lat: number
+      lon: number
+      radius_meters: number
+      is_active: boolean
+      priority: number
+      created_at: Date
+      updated_at: Date
+    }, ExtArgs["result"]["alertZone"]>
+    composites: {}
+  }
+
+  type AlertZoneGetPayload<S extends boolean | null | undefined | AlertZoneDefaultArgs> = $Result.GetResult<Prisma.$AlertZonePayload, S>
+
+  type AlertZoneCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<AlertZoneFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: AlertZoneCountAggregateInputType | true
+    }
+
+  export interface AlertZoneDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['AlertZone'], meta: { name: 'AlertZone' } }
+    /**
+     * Find zero or one AlertZone that matches the filter.
+     * @param {AlertZoneFindUniqueArgs} args - Arguments to find a AlertZone
+     * @example
+     * // Get one AlertZone
+     * const alertZone = await prisma.alertZone.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends AlertZoneFindUniqueArgs>(args: SelectSubset<T, AlertZoneFindUniqueArgs<ExtArgs>>): Prisma__AlertZoneClient<$Result.GetResult<Prisma.$AlertZonePayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one AlertZone that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {AlertZoneFindUniqueOrThrowArgs} args - Arguments to find a AlertZone
+     * @example
+     * // Get one AlertZone
+     * const alertZone = await prisma.alertZone.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends AlertZoneFindUniqueOrThrowArgs>(args: SelectSubset<T, AlertZoneFindUniqueOrThrowArgs<ExtArgs>>): Prisma__AlertZoneClient<$Result.GetResult<Prisma.$AlertZonePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first AlertZone that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AlertZoneFindFirstArgs} args - Arguments to find a AlertZone
+     * @example
+     * // Get one AlertZone
+     * const alertZone = await prisma.alertZone.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends AlertZoneFindFirstArgs>(args?: SelectSubset<T, AlertZoneFindFirstArgs<ExtArgs>>): Prisma__AlertZoneClient<$Result.GetResult<Prisma.$AlertZonePayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first AlertZone that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AlertZoneFindFirstOrThrowArgs} args - Arguments to find a AlertZone
+     * @example
+     * // Get one AlertZone
+     * const alertZone = await prisma.alertZone.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends AlertZoneFindFirstOrThrowArgs>(args?: SelectSubset<T, AlertZoneFindFirstOrThrowArgs<ExtArgs>>): Prisma__AlertZoneClient<$Result.GetResult<Prisma.$AlertZonePayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more AlertZones that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AlertZoneFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all AlertZones
+     * const alertZones = await prisma.alertZone.findMany()
+     * 
+     * // Get first 10 AlertZones
+     * const alertZones = await prisma.alertZone.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const alertZoneWithIdOnly = await prisma.alertZone.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends AlertZoneFindManyArgs>(args?: SelectSubset<T, AlertZoneFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AlertZonePayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Delete a AlertZone.
+     * @param {AlertZoneDeleteArgs} args - Arguments to delete one AlertZone.
+     * @example
+     * // Delete one AlertZone
+     * const AlertZone = await prisma.alertZone.delete({
+     *   where: {
+     *     // ... filter to delete one AlertZone
+     *   }
+     * })
+     * 
+     */
+    delete<T extends AlertZoneDeleteArgs>(args: SelectSubset<T, AlertZoneDeleteArgs<ExtArgs>>): Prisma__AlertZoneClient<$Result.GetResult<Prisma.$AlertZonePayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one AlertZone.
+     * @param {AlertZoneUpdateArgs} args - Arguments to update one AlertZone.
+     * @example
+     * // Update one AlertZone
+     * const alertZone = await prisma.alertZone.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends AlertZoneUpdateArgs>(args: SelectSubset<T, AlertZoneUpdateArgs<ExtArgs>>): Prisma__AlertZoneClient<$Result.GetResult<Prisma.$AlertZonePayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more AlertZones.
+     * @param {AlertZoneDeleteManyArgs} args - Arguments to filter AlertZones to delete.
+     * @example
+     * // Delete a few AlertZones
+     * const { count } = await prisma.alertZone.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends AlertZoneDeleteManyArgs>(args?: SelectSubset<T, AlertZoneDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more AlertZones.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AlertZoneUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many AlertZones
+     * const alertZone = await prisma.alertZone.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends AlertZoneUpdateManyArgs>(args: SelectSubset<T, AlertZoneUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more AlertZones and returns the data updated in the database.
+     * @param {AlertZoneUpdateManyAndReturnArgs} args - Arguments to update many AlertZones.
+     * @example
+     * // Update many AlertZones
+     * const alertZone = await prisma.alertZone.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more AlertZones and only return the `id`
+     * const alertZoneWithIdOnly = await prisma.alertZone.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends AlertZoneUpdateManyAndReturnArgs>(args: SelectSubset<T, AlertZoneUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AlertZonePayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+
+    /**
+     * Count the number of AlertZones.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AlertZoneCountArgs} args - Arguments to filter AlertZones to count.
+     * @example
+     * // Count the number of AlertZones
+     * const count = await prisma.alertZone.count({
+     *   where: {
+     *     // ... the filter for the AlertZones we want to count
+     *   }
+     * })
+    **/
+    count<T extends AlertZoneCountArgs>(
+      args?: Subset<T, AlertZoneCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], AlertZoneCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a AlertZone.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AlertZoneAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends AlertZoneAggregateArgs>(args: Subset<T, AlertZoneAggregateArgs>): Prisma.PrismaPromise<GetAlertZoneAggregateType<T>>
+
+    /**
+     * Group by AlertZone.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AlertZoneGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends AlertZoneGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: AlertZoneGroupByArgs['orderBy'] }
+        : { orderBy?: AlertZoneGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, AlertZoneGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetAlertZoneGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the AlertZone model
+   */
+  readonly fields: AlertZoneFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for AlertZone.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__AlertZoneClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    user<T extends UserDefaultArgs<ExtArgs> = {}>(args?: Subset<T, UserDefaultArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the AlertZone model
+   */
+  interface AlertZoneFieldRefs {
+    readonly id: FieldRef<"AlertZone", 'Int'>
+    readonly user_id: FieldRef<"AlertZone", 'Int'>
+    readonly name: FieldRef<"AlertZone", 'String'>
+    readonly lat: FieldRef<"AlertZone", 'Float'>
+    readonly lon: FieldRef<"AlertZone", 'Float'>
+    readonly radius_meters: FieldRef<"AlertZone", 'Int'>
+    readonly is_active: FieldRef<"AlertZone", 'Boolean'>
+    readonly priority: FieldRef<"AlertZone", 'Int'>
+    readonly created_at: FieldRef<"AlertZone", 'DateTime'>
+    readonly updated_at: FieldRef<"AlertZone", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * AlertZone findUnique
+   */
+  export type AlertZoneFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AlertZone
+     */
+    select?: AlertZoneSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AlertZone
+     */
+    omit?: AlertZoneOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AlertZoneInclude<ExtArgs> | null
+    /**
+     * Filter, which AlertZone to fetch.
+     */
+    where: AlertZoneWhereUniqueInput
+  }
+
+  /**
+   * AlertZone findUniqueOrThrow
+   */
+  export type AlertZoneFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AlertZone
+     */
+    select?: AlertZoneSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AlertZone
+     */
+    omit?: AlertZoneOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AlertZoneInclude<ExtArgs> | null
+    /**
+     * Filter, which AlertZone to fetch.
+     */
+    where: AlertZoneWhereUniqueInput
+  }
+
+  /**
+   * AlertZone findFirst
+   */
+  export type AlertZoneFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AlertZone
+     */
+    select?: AlertZoneSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AlertZone
+     */
+    omit?: AlertZoneOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AlertZoneInclude<ExtArgs> | null
+    /**
+     * Filter, which AlertZone to fetch.
+     */
+    where?: AlertZoneWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of AlertZones to fetch.
+     */
+    orderBy?: AlertZoneOrderByWithRelationInput | AlertZoneOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for AlertZones.
+     */
+    cursor?: AlertZoneWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` AlertZones from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` AlertZones.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of AlertZones.
+     */
+    distinct?: AlertZoneScalarFieldEnum | AlertZoneScalarFieldEnum[]
+  }
+
+  /**
+   * AlertZone findFirstOrThrow
+   */
+  export type AlertZoneFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AlertZone
+     */
+    select?: AlertZoneSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AlertZone
+     */
+    omit?: AlertZoneOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AlertZoneInclude<ExtArgs> | null
+    /**
+     * Filter, which AlertZone to fetch.
+     */
+    where?: AlertZoneWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of AlertZones to fetch.
+     */
+    orderBy?: AlertZoneOrderByWithRelationInput | AlertZoneOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for AlertZones.
+     */
+    cursor?: AlertZoneWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` AlertZones from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` AlertZones.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of AlertZones.
+     */
+    distinct?: AlertZoneScalarFieldEnum | AlertZoneScalarFieldEnum[]
+  }
+
+  /**
+   * AlertZone findMany
+   */
+  export type AlertZoneFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AlertZone
+     */
+    select?: AlertZoneSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AlertZone
+     */
+    omit?: AlertZoneOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AlertZoneInclude<ExtArgs> | null
+    /**
+     * Filter, which AlertZones to fetch.
+     */
+    where?: AlertZoneWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of AlertZones to fetch.
+     */
+    orderBy?: AlertZoneOrderByWithRelationInput | AlertZoneOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing AlertZones.
+     */
+    cursor?: AlertZoneWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` AlertZones from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` AlertZones.
+     */
+    skip?: number
+    distinct?: AlertZoneScalarFieldEnum | AlertZoneScalarFieldEnum[]
+  }
+
+  /**
+   * AlertZone update
+   */
+  export type AlertZoneUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AlertZone
+     */
+    select?: AlertZoneSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AlertZone
+     */
+    omit?: AlertZoneOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AlertZoneInclude<ExtArgs> | null
+    /**
+     * The data needed to update a AlertZone.
+     */
+    data: XOR<AlertZoneUpdateInput, AlertZoneUncheckedUpdateInput>
+    /**
+     * Choose, which AlertZone to update.
+     */
+    where: AlertZoneWhereUniqueInput
+  }
+
+  /**
+   * AlertZone updateMany
+   */
+  export type AlertZoneUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update AlertZones.
+     */
+    data: XOR<AlertZoneUpdateManyMutationInput, AlertZoneUncheckedUpdateManyInput>
+    /**
+     * Filter which AlertZones to update
+     */
+    where?: AlertZoneWhereInput
+    /**
+     * Limit how many AlertZones to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * AlertZone updateManyAndReturn
+   */
+  export type AlertZoneUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AlertZone
+     */
+    select?: AlertZoneSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the AlertZone
+     */
+    omit?: AlertZoneOmit<ExtArgs> | null
+    /**
+     * The data used to update AlertZones.
+     */
+    data: XOR<AlertZoneUpdateManyMutationInput, AlertZoneUncheckedUpdateManyInput>
+    /**
+     * Filter which AlertZones to update
+     */
+    where?: AlertZoneWhereInput
+    /**
+     * Limit how many AlertZones to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AlertZoneIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * AlertZone delete
+   */
+  export type AlertZoneDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AlertZone
+     */
+    select?: AlertZoneSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AlertZone
+     */
+    omit?: AlertZoneOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AlertZoneInclude<ExtArgs> | null
+    /**
+     * Filter which AlertZone to delete.
+     */
+    where: AlertZoneWhereUniqueInput
+  }
+
+  /**
+   * AlertZone deleteMany
+   */
+  export type AlertZoneDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which AlertZones to delete
+     */
+    where?: AlertZoneWhereInput
+    /**
+     * Limit how many AlertZones to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * AlertZone without action
+   */
+  export type AlertZoneDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AlertZone
+     */
+    select?: AlertZoneSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AlertZone
+     */
+    omit?: AlertZoneOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AlertZoneInclude<ExtArgs> | null
+  }
+
+
+  /**
    * Model Sighting
    */
 
@@ -16466,6 +20652,8 @@ export namespace Prisma {
     dismissed: number
     dismissed_at: number
     dismissed_reason: number
+    meta: number
+    settings: number
     created_at: number
     updated_at: number
     _all: number
@@ -16541,6 +20729,8 @@ export namespace Prisma {
     dismissed?: true
     dismissed_at?: true
     dismissed_reason?: true
+    meta?: true
+    settings?: true
     created_at?: true
     updated_at?: true
     _all?: true
@@ -16647,6 +20837,8 @@ export namespace Prisma {
     dismissed: boolean
     dismissed_at: Date | null
     dismissed_reason: string | null
+    meta: JsonValue | null
+    settings: JsonValue | null
     created_at: Date
     updated_at: Date
     _count: SightingCountAggregateOutputType | null
@@ -16685,6 +20877,8 @@ export namespace Prisma {
     dismissed?: boolean
     dismissed_at?: boolean
     dismissed_reason?: boolean
+    meta?: boolean
+    settings?: boolean
     created_at?: boolean
     updated_at?: boolean
     alert?: boolean | AlertDefaultArgs<ExtArgs>
@@ -16707,6 +20901,8 @@ export namespace Prisma {
     dismissed?: boolean
     dismissed_at?: boolean
     dismissed_reason?: boolean
+    meta?: boolean
+    settings?: boolean
     created_at?: boolean
     updated_at?: boolean
     alert?: boolean | AlertDefaultArgs<ExtArgs>
@@ -16728,11 +20924,13 @@ export namespace Prisma {
     dismissed?: boolean
     dismissed_at?: boolean
     dismissed_reason?: boolean
+    meta?: boolean
+    settings?: boolean
     created_at?: boolean
     updated_at?: boolean
   }
 
-  export type SightingOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "alert_id" | "reporter_id" | "sighting_lat" | "sighting_lon" | "location_address" | "photo_url" | "notes" | "confidence" | "sighting_time" | "direction" | "dismissed" | "dismissed_at" | "dismissed_reason" | "created_at" | "updated_at", ExtArgs["result"]["sighting"]>
+  export type SightingOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "alert_id" | "reporter_id" | "sighting_lat" | "sighting_lon" | "location_address" | "photo_url" | "notes" | "confidence" | "sighting_time" | "direction" | "dismissed" | "dismissed_at" | "dismissed_reason" | "meta" | "settings" | "created_at" | "updated_at", ExtArgs["result"]["sighting"]>
   export type SightingInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     alert?: boolean | AlertDefaultArgs<ExtArgs>
     reporter?: boolean | UserDefaultArgs<ExtArgs>
@@ -16763,6 +20961,8 @@ export namespace Prisma {
       dismissed: boolean
       dismissed_at: Date | null
       dismissed_reason: string | null
+      meta: Prisma.JsonValue | null
+      settings: Prisma.JsonValue | null
       created_at: Date
       updated_at: Date
     }, ExtArgs["result"]["sighting"]>
@@ -17133,6 +21333,8 @@ export namespace Prisma {
     readonly dismissed: FieldRef<"Sighting", 'Boolean'>
     readonly dismissed_at: FieldRef<"Sighting", 'DateTime'>
     readonly dismissed_reason: FieldRef<"Sighting", 'String'>
+    readonly meta: FieldRef<"Sighting", 'Json'>
+    readonly settings: FieldRef<"Sighting", 'Json'>
     readonly created_at: FieldRef<"Sighting", 'DateTime'>
     readonly updated_at: FieldRef<"Sighting", 'DateTime'>
   }
@@ -17549,6 +21751,8 @@ export namespace Prisma {
     exclusion_reason: number
     push_message_id: number
     push_response: number
+    meta: number
+    settings: number
     created_at: number
     updated_at: number
     _all: number
@@ -17629,6 +21833,8 @@ export namespace Prisma {
     exclusion_reason?: true
     push_message_id?: true
     push_response?: true
+    meta?: true
+    settings?: true
     created_at?: true
     updated_at?: true
     _all?: true
@@ -17738,6 +21944,8 @@ export namespace Prisma {
     exclusion_reason: string | null
     push_message_id: string | null
     push_response: JsonValue | null
+    meta: JsonValue | null
+    settings: JsonValue | null
     created_at: Date
     updated_at: Date
     _count: NotificationCountAggregateOutputType | null
@@ -17779,6 +21987,8 @@ export namespace Prisma {
     exclusion_reason?: boolean
     push_message_id?: boolean
     push_response?: boolean
+    meta?: boolean
+    settings?: boolean
     created_at?: boolean
     updated_at?: boolean
     alert?: boolean | AlertDefaultArgs<ExtArgs>
@@ -17803,6 +22013,8 @@ export namespace Prisma {
     exclusion_reason?: boolean
     push_message_id?: boolean
     push_response?: boolean
+    meta?: boolean
+    settings?: boolean
     created_at?: boolean
     updated_at?: boolean
     alert?: boolean | AlertDefaultArgs<ExtArgs>
@@ -17827,6 +22039,8 @@ export namespace Prisma {
     exclusion_reason?: boolean
     push_message_id?: boolean
     push_response?: boolean
+    meta?: boolean
+    settings?: boolean
     created_at?: boolean
     updated_at?: boolean
     alert?: boolean | AlertDefaultArgs<ExtArgs>
@@ -17851,11 +22065,13 @@ export namespace Prisma {
     exclusion_reason?: boolean
     push_message_id?: boolean
     push_response?: boolean
+    meta?: boolean
+    settings?: boolean
     created_at?: boolean
     updated_at?: boolean
   }
 
-  export type NotificationOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "alert_id" | "device_id" | "confidence" | "match_reason" | "distance_km" | "status" | "queued_at" | "sent_at" | "delivered_at" | "opened_at" | "failed_at" | "failure_reason" | "excluded" | "exclusion_reason" | "push_message_id" | "push_response" | "created_at" | "updated_at", ExtArgs["result"]["notification"]>
+  export type NotificationOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "alert_id" | "device_id" | "confidence" | "match_reason" | "distance_km" | "status" | "queued_at" | "sent_at" | "delivered_at" | "opened_at" | "failed_at" | "failure_reason" | "excluded" | "exclusion_reason" | "push_message_id" | "push_response" | "meta" | "settings" | "created_at" | "updated_at", ExtArgs["result"]["notification"]>
   export type NotificationInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     alert?: boolean | AlertDefaultArgs<ExtArgs>
     device?: boolean | DeviceDefaultArgs<ExtArgs>
@@ -17893,6 +22109,8 @@ export namespace Prisma {
       exclusion_reason: string | null
       push_message_id: string | null
       push_response: Prisma.JsonValue | null
+      meta: Prisma.JsonValue | null
+      settings: Prisma.JsonValue | null
       created_at: Date
       updated_at: Date
     }, ExtArgs["result"]["notification"]>
@@ -18337,6 +22555,8 @@ export namespace Prisma {
     readonly exclusion_reason: FieldRef<"Notification", 'String'>
     readonly push_message_id: FieldRef<"Notification", 'String'>
     readonly push_response: FieldRef<"Notification", 'Json'>
+    readonly meta: FieldRef<"Notification", 'Json'>
+    readonly settings: FieldRef<"Notification", 'Json'>
     readonly created_at: FieldRef<"Notification", 'DateTime'>
     readonly updated_at: FieldRef<"Notification", 'DateTime'>
   }
@@ -18818,6 +23038,7 @@ export namespace Prisma {
     active: 'active',
     permissions: 'permissions',
     meta: 'meta',
+    settings: 'settings',
     conditions: 'conditions',
     rules: 'rules',
     created_at: 'created_at',
@@ -18857,6 +23078,8 @@ export namespace Prisma {
     refreshTokenExpiresAt: 'refreshTokenExpiresAt',
     scope: 'scope',
     password: 'password',
+    meta: 'meta',
+    settings: 'settings',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
   };
@@ -18895,18 +23118,63 @@ export namespace Prisma {
     action: 'action',
     userId: 'userId',
     actorId: 'actorId',
+    actorType: 'actorType',
     metadata: 'metadata',
     ipAddress: 'ipAddress',
     userAgent: 'userAgent',
-    createdAt: 'createdAt'
+    createdAt: 'createdAt',
+    eventType: 'eventType',
+    entityType: 'entityType',
+    entityId: 'entityId',
+    description: 'description',
+    oldValues: 'oldValues',
+    newValues: 'newValues',
+    sessionId: 'sessionId',
+    requestId: 'requestId',
+    success: 'success',
+    errorMessage: 'errorMessage',
+    errorStack: 'errorStack',
+    timestamp: 'timestamp'
   };
 
   export type AuditLogScalarFieldEnum = (typeof AuditLogScalarFieldEnum)[keyof typeof AuditLogScalarFieldEnum]
 
 
+  export const PetTypeScalarFieldEnum: {
+    id: 'id',
+    name: 'name',
+    slug: 'slug',
+    meta: 'meta',
+    settings: 'settings',
+    created_at: 'created_at',
+    updated_at: 'updated_at'
+  };
+
+  export type PetTypeScalarFieldEnum = (typeof PetTypeScalarFieldEnum)[keyof typeof PetTypeScalarFieldEnum]
+
+
+  export const PetScalarFieldEnum: {
+    id: 'id',
+    tagId: 'tagId',
+    userId: 'userId',
+    petTypeId: 'petTypeId',
+    name: 'name',
+    gender: 'gender',
+    photos: 'photos',
+    size: 'size',
+    isMissing: 'isMissing',
+    birthday: 'birthday',
+    created_at: 'created_at',
+    updated_at: 'updated_at'
+  };
+
+  export type PetScalarFieldEnum = (typeof PetScalarFieldEnum)[keyof typeof PetScalarFieldEnum]
+
+
   export const AlertScalarFieldEnum: {
     id: 'id',
     creator_id: 'creator_id',
+    pet_id: 'pet_id',
     pet_name: 'pet_name',
     pet_species: 'pet_species',
     pet_breed: 'pet_breed',
@@ -18931,7 +23199,9 @@ export namespace Prisma {
     affected_postal_codes: 'affected_postal_codes',
     notes: 'notes',
     reward_offered: 'reward_offered',
-    reward_amount: 'reward_amount'
+    reward_amount: 'reward_amount',
+    meta: 'meta',
+    settings: 'settings'
   };
 
   export type AlertScalarFieldEnum = (typeof AlertScalarFieldEnum)[keyof typeof AlertScalarFieldEnum]
@@ -18982,6 +23252,22 @@ export namespace Prisma {
   export type SavedZoneScalarFieldEnum = (typeof SavedZoneScalarFieldEnum)[keyof typeof SavedZoneScalarFieldEnum]
 
 
+  export const AlertZoneScalarFieldEnum: {
+    id: 'id',
+    user_id: 'user_id',
+    name: 'name',
+    lat: 'lat',
+    lon: 'lon',
+    radius_meters: 'radius_meters',
+    is_active: 'is_active',
+    priority: 'priority',
+    created_at: 'created_at',
+    updated_at: 'updated_at'
+  };
+
+  export type AlertZoneScalarFieldEnum = (typeof AlertZoneScalarFieldEnum)[keyof typeof AlertZoneScalarFieldEnum]
+
+
   export const SightingScalarFieldEnum: {
     id: 'id',
     alert_id: 'alert_id',
@@ -18997,6 +23283,8 @@ export namespace Prisma {
     dismissed: 'dismissed',
     dismissed_at: 'dismissed_at',
     dismissed_reason: 'dismissed_reason',
+    meta: 'meta',
+    settings: 'settings',
     created_at: 'created_at',
     updated_at: 'updated_at'
   };
@@ -19022,6 +23310,8 @@ export namespace Prisma {
     exclusion_reason: 'exclusion_reason',
     push_message_id: 'push_message_id',
     push_response: 'push_response',
+    meta: 'meta',
+    settings: 'settings',
     created_at: 'created_at',
     updated_at: 'updated_at'
   };
@@ -19135,6 +23425,62 @@ export namespace Prisma {
    * Reference to a field of type 'QueryMode'
    */
   export type EnumQueryModeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'QueryMode'>
+    
+
+
+  /**
+   * Reference to a field of type 'AuditEventType'
+   */
+  export type EnumAuditEventTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'AuditEventType'>
+    
+
+
+  /**
+   * Reference to a field of type 'AuditEventType[]'
+   */
+  export type ListEnumAuditEventTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'AuditEventType[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'AuditEntityType'
+   */
+  export type EnumAuditEntityTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'AuditEntityType'>
+    
+
+
+  /**
+   * Reference to a field of type 'AuditEntityType[]'
+   */
+  export type ListEnumAuditEntityTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'AuditEntityType[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'Gender'
+   */
+  export type EnumGenderFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Gender'>
+    
+
+
+  /**
+   * Reference to a field of type 'Gender[]'
+   */
+  export type ListEnumGenderFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Gender[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'Size'
+   */
+  export type EnumSizeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Size'>
+    
+
+
+  /**
+   * Reference to a field of type 'Size[]'
+   */
+  export type ListEnumSizeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Size[]'>
     
 
 
@@ -19264,6 +23610,9 @@ export namespace Prisma {
     devices?: DeviceListRelationFilter
     created_alerts?: AlertListRelationFilter
     reported_sightings?: SightingListRelationFilter
+    auditLogs?: AuditLogListRelationFilter
+    pets?: PetListRelationFilter
+    alert_zones?: AlertZoneListRelationFilter
   }
 
   export type UserOrderByWithRelationInput = {
@@ -19288,6 +23637,9 @@ export namespace Prisma {
     devices?: DeviceOrderByRelationAggregateInput
     created_alerts?: AlertOrderByRelationAggregateInput
     reported_sightings?: SightingOrderByRelationAggregateInput
+    auditLogs?: AuditLogOrderByRelationAggregateInput
+    pets?: PetOrderByRelationAggregateInput
+    alert_zones?: AlertZoneOrderByRelationAggregateInput
   }
 
   export type UserWhereUniqueInput = Prisma.AtLeast<{
@@ -19315,6 +23667,9 @@ export namespace Prisma {
     devices?: DeviceListRelationFilter
     created_alerts?: AlertListRelationFilter
     reported_sightings?: SightingListRelationFilter
+    auditLogs?: AuditLogListRelationFilter
+    pets?: PetListRelationFilter
+    alert_zones?: AlertZoneListRelationFilter
   }, "id" | "email">
 
   export type UserOrderByWithAggregationInput = {
@@ -19493,6 +23848,7 @@ export namespace Prisma {
     active?: BoolFilter<"Role"> | boolean
     permissions?: JsonNullableFilter<"Role">
     meta?: JsonNullableFilter<"Role">
+    settings?: JsonNullableFilter<"Role">
     conditions?: JsonNullableFilter<"Role">
     rules?: JsonNullableFilter<"Role">
     created_at?: DateTimeFilter<"Role"> | Date | string
@@ -19509,6 +23865,7 @@ export namespace Prisma {
     active?: SortOrder
     permissions?: SortOrderInput | SortOrder
     meta?: SortOrderInput | SortOrder
+    settings?: SortOrderInput | SortOrder
     conditions?: SortOrderInput | SortOrder
     rules?: SortOrderInput | SortOrder
     created_at?: SortOrder
@@ -19528,6 +23885,7 @@ export namespace Prisma {
     active?: BoolFilter<"Role"> | boolean
     permissions?: JsonNullableFilter<"Role">
     meta?: JsonNullableFilter<"Role">
+    settings?: JsonNullableFilter<"Role">
     conditions?: JsonNullableFilter<"Role">
     rules?: JsonNullableFilter<"Role">
     created_at?: DateTimeFilter<"Role"> | Date | string
@@ -19544,6 +23902,7 @@ export namespace Prisma {
     active?: SortOrder
     permissions?: SortOrderInput | SortOrder
     meta?: SortOrderInput | SortOrder
+    settings?: SortOrderInput | SortOrder
     conditions?: SortOrderInput | SortOrder
     rules?: SortOrderInput | SortOrder
     created_at?: SortOrder
@@ -19567,6 +23926,7 @@ export namespace Prisma {
     active?: BoolWithAggregatesFilter<"Role"> | boolean
     permissions?: JsonNullableWithAggregatesFilter<"Role">
     meta?: JsonNullableWithAggregatesFilter<"Role">
+    settings?: JsonNullableWithAggregatesFilter<"Role">
     conditions?: JsonNullableWithAggregatesFilter<"Role">
     rules?: JsonNullableWithAggregatesFilter<"Role">
     created_at?: DateTimeWithAggregatesFilter<"Role"> | Date | string
@@ -19680,6 +24040,8 @@ export namespace Prisma {
     refreshTokenExpiresAt?: DateTimeNullableFilter<"Account"> | Date | string | null
     scope?: StringNullableFilter<"Account"> | string | null
     password?: StringNullableFilter<"Account"> | string | null
+    meta?: JsonNullableFilter<"Account">
+    settings?: JsonNullableFilter<"Account">
     createdAt?: DateTimeFilter<"Account"> | Date | string
     updatedAt?: DateTimeFilter<"Account"> | Date | string
     user?: XOR<UserScalarRelationFilter, UserWhereInput>
@@ -19697,6 +24059,8 @@ export namespace Prisma {
     refreshTokenExpiresAt?: SortOrderInput | SortOrder
     scope?: SortOrderInput | SortOrder
     password?: SortOrderInput | SortOrder
+    meta?: SortOrderInput | SortOrder
+    settings?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     user?: UserOrderByWithRelationInput
@@ -19717,6 +24081,8 @@ export namespace Prisma {
     refreshTokenExpiresAt?: DateTimeNullableFilter<"Account"> | Date | string | null
     scope?: StringNullableFilter<"Account"> | string | null
     password?: StringNullableFilter<"Account"> | string | null
+    meta?: JsonNullableFilter<"Account">
+    settings?: JsonNullableFilter<"Account">
     createdAt?: DateTimeFilter<"Account"> | Date | string
     updatedAt?: DateTimeFilter<"Account"> | Date | string
     user?: XOR<UserScalarRelationFilter, UserWhereInput>
@@ -19734,6 +24100,8 @@ export namespace Prisma {
     refreshTokenExpiresAt?: SortOrderInput | SortOrder
     scope?: SortOrderInput | SortOrder
     password?: SortOrderInput | SortOrder
+    meta?: SortOrderInput | SortOrder
+    settings?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     _count?: AccountCountOrderByAggregateInput
@@ -19758,6 +24126,8 @@ export namespace Prisma {
     refreshTokenExpiresAt?: DateTimeNullableWithAggregatesFilter<"Account"> | Date | string | null
     scope?: StringNullableWithAggregatesFilter<"Account"> | string | null
     password?: StringNullableWithAggregatesFilter<"Account"> | string | null
+    meta?: JsonNullableWithAggregatesFilter<"Account">
+    settings?: JsonNullableWithAggregatesFilter<"Account">
     createdAt?: DateTimeWithAggregatesFilter<"Account"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"Account"> | Date | string
   }
@@ -19898,11 +24268,25 @@ export namespace Prisma {
     id?: IntFilter<"AuditLog"> | number
     action?: StringFilter<"AuditLog"> | string
     userId?: IntNullableFilter<"AuditLog"> | number | null
-    actorId?: IntNullableFilter<"AuditLog"> | number | null
+    actorId?: StringNullableFilter<"AuditLog"> | string | null
+    actorType?: StringNullableFilter<"AuditLog"> | string | null
     metadata?: JsonNullableFilter<"AuditLog">
     ipAddress?: StringNullableFilter<"AuditLog"> | string | null
     userAgent?: StringNullableFilter<"AuditLog"> | string | null
     createdAt?: DateTimeFilter<"AuditLog"> | Date | string
+    eventType?: EnumAuditEventTypeFilter<"AuditLog"> | $Enums.AuditEventType
+    entityType?: EnumAuditEntityTypeNullableFilter<"AuditLog"> | $Enums.AuditEntityType | null
+    entityId?: IntNullableFilter<"AuditLog"> | number | null
+    description?: StringNullableFilter<"AuditLog"> | string | null
+    oldValues?: JsonNullableFilter<"AuditLog">
+    newValues?: JsonNullableFilter<"AuditLog">
+    sessionId?: StringNullableFilter<"AuditLog"> | string | null
+    requestId?: StringNullableFilter<"AuditLog"> | string | null
+    success?: BoolFilter<"AuditLog"> | boolean
+    errorMessage?: StringNullableFilter<"AuditLog"> | string | null
+    errorStack?: StringNullableFilter<"AuditLog"> | string | null
+    timestamp?: DateTimeFilter<"AuditLog"> | Date | string
+    user?: XOR<UserNullableScalarRelationFilter, UserWhereInput> | null
   }
 
   export type AuditLogOrderByWithRelationInput = {
@@ -19910,10 +24294,24 @@ export namespace Prisma {
     action?: SortOrder
     userId?: SortOrderInput | SortOrder
     actorId?: SortOrderInput | SortOrder
+    actorType?: SortOrderInput | SortOrder
     metadata?: SortOrderInput | SortOrder
     ipAddress?: SortOrderInput | SortOrder
     userAgent?: SortOrderInput | SortOrder
     createdAt?: SortOrder
+    eventType?: SortOrder
+    entityType?: SortOrderInput | SortOrder
+    entityId?: SortOrderInput | SortOrder
+    description?: SortOrderInput | SortOrder
+    oldValues?: SortOrderInput | SortOrder
+    newValues?: SortOrderInput | SortOrder
+    sessionId?: SortOrderInput | SortOrder
+    requestId?: SortOrderInput | SortOrder
+    success?: SortOrder
+    errorMessage?: SortOrderInput | SortOrder
+    errorStack?: SortOrderInput | SortOrder
+    timestamp?: SortOrder
+    user?: UserOrderByWithRelationInput
   }
 
   export type AuditLogWhereUniqueInput = Prisma.AtLeast<{
@@ -19923,11 +24321,25 @@ export namespace Prisma {
     NOT?: AuditLogWhereInput | AuditLogWhereInput[]
     action?: StringFilter<"AuditLog"> | string
     userId?: IntNullableFilter<"AuditLog"> | number | null
-    actorId?: IntNullableFilter<"AuditLog"> | number | null
+    actorId?: StringNullableFilter<"AuditLog"> | string | null
+    actorType?: StringNullableFilter<"AuditLog"> | string | null
     metadata?: JsonNullableFilter<"AuditLog">
     ipAddress?: StringNullableFilter<"AuditLog"> | string | null
     userAgent?: StringNullableFilter<"AuditLog"> | string | null
     createdAt?: DateTimeFilter<"AuditLog"> | Date | string
+    eventType?: EnumAuditEventTypeFilter<"AuditLog"> | $Enums.AuditEventType
+    entityType?: EnumAuditEntityTypeNullableFilter<"AuditLog"> | $Enums.AuditEntityType | null
+    entityId?: IntNullableFilter<"AuditLog"> | number | null
+    description?: StringNullableFilter<"AuditLog"> | string | null
+    oldValues?: JsonNullableFilter<"AuditLog">
+    newValues?: JsonNullableFilter<"AuditLog">
+    sessionId?: StringNullableFilter<"AuditLog"> | string | null
+    requestId?: StringNullableFilter<"AuditLog"> | string | null
+    success?: BoolFilter<"AuditLog"> | boolean
+    errorMessage?: StringNullableFilter<"AuditLog"> | string | null
+    errorStack?: StringNullableFilter<"AuditLog"> | string | null
+    timestamp?: DateTimeFilter<"AuditLog"> | Date | string
+    user?: XOR<UserNullableScalarRelationFilter, UserWhereInput> | null
   }, "id">
 
   export type AuditLogOrderByWithAggregationInput = {
@@ -19935,10 +24347,23 @@ export namespace Prisma {
     action?: SortOrder
     userId?: SortOrderInput | SortOrder
     actorId?: SortOrderInput | SortOrder
+    actorType?: SortOrderInput | SortOrder
     metadata?: SortOrderInput | SortOrder
     ipAddress?: SortOrderInput | SortOrder
     userAgent?: SortOrderInput | SortOrder
     createdAt?: SortOrder
+    eventType?: SortOrder
+    entityType?: SortOrderInput | SortOrder
+    entityId?: SortOrderInput | SortOrder
+    description?: SortOrderInput | SortOrder
+    oldValues?: SortOrderInput | SortOrder
+    newValues?: SortOrderInput | SortOrder
+    sessionId?: SortOrderInput | SortOrder
+    requestId?: SortOrderInput | SortOrder
+    success?: SortOrder
+    errorMessage?: SortOrderInput | SortOrder
+    errorStack?: SortOrderInput | SortOrder
+    timestamp?: SortOrder
     _count?: AuditLogCountOrderByAggregateInput
     _avg?: AuditLogAvgOrderByAggregateInput
     _max?: AuditLogMaxOrderByAggregateInput
@@ -19953,11 +24378,189 @@ export namespace Prisma {
     id?: IntWithAggregatesFilter<"AuditLog"> | number
     action?: StringWithAggregatesFilter<"AuditLog"> | string
     userId?: IntNullableWithAggregatesFilter<"AuditLog"> | number | null
-    actorId?: IntNullableWithAggregatesFilter<"AuditLog"> | number | null
+    actorId?: StringNullableWithAggregatesFilter<"AuditLog"> | string | null
+    actorType?: StringNullableWithAggregatesFilter<"AuditLog"> | string | null
     metadata?: JsonNullableWithAggregatesFilter<"AuditLog">
     ipAddress?: StringNullableWithAggregatesFilter<"AuditLog"> | string | null
     userAgent?: StringNullableWithAggregatesFilter<"AuditLog"> | string | null
     createdAt?: DateTimeWithAggregatesFilter<"AuditLog"> | Date | string
+    eventType?: EnumAuditEventTypeWithAggregatesFilter<"AuditLog"> | $Enums.AuditEventType
+    entityType?: EnumAuditEntityTypeNullableWithAggregatesFilter<"AuditLog"> | $Enums.AuditEntityType | null
+    entityId?: IntNullableWithAggregatesFilter<"AuditLog"> | number | null
+    description?: StringNullableWithAggregatesFilter<"AuditLog"> | string | null
+    oldValues?: JsonNullableWithAggregatesFilter<"AuditLog">
+    newValues?: JsonNullableWithAggregatesFilter<"AuditLog">
+    sessionId?: StringNullableWithAggregatesFilter<"AuditLog"> | string | null
+    requestId?: StringNullableWithAggregatesFilter<"AuditLog"> | string | null
+    success?: BoolWithAggregatesFilter<"AuditLog"> | boolean
+    errorMessage?: StringNullableWithAggregatesFilter<"AuditLog"> | string | null
+    errorStack?: StringNullableWithAggregatesFilter<"AuditLog"> | string | null
+    timestamp?: DateTimeWithAggregatesFilter<"AuditLog"> | Date | string
+  }
+
+  export type PetTypeWhereInput = {
+    AND?: PetTypeWhereInput | PetTypeWhereInput[]
+    OR?: PetTypeWhereInput[]
+    NOT?: PetTypeWhereInput | PetTypeWhereInput[]
+    id?: IntFilter<"PetType"> | number
+    name?: StringFilter<"PetType"> | string
+    slug?: StringFilter<"PetType"> | string
+    meta?: JsonNullableFilter<"PetType">
+    settings?: JsonNullableFilter<"PetType">
+    created_at?: DateTimeFilter<"PetType"> | Date | string
+    updated_at?: DateTimeFilter<"PetType"> | Date | string
+    pets?: PetListRelationFilter
+  }
+
+  export type PetTypeOrderByWithRelationInput = {
+    id?: SortOrder
+    name?: SortOrder
+    slug?: SortOrder
+    meta?: SortOrderInput | SortOrder
+    settings?: SortOrderInput | SortOrder
+    created_at?: SortOrder
+    updated_at?: SortOrder
+    pets?: PetOrderByRelationAggregateInput
+  }
+
+  export type PetTypeWhereUniqueInput = Prisma.AtLeast<{
+    id?: number
+    name?: string
+    slug?: string
+    AND?: PetTypeWhereInput | PetTypeWhereInput[]
+    OR?: PetTypeWhereInput[]
+    NOT?: PetTypeWhereInput | PetTypeWhereInput[]
+    meta?: JsonNullableFilter<"PetType">
+    settings?: JsonNullableFilter<"PetType">
+    created_at?: DateTimeFilter<"PetType"> | Date | string
+    updated_at?: DateTimeFilter<"PetType"> | Date | string
+    pets?: PetListRelationFilter
+  }, "id" | "name" | "slug">
+
+  export type PetTypeOrderByWithAggregationInput = {
+    id?: SortOrder
+    name?: SortOrder
+    slug?: SortOrder
+    meta?: SortOrderInput | SortOrder
+    settings?: SortOrderInput | SortOrder
+    created_at?: SortOrder
+    updated_at?: SortOrder
+    _count?: PetTypeCountOrderByAggregateInput
+    _avg?: PetTypeAvgOrderByAggregateInput
+    _max?: PetTypeMaxOrderByAggregateInput
+    _min?: PetTypeMinOrderByAggregateInput
+    _sum?: PetTypeSumOrderByAggregateInput
+  }
+
+  export type PetTypeScalarWhereWithAggregatesInput = {
+    AND?: PetTypeScalarWhereWithAggregatesInput | PetTypeScalarWhereWithAggregatesInput[]
+    OR?: PetTypeScalarWhereWithAggregatesInput[]
+    NOT?: PetTypeScalarWhereWithAggregatesInput | PetTypeScalarWhereWithAggregatesInput[]
+    id?: IntWithAggregatesFilter<"PetType"> | number
+    name?: StringWithAggregatesFilter<"PetType"> | string
+    slug?: StringWithAggregatesFilter<"PetType"> | string
+    meta?: JsonNullableWithAggregatesFilter<"PetType">
+    settings?: JsonNullableWithAggregatesFilter<"PetType">
+    created_at?: DateTimeWithAggregatesFilter<"PetType"> | Date | string
+    updated_at?: DateTimeWithAggregatesFilter<"PetType"> | Date | string
+  }
+
+  export type PetWhereInput = {
+    AND?: PetWhereInput | PetWhereInput[]
+    OR?: PetWhereInput[]
+    NOT?: PetWhereInput | PetWhereInput[]
+    id?: IntFilter<"Pet"> | number
+    tagId?: StringFilter<"Pet"> | string
+    userId?: IntFilter<"Pet"> | number
+    petTypeId?: IntFilter<"Pet"> | number
+    name?: StringFilter<"Pet"> | string
+    gender?: EnumGenderNullableFilter<"Pet"> | $Enums.Gender | null
+    photos?: StringNullableListFilter<"Pet">
+    size?: EnumSizeNullableFilter<"Pet"> | $Enums.Size | null
+    isMissing?: BoolFilter<"Pet"> | boolean
+    birthday?: DateTimeNullableFilter<"Pet"> | Date | string | null
+    created_at?: DateTimeFilter<"Pet"> | Date | string
+    updated_at?: DateTimeFilter<"Pet"> | Date | string
+    user?: XOR<UserScalarRelationFilter, UserWhereInput>
+    petType?: XOR<PetTypeScalarRelationFilter, PetTypeWhereInput>
+    alerts?: AlertListRelationFilter
+  }
+
+  export type PetOrderByWithRelationInput = {
+    id?: SortOrder
+    tagId?: SortOrder
+    userId?: SortOrder
+    petTypeId?: SortOrder
+    name?: SortOrder
+    gender?: SortOrderInput | SortOrder
+    photos?: SortOrder
+    size?: SortOrderInput | SortOrder
+    isMissing?: SortOrder
+    birthday?: SortOrderInput | SortOrder
+    created_at?: SortOrder
+    updated_at?: SortOrder
+    user?: UserOrderByWithRelationInput
+    petType?: PetTypeOrderByWithRelationInput
+    alerts?: AlertOrderByRelationAggregateInput
+  }
+
+  export type PetWhereUniqueInput = Prisma.AtLeast<{
+    id?: number
+    tagId?: string
+    AND?: PetWhereInput | PetWhereInput[]
+    OR?: PetWhereInput[]
+    NOT?: PetWhereInput | PetWhereInput[]
+    userId?: IntFilter<"Pet"> | number
+    petTypeId?: IntFilter<"Pet"> | number
+    name?: StringFilter<"Pet"> | string
+    gender?: EnumGenderNullableFilter<"Pet"> | $Enums.Gender | null
+    photos?: StringNullableListFilter<"Pet">
+    size?: EnumSizeNullableFilter<"Pet"> | $Enums.Size | null
+    isMissing?: BoolFilter<"Pet"> | boolean
+    birthday?: DateTimeNullableFilter<"Pet"> | Date | string | null
+    created_at?: DateTimeFilter<"Pet"> | Date | string
+    updated_at?: DateTimeFilter<"Pet"> | Date | string
+    user?: XOR<UserScalarRelationFilter, UserWhereInput>
+    petType?: XOR<PetTypeScalarRelationFilter, PetTypeWhereInput>
+    alerts?: AlertListRelationFilter
+  }, "id" | "tagId">
+
+  export type PetOrderByWithAggregationInput = {
+    id?: SortOrder
+    tagId?: SortOrder
+    userId?: SortOrder
+    petTypeId?: SortOrder
+    name?: SortOrder
+    gender?: SortOrderInput | SortOrder
+    photos?: SortOrder
+    size?: SortOrderInput | SortOrder
+    isMissing?: SortOrder
+    birthday?: SortOrderInput | SortOrder
+    created_at?: SortOrder
+    updated_at?: SortOrder
+    _count?: PetCountOrderByAggregateInput
+    _avg?: PetAvgOrderByAggregateInput
+    _max?: PetMaxOrderByAggregateInput
+    _min?: PetMinOrderByAggregateInput
+    _sum?: PetSumOrderByAggregateInput
+  }
+
+  export type PetScalarWhereWithAggregatesInput = {
+    AND?: PetScalarWhereWithAggregatesInput | PetScalarWhereWithAggregatesInput[]
+    OR?: PetScalarWhereWithAggregatesInput[]
+    NOT?: PetScalarWhereWithAggregatesInput | PetScalarWhereWithAggregatesInput[]
+    id?: IntWithAggregatesFilter<"Pet"> | number
+    tagId?: StringWithAggregatesFilter<"Pet"> | string
+    userId?: IntWithAggregatesFilter<"Pet"> | number
+    petTypeId?: IntWithAggregatesFilter<"Pet"> | number
+    name?: StringWithAggregatesFilter<"Pet"> | string
+    gender?: EnumGenderNullableWithAggregatesFilter<"Pet"> | $Enums.Gender | null
+    photos?: StringNullableListFilter<"Pet">
+    size?: EnumSizeNullableWithAggregatesFilter<"Pet"> | $Enums.Size | null
+    isMissing?: BoolWithAggregatesFilter<"Pet"> | boolean
+    birthday?: DateTimeNullableWithAggregatesFilter<"Pet"> | Date | string | null
+    created_at?: DateTimeWithAggregatesFilter<"Pet"> | Date | string
+    updated_at?: DateTimeWithAggregatesFilter<"Pet"> | Date | string
   }
 
   export type AlertWhereInput = {
@@ -19966,6 +24569,7 @@ export namespace Prisma {
     NOT?: AlertWhereInput | AlertWhereInput[]
     id?: IntFilter<"Alert"> | number
     creator_id?: IntFilter<"Alert"> | number
+    pet_id?: IntNullableFilter<"Alert"> | number | null
     pet_name?: StringFilter<"Alert"> | string
     pet_species?: EnumPetSpeciesFilter<"Alert"> | $Enums.PetSpecies
     pet_breed?: StringNullableFilter<"Alert"> | string | null
@@ -19991,7 +24595,10 @@ export namespace Prisma {
     notes?: StringNullableFilter<"Alert"> | string | null
     reward_offered?: BoolFilter<"Alert"> | boolean
     reward_amount?: DecimalNullableFilter<"Alert"> | Decimal | DecimalJsLike | number | string | null
+    meta?: JsonNullableFilter<"Alert">
+    settings?: JsonNullableFilter<"Alert">
     creator?: XOR<UserScalarRelationFilter, UserWhereInput>
+    pet?: XOR<PetNullableScalarRelationFilter, PetWhereInput> | null
     sightings?: SightingListRelationFilter
     notifications?: NotificationListRelationFilter
   }
@@ -19999,6 +24606,7 @@ export namespace Prisma {
   export type AlertOrderByWithRelationInput = {
     id?: SortOrder
     creator_id?: SortOrder
+    pet_id?: SortOrderInput | SortOrder
     pet_name?: SortOrder
     pet_species?: SortOrder
     pet_breed?: SortOrderInput | SortOrder
@@ -20024,7 +24632,10 @@ export namespace Prisma {
     notes?: SortOrderInput | SortOrder
     reward_offered?: SortOrder
     reward_amount?: SortOrderInput | SortOrder
+    meta?: SortOrderInput | SortOrder
+    settings?: SortOrderInput | SortOrder
     creator?: UserOrderByWithRelationInput
+    pet?: PetOrderByWithRelationInput
     sightings?: SightingOrderByRelationAggregateInput
     notifications?: NotificationOrderByRelationAggregateInput
   }
@@ -20035,6 +24646,7 @@ export namespace Prisma {
     OR?: AlertWhereInput[]
     NOT?: AlertWhereInput | AlertWhereInput[]
     creator_id?: IntFilter<"Alert"> | number
+    pet_id?: IntNullableFilter<"Alert"> | number | null
     pet_name?: StringFilter<"Alert"> | string
     pet_species?: EnumPetSpeciesFilter<"Alert"> | $Enums.PetSpecies
     pet_breed?: StringNullableFilter<"Alert"> | string | null
@@ -20060,7 +24672,10 @@ export namespace Prisma {
     notes?: StringNullableFilter<"Alert"> | string | null
     reward_offered?: BoolFilter<"Alert"> | boolean
     reward_amount?: DecimalNullableFilter<"Alert"> | Decimal | DecimalJsLike | number | string | null
+    meta?: JsonNullableFilter<"Alert">
+    settings?: JsonNullableFilter<"Alert">
     creator?: XOR<UserScalarRelationFilter, UserWhereInput>
+    pet?: XOR<PetNullableScalarRelationFilter, PetWhereInput> | null
     sightings?: SightingListRelationFilter
     notifications?: NotificationListRelationFilter
   }, "id">
@@ -20068,6 +24683,7 @@ export namespace Prisma {
   export type AlertOrderByWithAggregationInput = {
     id?: SortOrder
     creator_id?: SortOrder
+    pet_id?: SortOrderInput | SortOrder
     pet_name?: SortOrder
     pet_species?: SortOrder
     pet_breed?: SortOrderInput | SortOrder
@@ -20093,6 +24709,8 @@ export namespace Prisma {
     notes?: SortOrderInput | SortOrder
     reward_offered?: SortOrder
     reward_amount?: SortOrderInput | SortOrder
+    meta?: SortOrderInput | SortOrder
+    settings?: SortOrderInput | SortOrder
     _count?: AlertCountOrderByAggregateInput
     _avg?: AlertAvgOrderByAggregateInput
     _max?: AlertMaxOrderByAggregateInput
@@ -20106,6 +24724,7 @@ export namespace Prisma {
     NOT?: AlertScalarWhereWithAggregatesInput | AlertScalarWhereWithAggregatesInput[]
     id?: IntWithAggregatesFilter<"Alert"> | number
     creator_id?: IntWithAggregatesFilter<"Alert"> | number
+    pet_id?: IntNullableWithAggregatesFilter<"Alert"> | number | null
     pet_name?: StringWithAggregatesFilter<"Alert"> | string
     pet_species?: EnumPetSpeciesWithAggregatesFilter<"Alert"> | $Enums.PetSpecies
     pet_breed?: StringNullableWithAggregatesFilter<"Alert"> | string | null
@@ -20131,6 +24750,8 @@ export namespace Prisma {
     notes?: StringNullableWithAggregatesFilter<"Alert"> | string | null
     reward_offered?: BoolWithAggregatesFilter<"Alert"> | boolean
     reward_amount?: DecimalNullableWithAggregatesFilter<"Alert"> | Decimal | DecimalJsLike | number | string | null
+    meta?: JsonNullableWithAggregatesFilter<"Alert">
+    settings?: JsonNullableWithAggregatesFilter<"Alert">
   }
 
   export type DeviceWhereInput = {
@@ -20368,6 +24989,88 @@ export namespace Prisma {
     updated_at?: DateTimeWithAggregatesFilter<"SavedZone"> | Date | string
   }
 
+  export type AlertZoneWhereInput = {
+    AND?: AlertZoneWhereInput | AlertZoneWhereInput[]
+    OR?: AlertZoneWhereInput[]
+    NOT?: AlertZoneWhereInput | AlertZoneWhereInput[]
+    id?: IntFilter<"AlertZone"> | number
+    user_id?: IntFilter<"AlertZone"> | number
+    name?: StringFilter<"AlertZone"> | string
+    lat?: FloatFilter<"AlertZone"> | number
+    lon?: FloatFilter<"AlertZone"> | number
+    radius_meters?: IntFilter<"AlertZone"> | number
+    is_active?: BoolFilter<"AlertZone"> | boolean
+    priority?: IntFilter<"AlertZone"> | number
+    created_at?: DateTimeFilter<"AlertZone"> | Date | string
+    updated_at?: DateTimeFilter<"AlertZone"> | Date | string
+    user?: XOR<UserScalarRelationFilter, UserWhereInput>
+  }
+
+  export type AlertZoneOrderByWithRelationInput = {
+    id?: SortOrder
+    user_id?: SortOrder
+    name?: SortOrder
+    lat?: SortOrder
+    lon?: SortOrder
+    radius_meters?: SortOrder
+    is_active?: SortOrder
+    priority?: SortOrder
+    created_at?: SortOrder
+    updated_at?: SortOrder
+    user?: UserOrderByWithRelationInput
+  }
+
+  export type AlertZoneWhereUniqueInput = Prisma.AtLeast<{
+    id?: number
+    AND?: AlertZoneWhereInput | AlertZoneWhereInput[]
+    OR?: AlertZoneWhereInput[]
+    NOT?: AlertZoneWhereInput | AlertZoneWhereInput[]
+    user_id?: IntFilter<"AlertZone"> | number
+    name?: StringFilter<"AlertZone"> | string
+    lat?: FloatFilter<"AlertZone"> | number
+    lon?: FloatFilter<"AlertZone"> | number
+    radius_meters?: IntFilter<"AlertZone"> | number
+    is_active?: BoolFilter<"AlertZone"> | boolean
+    priority?: IntFilter<"AlertZone"> | number
+    created_at?: DateTimeFilter<"AlertZone"> | Date | string
+    updated_at?: DateTimeFilter<"AlertZone"> | Date | string
+    user?: XOR<UserScalarRelationFilter, UserWhereInput>
+  }, "id">
+
+  export type AlertZoneOrderByWithAggregationInput = {
+    id?: SortOrder
+    user_id?: SortOrder
+    name?: SortOrder
+    lat?: SortOrder
+    lon?: SortOrder
+    radius_meters?: SortOrder
+    is_active?: SortOrder
+    priority?: SortOrder
+    created_at?: SortOrder
+    updated_at?: SortOrder
+    _count?: AlertZoneCountOrderByAggregateInput
+    _avg?: AlertZoneAvgOrderByAggregateInput
+    _max?: AlertZoneMaxOrderByAggregateInput
+    _min?: AlertZoneMinOrderByAggregateInput
+    _sum?: AlertZoneSumOrderByAggregateInput
+  }
+
+  export type AlertZoneScalarWhereWithAggregatesInput = {
+    AND?: AlertZoneScalarWhereWithAggregatesInput | AlertZoneScalarWhereWithAggregatesInput[]
+    OR?: AlertZoneScalarWhereWithAggregatesInput[]
+    NOT?: AlertZoneScalarWhereWithAggregatesInput | AlertZoneScalarWhereWithAggregatesInput[]
+    id?: IntWithAggregatesFilter<"AlertZone"> | number
+    user_id?: IntWithAggregatesFilter<"AlertZone"> | number
+    name?: StringWithAggregatesFilter<"AlertZone"> | string
+    lat?: FloatWithAggregatesFilter<"AlertZone"> | number
+    lon?: FloatWithAggregatesFilter<"AlertZone"> | number
+    radius_meters?: IntWithAggregatesFilter<"AlertZone"> | number
+    is_active?: BoolWithAggregatesFilter<"AlertZone"> | boolean
+    priority?: IntWithAggregatesFilter<"AlertZone"> | number
+    created_at?: DateTimeWithAggregatesFilter<"AlertZone"> | Date | string
+    updated_at?: DateTimeWithAggregatesFilter<"AlertZone"> | Date | string
+  }
+
   export type SightingWhereInput = {
     AND?: SightingWhereInput | SightingWhereInput[]
     OR?: SightingWhereInput[]
@@ -20386,6 +25089,8 @@ export namespace Prisma {
     dismissed?: BoolFilter<"Sighting"> | boolean
     dismissed_at?: DateTimeNullableFilter<"Sighting"> | Date | string | null
     dismissed_reason?: StringNullableFilter<"Sighting"> | string | null
+    meta?: JsonNullableFilter<"Sighting">
+    settings?: JsonNullableFilter<"Sighting">
     created_at?: DateTimeFilter<"Sighting"> | Date | string
     updated_at?: DateTimeFilter<"Sighting"> | Date | string
     alert?: XOR<AlertScalarRelationFilter, AlertWhereInput>
@@ -20407,6 +25112,8 @@ export namespace Prisma {
     dismissed?: SortOrder
     dismissed_at?: SortOrderInput | SortOrder
     dismissed_reason?: SortOrderInput | SortOrder
+    meta?: SortOrderInput | SortOrder
+    settings?: SortOrderInput | SortOrder
     created_at?: SortOrder
     updated_at?: SortOrder
     alert?: AlertOrderByWithRelationInput
@@ -20431,6 +25138,8 @@ export namespace Prisma {
     dismissed?: BoolFilter<"Sighting"> | boolean
     dismissed_at?: DateTimeNullableFilter<"Sighting"> | Date | string | null
     dismissed_reason?: StringNullableFilter<"Sighting"> | string | null
+    meta?: JsonNullableFilter<"Sighting">
+    settings?: JsonNullableFilter<"Sighting">
     created_at?: DateTimeFilter<"Sighting"> | Date | string
     updated_at?: DateTimeFilter<"Sighting"> | Date | string
     alert?: XOR<AlertScalarRelationFilter, AlertWhereInput>
@@ -20452,6 +25161,8 @@ export namespace Prisma {
     dismissed?: SortOrder
     dismissed_at?: SortOrderInput | SortOrder
     dismissed_reason?: SortOrderInput | SortOrder
+    meta?: SortOrderInput | SortOrder
+    settings?: SortOrderInput | SortOrder
     created_at?: SortOrder
     updated_at?: SortOrder
     _count?: SightingCountOrderByAggregateInput
@@ -20479,6 +25190,8 @@ export namespace Prisma {
     dismissed?: BoolWithAggregatesFilter<"Sighting"> | boolean
     dismissed_at?: DateTimeNullableWithAggregatesFilter<"Sighting"> | Date | string | null
     dismissed_reason?: StringNullableWithAggregatesFilter<"Sighting"> | string | null
+    meta?: JsonNullableWithAggregatesFilter<"Sighting">
+    settings?: JsonNullableWithAggregatesFilter<"Sighting">
     created_at?: DateTimeWithAggregatesFilter<"Sighting"> | Date | string
     updated_at?: DateTimeWithAggregatesFilter<"Sighting"> | Date | string
   }
@@ -20504,6 +25217,8 @@ export namespace Prisma {
     exclusion_reason?: StringNullableFilter<"Notification"> | string | null
     push_message_id?: StringNullableFilter<"Notification"> | string | null
     push_response?: JsonNullableFilter<"Notification">
+    meta?: JsonNullableFilter<"Notification">
+    settings?: JsonNullableFilter<"Notification">
     created_at?: DateTimeFilter<"Notification"> | Date | string
     updated_at?: DateTimeFilter<"Notification"> | Date | string
     alert?: XOR<AlertScalarRelationFilter, AlertWhereInput>
@@ -20528,6 +25243,8 @@ export namespace Prisma {
     exclusion_reason?: SortOrderInput | SortOrder
     push_message_id?: SortOrderInput | SortOrder
     push_response?: SortOrderInput | SortOrder
+    meta?: SortOrderInput | SortOrder
+    settings?: SortOrderInput | SortOrder
     created_at?: SortOrder
     updated_at?: SortOrder
     alert?: AlertOrderByWithRelationInput
@@ -20555,6 +25272,8 @@ export namespace Prisma {
     exclusion_reason?: StringNullableFilter<"Notification"> | string | null
     push_message_id?: StringNullableFilter<"Notification"> | string | null
     push_response?: JsonNullableFilter<"Notification">
+    meta?: JsonNullableFilter<"Notification">
+    settings?: JsonNullableFilter<"Notification">
     created_at?: DateTimeFilter<"Notification"> | Date | string
     updated_at?: DateTimeFilter<"Notification"> | Date | string
     alert?: XOR<AlertScalarRelationFilter, AlertWhereInput>
@@ -20579,6 +25298,8 @@ export namespace Prisma {
     exclusion_reason?: SortOrderInput | SortOrder
     push_message_id?: SortOrderInput | SortOrder
     push_response?: SortOrderInput | SortOrder
+    meta?: SortOrderInput | SortOrder
+    settings?: SortOrderInput | SortOrder
     created_at?: SortOrder
     updated_at?: SortOrder
     _count?: NotificationCountOrderByAggregateInput
@@ -20609,6 +25330,8 @@ export namespace Prisma {
     exclusion_reason?: StringNullableWithAggregatesFilter<"Notification"> | string | null
     push_message_id?: StringNullableWithAggregatesFilter<"Notification"> | string | null
     push_response?: JsonNullableWithAggregatesFilter<"Notification">
+    meta?: JsonNullableWithAggregatesFilter<"Notification">
+    settings?: JsonNullableWithAggregatesFilter<"Notification">
     created_at?: DateTimeWithAggregatesFilter<"Notification"> | Date | string
     updated_at?: DateTimeWithAggregatesFilter<"Notification"> | Date | string
   }
@@ -20634,6 +25357,9 @@ export namespace Prisma {
     devices?: DeviceCreateNestedManyWithoutUserInput
     created_alerts?: AlertCreateNestedManyWithoutCreatorInput
     reported_sightings?: SightingCreateNestedManyWithoutReporterInput
+    auditLogs?: AuditLogCreateNestedManyWithoutUserInput
+    pets?: PetCreateNestedManyWithoutUserInput
+    alert_zones?: AlertZoneCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateInput = {
@@ -20658,6 +25384,9 @@ export namespace Prisma {
     devices?: DeviceUncheckedCreateNestedManyWithoutUserInput
     created_alerts?: AlertUncheckedCreateNestedManyWithoutCreatorInput
     reported_sightings?: SightingUncheckedCreateNestedManyWithoutReporterInput
+    auditLogs?: AuditLogUncheckedCreateNestedManyWithoutUserInput
+    pets?: PetUncheckedCreateNestedManyWithoutUserInput
+    alert_zones?: AlertZoneUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserUpdateInput = {
@@ -20681,6 +25410,9 @@ export namespace Prisma {
     devices?: DeviceUpdateManyWithoutUserNestedInput
     created_alerts?: AlertUpdateManyWithoutCreatorNestedInput
     reported_sightings?: SightingUpdateManyWithoutReporterNestedInput
+    auditLogs?: AuditLogUpdateManyWithoutUserNestedInput
+    pets?: PetUpdateManyWithoutUserNestedInput
+    alert_zones?: AlertZoneUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateInput = {
@@ -20705,6 +25437,9 @@ export namespace Prisma {
     devices?: DeviceUncheckedUpdateManyWithoutUserNestedInput
     created_alerts?: AlertUncheckedUpdateManyWithoutCreatorNestedInput
     reported_sightings?: SightingUncheckedUpdateManyWithoutReporterNestedInput
+    auditLogs?: AuditLogUncheckedUpdateManyWithoutUserNestedInput
+    pets?: PetUncheckedUpdateManyWithoutUserNestedInput
+    alert_zones?: AlertZoneUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type UserCreateManyInput = {
@@ -20867,6 +25602,7 @@ export namespace Prisma {
     active?: boolean
     permissions?: NullableJsonNullValueInput | InputJsonValue
     meta?: NullableJsonNullValueInput | InputJsonValue
+    settings?: NullableJsonNullValueInput | InputJsonValue
     conditions?: NullableJsonNullValueInput | InputJsonValue
     rules?: NullableJsonNullValueInput | InputJsonValue
     created_at?: Date | string
@@ -20883,6 +25619,7 @@ export namespace Prisma {
     active?: boolean
     permissions?: NullableJsonNullValueInput | InputJsonValue
     meta?: NullableJsonNullValueInput | InputJsonValue
+    settings?: NullableJsonNullValueInput | InputJsonValue
     conditions?: NullableJsonNullValueInput | InputJsonValue
     rules?: NullableJsonNullValueInput | InputJsonValue
     created_at?: Date | string
@@ -20898,6 +25635,7 @@ export namespace Prisma {
     active?: BoolFieldUpdateOperationsInput | boolean
     permissions?: NullableJsonNullValueInput | InputJsonValue
     meta?: NullableJsonNullValueInput | InputJsonValue
+    settings?: NullableJsonNullValueInput | InputJsonValue
     conditions?: NullableJsonNullValueInput | InputJsonValue
     rules?: NullableJsonNullValueInput | InputJsonValue
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -20914,6 +25652,7 @@ export namespace Prisma {
     active?: BoolFieldUpdateOperationsInput | boolean
     permissions?: NullableJsonNullValueInput | InputJsonValue
     meta?: NullableJsonNullValueInput | InputJsonValue
+    settings?: NullableJsonNullValueInput | InputJsonValue
     conditions?: NullableJsonNullValueInput | InputJsonValue
     rules?: NullableJsonNullValueInput | InputJsonValue
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -20930,6 +25669,7 @@ export namespace Prisma {
     active?: boolean
     permissions?: NullableJsonNullValueInput | InputJsonValue
     meta?: NullableJsonNullValueInput | InputJsonValue
+    settings?: NullableJsonNullValueInput | InputJsonValue
     conditions?: NullableJsonNullValueInput | InputJsonValue
     rules?: NullableJsonNullValueInput | InputJsonValue
     created_at?: Date | string
@@ -20944,6 +25684,7 @@ export namespace Prisma {
     active?: BoolFieldUpdateOperationsInput | boolean
     permissions?: NullableJsonNullValueInput | InputJsonValue
     meta?: NullableJsonNullValueInput | InputJsonValue
+    settings?: NullableJsonNullValueInput | InputJsonValue
     conditions?: NullableJsonNullValueInput | InputJsonValue
     rules?: NullableJsonNullValueInput | InputJsonValue
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -20959,6 +25700,7 @@ export namespace Prisma {
     active?: BoolFieldUpdateOperationsInput | boolean
     permissions?: NullableJsonNullValueInput | InputJsonValue
     meta?: NullableJsonNullValueInput | InputJsonValue
+    settings?: NullableJsonNullValueInput | InputJsonValue
     conditions?: NullableJsonNullValueInput | InputJsonValue
     rules?: NullableJsonNullValueInput | InputJsonValue
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -21076,6 +25818,8 @@ export namespace Prisma {
     refreshTokenExpiresAt?: Date | string | null
     scope?: string | null
     password?: string | null
+    meta?: NullableJsonNullValueInput | InputJsonValue
+    settings?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
     user: UserCreateNestedOneWithoutAccountsInput
@@ -21093,6 +25837,8 @@ export namespace Prisma {
     refreshTokenExpiresAt?: Date | string | null
     scope?: string | null
     password?: string | null
+    meta?: NullableJsonNullValueInput | InputJsonValue
+    settings?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -21107,6 +25853,8 @@ export namespace Prisma {
     refreshTokenExpiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     scope?: NullableStringFieldUpdateOperationsInput | string | null
     password?: NullableStringFieldUpdateOperationsInput | string | null
+    meta?: NullableJsonNullValueInput | InputJsonValue
+    settings?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     user?: UserUpdateOneRequiredWithoutAccountsNestedInput
@@ -21124,6 +25872,8 @@ export namespace Prisma {
     refreshTokenExpiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     scope?: NullableStringFieldUpdateOperationsInput | string | null
     password?: NullableStringFieldUpdateOperationsInput | string | null
+    meta?: NullableJsonNullValueInput | InputJsonValue
+    settings?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -21140,6 +25890,8 @@ export namespace Prisma {
     refreshTokenExpiresAt?: Date | string | null
     scope?: string | null
     password?: string | null
+    meta?: NullableJsonNullValueInput | InputJsonValue
+    settings?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -21154,6 +25906,8 @@ export namespace Prisma {
     refreshTokenExpiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     scope?: NullableStringFieldUpdateOperationsInput | string | null
     password?: NullableStringFieldUpdateOperationsInput | string | null
+    meta?: NullableJsonNullValueInput | InputJsonValue
+    settings?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -21170,6 +25924,8 @@ export namespace Prisma {
     refreshTokenExpiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     scope?: NullableStringFieldUpdateOperationsInput | string | null
     password?: NullableStringFieldUpdateOperationsInput | string | null
+    meta?: NullableJsonNullValueInput | InputJsonValue
+    settings?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -21317,76 +26073,341 @@ export namespace Prisma {
 
   export type AuditLogCreateInput = {
     action: string
-    userId?: number | null
-    actorId?: number | null
+    actorId?: string | null
+    actorType?: string | null
     metadata?: NullableJsonNullValueInput | InputJsonValue
     ipAddress?: string | null
     userAgent?: string | null
     createdAt?: Date | string
+    eventType: $Enums.AuditEventType
+    entityType?: $Enums.AuditEntityType | null
+    entityId?: number | null
+    description?: string | null
+    oldValues?: NullableJsonNullValueInput | InputJsonValue
+    newValues?: NullableJsonNullValueInput | InputJsonValue
+    sessionId?: string | null
+    requestId?: string | null
+    success?: boolean
+    errorMessage?: string | null
+    errorStack?: string | null
+    timestamp?: Date | string
+    user?: UserCreateNestedOneWithoutAuditLogsInput
   }
 
   export type AuditLogUncheckedCreateInput = {
     id?: number
     action: string
     userId?: number | null
-    actorId?: number | null
+    actorId?: string | null
+    actorType?: string | null
     metadata?: NullableJsonNullValueInput | InputJsonValue
     ipAddress?: string | null
     userAgent?: string | null
     createdAt?: Date | string
+    eventType: $Enums.AuditEventType
+    entityType?: $Enums.AuditEntityType | null
+    entityId?: number | null
+    description?: string | null
+    oldValues?: NullableJsonNullValueInput | InputJsonValue
+    newValues?: NullableJsonNullValueInput | InputJsonValue
+    sessionId?: string | null
+    requestId?: string | null
+    success?: boolean
+    errorMessage?: string | null
+    errorStack?: string | null
+    timestamp?: Date | string
   }
 
   export type AuditLogUpdateInput = {
     action?: StringFieldUpdateOperationsInput | string
-    userId?: NullableIntFieldUpdateOperationsInput | number | null
-    actorId?: NullableIntFieldUpdateOperationsInput | number | null
+    actorId?: NullableStringFieldUpdateOperationsInput | string | null
+    actorType?: NullableStringFieldUpdateOperationsInput | string | null
     metadata?: NullableJsonNullValueInput | InputJsonValue
     ipAddress?: NullableStringFieldUpdateOperationsInput | string | null
     userAgent?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    eventType?: EnumAuditEventTypeFieldUpdateOperationsInput | $Enums.AuditEventType
+    entityType?: NullableEnumAuditEntityTypeFieldUpdateOperationsInput | $Enums.AuditEntityType | null
+    entityId?: NullableIntFieldUpdateOperationsInput | number | null
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    oldValues?: NullableJsonNullValueInput | InputJsonValue
+    newValues?: NullableJsonNullValueInput | InputJsonValue
+    sessionId?: NullableStringFieldUpdateOperationsInput | string | null
+    requestId?: NullableStringFieldUpdateOperationsInput | string | null
+    success?: BoolFieldUpdateOperationsInput | boolean
+    errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    errorStack?: NullableStringFieldUpdateOperationsInput | string | null
+    timestamp?: DateTimeFieldUpdateOperationsInput | Date | string
+    user?: UserUpdateOneWithoutAuditLogsNestedInput
   }
 
   export type AuditLogUncheckedUpdateInput = {
     id?: IntFieldUpdateOperationsInput | number
     action?: StringFieldUpdateOperationsInput | string
     userId?: NullableIntFieldUpdateOperationsInput | number | null
-    actorId?: NullableIntFieldUpdateOperationsInput | number | null
+    actorId?: NullableStringFieldUpdateOperationsInput | string | null
+    actorType?: NullableStringFieldUpdateOperationsInput | string | null
     metadata?: NullableJsonNullValueInput | InputJsonValue
     ipAddress?: NullableStringFieldUpdateOperationsInput | string | null
     userAgent?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    eventType?: EnumAuditEventTypeFieldUpdateOperationsInput | $Enums.AuditEventType
+    entityType?: NullableEnumAuditEntityTypeFieldUpdateOperationsInput | $Enums.AuditEntityType | null
+    entityId?: NullableIntFieldUpdateOperationsInput | number | null
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    oldValues?: NullableJsonNullValueInput | InputJsonValue
+    newValues?: NullableJsonNullValueInput | InputJsonValue
+    sessionId?: NullableStringFieldUpdateOperationsInput | string | null
+    requestId?: NullableStringFieldUpdateOperationsInput | string | null
+    success?: BoolFieldUpdateOperationsInput | boolean
+    errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    errorStack?: NullableStringFieldUpdateOperationsInput | string | null
+    timestamp?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type AuditLogCreateManyInput = {
     id?: number
     action: string
     userId?: number | null
-    actorId?: number | null
+    actorId?: string | null
+    actorType?: string | null
     metadata?: NullableJsonNullValueInput | InputJsonValue
     ipAddress?: string | null
     userAgent?: string | null
     createdAt?: Date | string
+    eventType: $Enums.AuditEventType
+    entityType?: $Enums.AuditEntityType | null
+    entityId?: number | null
+    description?: string | null
+    oldValues?: NullableJsonNullValueInput | InputJsonValue
+    newValues?: NullableJsonNullValueInput | InputJsonValue
+    sessionId?: string | null
+    requestId?: string | null
+    success?: boolean
+    errorMessage?: string | null
+    errorStack?: string | null
+    timestamp?: Date | string
   }
 
   export type AuditLogUpdateManyMutationInput = {
     action?: StringFieldUpdateOperationsInput | string
-    userId?: NullableIntFieldUpdateOperationsInput | number | null
-    actorId?: NullableIntFieldUpdateOperationsInput | number | null
+    actorId?: NullableStringFieldUpdateOperationsInput | string | null
+    actorType?: NullableStringFieldUpdateOperationsInput | string | null
     metadata?: NullableJsonNullValueInput | InputJsonValue
     ipAddress?: NullableStringFieldUpdateOperationsInput | string | null
     userAgent?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    eventType?: EnumAuditEventTypeFieldUpdateOperationsInput | $Enums.AuditEventType
+    entityType?: NullableEnumAuditEntityTypeFieldUpdateOperationsInput | $Enums.AuditEntityType | null
+    entityId?: NullableIntFieldUpdateOperationsInput | number | null
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    oldValues?: NullableJsonNullValueInput | InputJsonValue
+    newValues?: NullableJsonNullValueInput | InputJsonValue
+    sessionId?: NullableStringFieldUpdateOperationsInput | string | null
+    requestId?: NullableStringFieldUpdateOperationsInput | string | null
+    success?: BoolFieldUpdateOperationsInput | boolean
+    errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    errorStack?: NullableStringFieldUpdateOperationsInput | string | null
+    timestamp?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type AuditLogUncheckedUpdateManyInput = {
     id?: IntFieldUpdateOperationsInput | number
     action?: StringFieldUpdateOperationsInput | string
     userId?: NullableIntFieldUpdateOperationsInput | number | null
-    actorId?: NullableIntFieldUpdateOperationsInput | number | null
+    actorId?: NullableStringFieldUpdateOperationsInput | string | null
+    actorType?: NullableStringFieldUpdateOperationsInput | string | null
     metadata?: NullableJsonNullValueInput | InputJsonValue
     ipAddress?: NullableStringFieldUpdateOperationsInput | string | null
     userAgent?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    eventType?: EnumAuditEventTypeFieldUpdateOperationsInput | $Enums.AuditEventType
+    entityType?: NullableEnumAuditEntityTypeFieldUpdateOperationsInput | $Enums.AuditEntityType | null
+    entityId?: NullableIntFieldUpdateOperationsInput | number | null
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    oldValues?: NullableJsonNullValueInput | InputJsonValue
+    newValues?: NullableJsonNullValueInput | InputJsonValue
+    sessionId?: NullableStringFieldUpdateOperationsInput | string | null
+    requestId?: NullableStringFieldUpdateOperationsInput | string | null
+    success?: BoolFieldUpdateOperationsInput | boolean
+    errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    errorStack?: NullableStringFieldUpdateOperationsInput | string | null
+    timestamp?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type PetTypeCreateInput = {
+    name: string
+    slug: string
+    meta?: NullableJsonNullValueInput | InputJsonValue
+    settings?: NullableJsonNullValueInput | InputJsonValue
+    created_at?: Date | string
+    updated_at?: Date | string
+    pets?: PetCreateNestedManyWithoutPetTypeInput
+  }
+
+  export type PetTypeUncheckedCreateInput = {
+    id?: number
+    name: string
+    slug: string
+    meta?: NullableJsonNullValueInput | InputJsonValue
+    settings?: NullableJsonNullValueInput | InputJsonValue
+    created_at?: Date | string
+    updated_at?: Date | string
+    pets?: PetUncheckedCreateNestedManyWithoutPetTypeInput
+  }
+
+  export type PetTypeUpdateInput = {
+    name?: StringFieldUpdateOperationsInput | string
+    slug?: StringFieldUpdateOperationsInput | string
+    meta?: NullableJsonNullValueInput | InputJsonValue
+    settings?: NullableJsonNullValueInput | InputJsonValue
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    pets?: PetUpdateManyWithoutPetTypeNestedInput
+  }
+
+  export type PetTypeUncheckedUpdateInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    name?: StringFieldUpdateOperationsInput | string
+    slug?: StringFieldUpdateOperationsInput | string
+    meta?: NullableJsonNullValueInput | InputJsonValue
+    settings?: NullableJsonNullValueInput | InputJsonValue
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    pets?: PetUncheckedUpdateManyWithoutPetTypeNestedInput
+  }
+
+  export type PetTypeCreateManyInput = {
+    id?: number
+    name: string
+    slug: string
+    meta?: NullableJsonNullValueInput | InputJsonValue
+    settings?: NullableJsonNullValueInput | InputJsonValue
+    created_at?: Date | string
+    updated_at?: Date | string
+  }
+
+  export type PetTypeUpdateManyMutationInput = {
+    name?: StringFieldUpdateOperationsInput | string
+    slug?: StringFieldUpdateOperationsInput | string
+    meta?: NullableJsonNullValueInput | InputJsonValue
+    settings?: NullableJsonNullValueInput | InputJsonValue
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type PetTypeUncheckedUpdateManyInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    name?: StringFieldUpdateOperationsInput | string
+    slug?: StringFieldUpdateOperationsInput | string
+    meta?: NullableJsonNullValueInput | InputJsonValue
+    settings?: NullableJsonNullValueInput | InputJsonValue
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type PetCreateInput = {
+    tagId: string
+    name: string
+    gender?: $Enums.Gender | null
+    photos?: PetCreatephotosInput | string[]
+    size?: $Enums.Size | null
+    isMissing?: boolean
+    birthday?: Date | string | null
+    created_at?: Date | string
+    updated_at?: Date | string
+    user: UserCreateNestedOneWithoutPetsInput
+    petType: PetTypeCreateNestedOneWithoutPetsInput
+    alerts?: AlertCreateNestedManyWithoutPetInput
+  }
+
+  export type PetUncheckedCreateInput = {
+    id?: number
+    tagId: string
+    userId: number
+    petTypeId: number
+    name: string
+    gender?: $Enums.Gender | null
+    photos?: PetCreatephotosInput | string[]
+    size?: $Enums.Size | null
+    isMissing?: boolean
+    birthday?: Date | string | null
+    created_at?: Date | string
+    updated_at?: Date | string
+    alerts?: AlertUncheckedCreateNestedManyWithoutPetInput
+  }
+
+  export type PetUpdateInput = {
+    tagId?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    gender?: NullableEnumGenderFieldUpdateOperationsInput | $Enums.Gender | null
+    photos?: PetUpdatephotosInput | string[]
+    size?: NullableEnumSizeFieldUpdateOperationsInput | $Enums.Size | null
+    isMissing?: BoolFieldUpdateOperationsInput | boolean
+    birthday?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    user?: UserUpdateOneRequiredWithoutPetsNestedInput
+    petType?: PetTypeUpdateOneRequiredWithoutPetsNestedInput
+    alerts?: AlertUpdateManyWithoutPetNestedInput
+  }
+
+  export type PetUncheckedUpdateInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    tagId?: StringFieldUpdateOperationsInput | string
+    userId?: IntFieldUpdateOperationsInput | number
+    petTypeId?: IntFieldUpdateOperationsInput | number
+    name?: StringFieldUpdateOperationsInput | string
+    gender?: NullableEnumGenderFieldUpdateOperationsInput | $Enums.Gender | null
+    photos?: PetUpdatephotosInput | string[]
+    size?: NullableEnumSizeFieldUpdateOperationsInput | $Enums.Size | null
+    isMissing?: BoolFieldUpdateOperationsInput | boolean
+    birthday?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    alerts?: AlertUncheckedUpdateManyWithoutPetNestedInput
+  }
+
+  export type PetCreateManyInput = {
+    id?: number
+    tagId: string
+    userId: number
+    petTypeId: number
+    name: string
+    gender?: $Enums.Gender | null
+    photos?: PetCreatephotosInput | string[]
+    size?: $Enums.Size | null
+    isMissing?: boolean
+    birthday?: Date | string | null
+    created_at?: Date | string
+    updated_at?: Date | string
+  }
+
+  export type PetUpdateManyMutationInput = {
+    tagId?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    gender?: NullableEnumGenderFieldUpdateOperationsInput | $Enums.Gender | null
+    photos?: PetUpdatephotosInput | string[]
+    size?: NullableEnumSizeFieldUpdateOperationsInput | $Enums.Size | null
+    isMissing?: BoolFieldUpdateOperationsInput | boolean
+    birthday?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type PetUncheckedUpdateManyInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    tagId?: StringFieldUpdateOperationsInput | string
+    userId?: IntFieldUpdateOperationsInput | number
+    petTypeId?: IntFieldUpdateOperationsInput | number
+    name?: StringFieldUpdateOperationsInput | string
+    gender?: NullableEnumGenderFieldUpdateOperationsInput | $Enums.Gender | null
+    photos?: PetUpdatephotosInput | string[]
+    size?: NullableEnumSizeFieldUpdateOperationsInput | $Enums.Size | null
+    isMissing?: BoolFieldUpdateOperationsInput | boolean
+    birthday?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type AlertUpdateInput = {
@@ -21415,7 +26436,10 @@ export namespace Prisma {
     notes?: NullableStringFieldUpdateOperationsInput | string | null
     reward_offered?: BoolFieldUpdateOperationsInput | boolean
     reward_amount?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    meta?: NullableJsonNullValueInput | InputJsonValue
+    settings?: NullableJsonNullValueInput | InputJsonValue
     creator?: UserUpdateOneRequiredWithoutCreated_alertsNestedInput
+    pet?: PetUpdateOneWithoutAlertsNestedInput
     sightings?: SightingUpdateManyWithoutAlertNestedInput
     notifications?: NotificationUpdateManyWithoutAlertNestedInput
   }
@@ -21423,6 +26447,7 @@ export namespace Prisma {
   export type AlertUncheckedUpdateInput = {
     id?: IntFieldUpdateOperationsInput | number
     creator_id?: IntFieldUpdateOperationsInput | number
+    pet_id?: NullableIntFieldUpdateOperationsInput | number | null
     pet_name?: StringFieldUpdateOperationsInput | string
     pet_species?: EnumPetSpeciesFieldUpdateOperationsInput | $Enums.PetSpecies
     pet_breed?: NullableStringFieldUpdateOperationsInput | string | null
@@ -21448,6 +26473,8 @@ export namespace Prisma {
     notes?: NullableStringFieldUpdateOperationsInput | string | null
     reward_offered?: BoolFieldUpdateOperationsInput | boolean
     reward_amount?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    meta?: NullableJsonNullValueInput | InputJsonValue
+    settings?: NullableJsonNullValueInput | InputJsonValue
     sightings?: SightingUncheckedUpdateManyWithoutAlertNestedInput
     notifications?: NotificationUncheckedUpdateManyWithoutAlertNestedInput
   }
@@ -21478,11 +26505,14 @@ export namespace Prisma {
     notes?: NullableStringFieldUpdateOperationsInput | string | null
     reward_offered?: BoolFieldUpdateOperationsInput | boolean
     reward_amount?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    meta?: NullableJsonNullValueInput | InputJsonValue
+    settings?: NullableJsonNullValueInput | InputJsonValue
   }
 
   export type AlertUncheckedUpdateManyInput = {
     id?: IntFieldUpdateOperationsInput | number
     creator_id?: IntFieldUpdateOperationsInput | number
+    pet_id?: NullableIntFieldUpdateOperationsInput | number | null
     pet_name?: StringFieldUpdateOperationsInput | string
     pet_species?: EnumPetSpeciesFieldUpdateOperationsInput | $Enums.PetSpecies
     pet_breed?: NullableStringFieldUpdateOperationsInput | string | null
@@ -21508,6 +26538,8 @@ export namespace Prisma {
     notes?: NullableStringFieldUpdateOperationsInput | string | null
     reward_offered?: BoolFieldUpdateOperationsInput | boolean
     reward_amount?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    meta?: NullableJsonNullValueInput | InputJsonValue
+    settings?: NullableJsonNullValueInput | InputJsonValue
   }
 
   export type DeviceCreateInput = {
@@ -21745,6 +26777,55 @@ export namespace Prisma {
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
+  export type AlertZoneUpdateInput = {
+    name?: StringFieldUpdateOperationsInput | string
+    lat?: FloatFieldUpdateOperationsInput | number
+    lon?: FloatFieldUpdateOperationsInput | number
+    radius_meters?: IntFieldUpdateOperationsInput | number
+    is_active?: BoolFieldUpdateOperationsInput | boolean
+    priority?: IntFieldUpdateOperationsInput | number
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    user?: UserUpdateOneRequiredWithoutAlert_zonesNestedInput
+  }
+
+  export type AlertZoneUncheckedUpdateInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    user_id?: IntFieldUpdateOperationsInput | number
+    name?: StringFieldUpdateOperationsInput | string
+    lat?: FloatFieldUpdateOperationsInput | number
+    lon?: FloatFieldUpdateOperationsInput | number
+    radius_meters?: IntFieldUpdateOperationsInput | number
+    is_active?: BoolFieldUpdateOperationsInput | boolean
+    priority?: IntFieldUpdateOperationsInput | number
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type AlertZoneUpdateManyMutationInput = {
+    name?: StringFieldUpdateOperationsInput | string
+    lat?: FloatFieldUpdateOperationsInput | number
+    lon?: FloatFieldUpdateOperationsInput | number
+    radius_meters?: IntFieldUpdateOperationsInput | number
+    is_active?: BoolFieldUpdateOperationsInput | boolean
+    priority?: IntFieldUpdateOperationsInput | number
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type AlertZoneUncheckedUpdateManyInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    user_id?: IntFieldUpdateOperationsInput | number
+    name?: StringFieldUpdateOperationsInput | string
+    lat?: FloatFieldUpdateOperationsInput | number
+    lon?: FloatFieldUpdateOperationsInput | number
+    radius_meters?: IntFieldUpdateOperationsInput | number
+    is_active?: BoolFieldUpdateOperationsInput | boolean
+    priority?: IntFieldUpdateOperationsInput | number
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
   export type SightingUpdateInput = {
     sighting_lat?: FloatFieldUpdateOperationsInput | number
     sighting_lon?: FloatFieldUpdateOperationsInput | number
@@ -21757,6 +26838,8 @@ export namespace Prisma {
     dismissed?: BoolFieldUpdateOperationsInput | boolean
     dismissed_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     dismissed_reason?: NullableStringFieldUpdateOperationsInput | string | null
+    meta?: NullableJsonNullValueInput | InputJsonValue
+    settings?: NullableJsonNullValueInput | InputJsonValue
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
     alert?: AlertUpdateOneRequiredWithoutSightingsNestedInput
@@ -21778,6 +26861,8 @@ export namespace Prisma {
     dismissed?: BoolFieldUpdateOperationsInput | boolean
     dismissed_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     dismissed_reason?: NullableStringFieldUpdateOperationsInput | string | null
+    meta?: NullableJsonNullValueInput | InputJsonValue
+    settings?: NullableJsonNullValueInput | InputJsonValue
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -21794,6 +26879,8 @@ export namespace Prisma {
     dismissed?: BoolFieldUpdateOperationsInput | boolean
     dismissed_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     dismissed_reason?: NullableStringFieldUpdateOperationsInput | string | null
+    meta?: NullableJsonNullValueInput | InputJsonValue
+    settings?: NullableJsonNullValueInput | InputJsonValue
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -21813,6 +26900,8 @@ export namespace Prisma {
     dismissed?: BoolFieldUpdateOperationsInput | boolean
     dismissed_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     dismissed_reason?: NullableStringFieldUpdateOperationsInput | string | null
+    meta?: NullableJsonNullValueInput | InputJsonValue
+    settings?: NullableJsonNullValueInput | InputJsonValue
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -21832,6 +26921,8 @@ export namespace Prisma {
     exclusion_reason?: string | null
     push_message_id?: string | null
     push_response?: NullableJsonNullValueInput | InputJsonValue
+    meta?: NullableJsonNullValueInput | InputJsonValue
+    settings?: NullableJsonNullValueInput | InputJsonValue
     created_at?: Date | string
     updated_at?: Date | string
     alert: AlertCreateNestedOneWithoutNotificationsInput
@@ -21856,6 +26947,8 @@ export namespace Prisma {
     exclusion_reason?: string | null
     push_message_id?: string | null
     push_response?: NullableJsonNullValueInput | InputJsonValue
+    meta?: NullableJsonNullValueInput | InputJsonValue
+    settings?: NullableJsonNullValueInput | InputJsonValue
     created_at?: Date | string
     updated_at?: Date | string
   }
@@ -21875,6 +26968,8 @@ export namespace Prisma {
     exclusion_reason?: NullableStringFieldUpdateOperationsInput | string | null
     push_message_id?: NullableStringFieldUpdateOperationsInput | string | null
     push_response?: NullableJsonNullValueInput | InputJsonValue
+    meta?: NullableJsonNullValueInput | InputJsonValue
+    settings?: NullableJsonNullValueInput | InputJsonValue
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
     alert?: AlertUpdateOneRequiredWithoutNotificationsNestedInput
@@ -21899,6 +26994,8 @@ export namespace Prisma {
     exclusion_reason?: NullableStringFieldUpdateOperationsInput | string | null
     push_message_id?: NullableStringFieldUpdateOperationsInput | string | null
     push_response?: NullableJsonNullValueInput | InputJsonValue
+    meta?: NullableJsonNullValueInput | InputJsonValue
+    settings?: NullableJsonNullValueInput | InputJsonValue
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -21921,6 +27018,8 @@ export namespace Prisma {
     exclusion_reason?: string | null
     push_message_id?: string | null
     push_response?: NullableJsonNullValueInput | InputJsonValue
+    meta?: NullableJsonNullValueInput | InputJsonValue
+    settings?: NullableJsonNullValueInput | InputJsonValue
     created_at?: Date | string
     updated_at?: Date | string
   }
@@ -21940,6 +27039,8 @@ export namespace Prisma {
     exclusion_reason?: NullableStringFieldUpdateOperationsInput | string | null
     push_message_id?: NullableStringFieldUpdateOperationsInput | string | null
     push_response?: NullableJsonNullValueInput | InputJsonValue
+    meta?: NullableJsonNullValueInput | InputJsonValue
+    settings?: NullableJsonNullValueInput | InputJsonValue
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -21962,6 +27063,8 @@ export namespace Prisma {
     exclusion_reason?: NullableStringFieldUpdateOperationsInput | string | null
     push_message_id?: NullableStringFieldUpdateOperationsInput | string | null
     push_response?: NullableJsonNullValueInput | InputJsonValue
+    meta?: NullableJsonNullValueInput | InputJsonValue
+    settings?: NullableJsonNullValueInput | InputJsonValue
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -22099,6 +27202,24 @@ export namespace Prisma {
     none?: SightingWhereInput
   }
 
+  export type AuditLogListRelationFilter = {
+    every?: AuditLogWhereInput
+    some?: AuditLogWhereInput
+    none?: AuditLogWhereInput
+  }
+
+  export type PetListRelationFilter = {
+    every?: PetWhereInput
+    some?: PetWhereInput
+    none?: PetWhereInput
+  }
+
+  export type AlertZoneListRelationFilter = {
+    every?: AlertZoneWhereInput
+    some?: AlertZoneWhereInput
+    none?: AlertZoneWhereInput
+  }
+
   export type SortOrderInput = {
     sort: SortOrder
     nulls?: NullsOrder
@@ -22129,6 +27250,18 @@ export namespace Prisma {
   }
 
   export type SightingOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type AuditLogOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type PetOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type AlertZoneOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
 
@@ -22407,6 +27540,7 @@ export namespace Prisma {
     active?: SortOrder
     permissions?: SortOrder
     meta?: SortOrder
+    settings?: SortOrder
     conditions?: SortOrder
     rules?: SortOrder
     created_at?: SortOrder
@@ -22541,6 +27675,8 @@ export namespace Prisma {
     refreshTokenExpiresAt?: SortOrder
     scope?: SortOrder
     password?: SortOrder
+    meta?: SortOrder
+    settings?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -22657,21 +27793,53 @@ export namespace Prisma {
     updatedAt?: SortOrder
   }
 
+  export type EnumAuditEventTypeFilter<$PrismaModel = never> = {
+    equals?: $Enums.AuditEventType | EnumAuditEventTypeFieldRefInput<$PrismaModel>
+    in?: $Enums.AuditEventType[] | ListEnumAuditEventTypeFieldRefInput<$PrismaModel>
+    notIn?: $Enums.AuditEventType[] | ListEnumAuditEventTypeFieldRefInput<$PrismaModel>
+    not?: NestedEnumAuditEventTypeFilter<$PrismaModel> | $Enums.AuditEventType
+  }
+
+  export type EnumAuditEntityTypeNullableFilter<$PrismaModel = never> = {
+    equals?: $Enums.AuditEntityType | EnumAuditEntityTypeFieldRefInput<$PrismaModel> | null
+    in?: $Enums.AuditEntityType[] | ListEnumAuditEntityTypeFieldRefInput<$PrismaModel> | null
+    notIn?: $Enums.AuditEntityType[] | ListEnumAuditEntityTypeFieldRefInput<$PrismaModel> | null
+    not?: NestedEnumAuditEntityTypeNullableFilter<$PrismaModel> | $Enums.AuditEntityType | null
+  }
+
+  export type UserNullableScalarRelationFilter = {
+    is?: UserWhereInput | null
+    isNot?: UserWhereInput | null
+  }
+
   export type AuditLogCountOrderByAggregateInput = {
     id?: SortOrder
     action?: SortOrder
     userId?: SortOrder
     actorId?: SortOrder
+    actorType?: SortOrder
     metadata?: SortOrder
     ipAddress?: SortOrder
     userAgent?: SortOrder
     createdAt?: SortOrder
+    eventType?: SortOrder
+    entityType?: SortOrder
+    entityId?: SortOrder
+    description?: SortOrder
+    oldValues?: SortOrder
+    newValues?: SortOrder
+    sessionId?: SortOrder
+    requestId?: SortOrder
+    success?: SortOrder
+    errorMessage?: SortOrder
+    errorStack?: SortOrder
+    timestamp?: SortOrder
   }
 
   export type AuditLogAvgOrderByAggregateInput = {
     id?: SortOrder
     userId?: SortOrder
-    actorId?: SortOrder
+    entityId?: SortOrder
   }
 
   export type AuditLogMaxOrderByAggregateInput = {
@@ -22679,9 +27847,20 @@ export namespace Prisma {
     action?: SortOrder
     userId?: SortOrder
     actorId?: SortOrder
+    actorType?: SortOrder
     ipAddress?: SortOrder
     userAgent?: SortOrder
     createdAt?: SortOrder
+    eventType?: SortOrder
+    entityType?: SortOrder
+    entityId?: SortOrder
+    description?: SortOrder
+    sessionId?: SortOrder
+    requestId?: SortOrder
+    success?: SortOrder
+    errorMessage?: SortOrder
+    errorStack?: SortOrder
+    timestamp?: SortOrder
   }
 
   export type AuditLogMinOrderByAggregateInput = {
@@ -22689,22 +27868,87 @@ export namespace Prisma {
     action?: SortOrder
     userId?: SortOrder
     actorId?: SortOrder
+    actorType?: SortOrder
     ipAddress?: SortOrder
     userAgent?: SortOrder
     createdAt?: SortOrder
+    eventType?: SortOrder
+    entityType?: SortOrder
+    entityId?: SortOrder
+    description?: SortOrder
+    sessionId?: SortOrder
+    requestId?: SortOrder
+    success?: SortOrder
+    errorMessage?: SortOrder
+    errorStack?: SortOrder
+    timestamp?: SortOrder
   }
 
   export type AuditLogSumOrderByAggregateInput = {
     id?: SortOrder
     userId?: SortOrder
-    actorId?: SortOrder
+    entityId?: SortOrder
   }
 
-  export type EnumPetSpeciesFilter<$PrismaModel = never> = {
-    equals?: $Enums.PetSpecies | EnumPetSpeciesFieldRefInput<$PrismaModel>
-    in?: $Enums.PetSpecies[] | ListEnumPetSpeciesFieldRefInput<$PrismaModel>
-    notIn?: $Enums.PetSpecies[] | ListEnumPetSpeciesFieldRefInput<$PrismaModel>
-    not?: NestedEnumPetSpeciesFilter<$PrismaModel> | $Enums.PetSpecies
+  export type EnumAuditEventTypeWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.AuditEventType | EnumAuditEventTypeFieldRefInput<$PrismaModel>
+    in?: $Enums.AuditEventType[] | ListEnumAuditEventTypeFieldRefInput<$PrismaModel>
+    notIn?: $Enums.AuditEventType[] | ListEnumAuditEventTypeFieldRefInput<$PrismaModel>
+    not?: NestedEnumAuditEventTypeWithAggregatesFilter<$PrismaModel> | $Enums.AuditEventType
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumAuditEventTypeFilter<$PrismaModel>
+    _max?: NestedEnumAuditEventTypeFilter<$PrismaModel>
+  }
+
+  export type EnumAuditEntityTypeNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.AuditEntityType | EnumAuditEntityTypeFieldRefInput<$PrismaModel> | null
+    in?: $Enums.AuditEntityType[] | ListEnumAuditEntityTypeFieldRefInput<$PrismaModel> | null
+    notIn?: $Enums.AuditEntityType[] | ListEnumAuditEntityTypeFieldRefInput<$PrismaModel> | null
+    not?: NestedEnumAuditEntityTypeNullableWithAggregatesFilter<$PrismaModel> | $Enums.AuditEntityType | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedEnumAuditEntityTypeNullableFilter<$PrismaModel>
+    _max?: NestedEnumAuditEntityTypeNullableFilter<$PrismaModel>
+  }
+
+  export type PetTypeCountOrderByAggregateInput = {
+    id?: SortOrder
+    name?: SortOrder
+    slug?: SortOrder
+    meta?: SortOrder
+    settings?: SortOrder
+    created_at?: SortOrder
+    updated_at?: SortOrder
+  }
+
+  export type PetTypeAvgOrderByAggregateInput = {
+    id?: SortOrder
+  }
+
+  export type PetTypeMaxOrderByAggregateInput = {
+    id?: SortOrder
+    name?: SortOrder
+    slug?: SortOrder
+    created_at?: SortOrder
+    updated_at?: SortOrder
+  }
+
+  export type PetTypeMinOrderByAggregateInput = {
+    id?: SortOrder
+    name?: SortOrder
+    slug?: SortOrder
+    created_at?: SortOrder
+    updated_at?: SortOrder
+  }
+
+  export type PetTypeSumOrderByAggregateInput = {
+    id?: SortOrder
+  }
+
+  export type EnumGenderNullableFilter<$PrismaModel = never> = {
+    equals?: $Enums.Gender | EnumGenderFieldRefInput<$PrismaModel> | null
+    in?: $Enums.Gender[] | ListEnumGenderFieldRefInput<$PrismaModel> | null
+    notIn?: $Enums.Gender[] | ListEnumGenderFieldRefInput<$PrismaModel> | null
+    not?: NestedEnumGenderNullableFilter<$PrismaModel> | $Enums.Gender | null
   }
 
   export type StringNullableListFilter<$PrismaModel = never> = {
@@ -22713,6 +27957,100 @@ export namespace Prisma {
     hasEvery?: string[] | ListStringFieldRefInput<$PrismaModel>
     hasSome?: string[] | ListStringFieldRefInput<$PrismaModel>
     isEmpty?: boolean
+  }
+
+  export type EnumSizeNullableFilter<$PrismaModel = never> = {
+    equals?: $Enums.Size | EnumSizeFieldRefInput<$PrismaModel> | null
+    in?: $Enums.Size[] | ListEnumSizeFieldRefInput<$PrismaModel> | null
+    notIn?: $Enums.Size[] | ListEnumSizeFieldRefInput<$PrismaModel> | null
+    not?: NestedEnumSizeNullableFilter<$PrismaModel> | $Enums.Size | null
+  }
+
+  export type PetTypeScalarRelationFilter = {
+    is?: PetTypeWhereInput
+    isNot?: PetTypeWhereInput
+  }
+
+  export type PetCountOrderByAggregateInput = {
+    id?: SortOrder
+    tagId?: SortOrder
+    userId?: SortOrder
+    petTypeId?: SortOrder
+    name?: SortOrder
+    gender?: SortOrder
+    photos?: SortOrder
+    size?: SortOrder
+    isMissing?: SortOrder
+    birthday?: SortOrder
+    created_at?: SortOrder
+    updated_at?: SortOrder
+  }
+
+  export type PetAvgOrderByAggregateInput = {
+    id?: SortOrder
+    userId?: SortOrder
+    petTypeId?: SortOrder
+  }
+
+  export type PetMaxOrderByAggregateInput = {
+    id?: SortOrder
+    tagId?: SortOrder
+    userId?: SortOrder
+    petTypeId?: SortOrder
+    name?: SortOrder
+    gender?: SortOrder
+    size?: SortOrder
+    isMissing?: SortOrder
+    birthday?: SortOrder
+    created_at?: SortOrder
+    updated_at?: SortOrder
+  }
+
+  export type PetMinOrderByAggregateInput = {
+    id?: SortOrder
+    tagId?: SortOrder
+    userId?: SortOrder
+    petTypeId?: SortOrder
+    name?: SortOrder
+    gender?: SortOrder
+    size?: SortOrder
+    isMissing?: SortOrder
+    birthday?: SortOrder
+    created_at?: SortOrder
+    updated_at?: SortOrder
+  }
+
+  export type PetSumOrderByAggregateInput = {
+    id?: SortOrder
+    userId?: SortOrder
+    petTypeId?: SortOrder
+  }
+
+  export type EnumGenderNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.Gender | EnumGenderFieldRefInput<$PrismaModel> | null
+    in?: $Enums.Gender[] | ListEnumGenderFieldRefInput<$PrismaModel> | null
+    notIn?: $Enums.Gender[] | ListEnumGenderFieldRefInput<$PrismaModel> | null
+    not?: NestedEnumGenderNullableWithAggregatesFilter<$PrismaModel> | $Enums.Gender | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedEnumGenderNullableFilter<$PrismaModel>
+    _max?: NestedEnumGenderNullableFilter<$PrismaModel>
+  }
+
+  export type EnumSizeNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.Size | EnumSizeFieldRefInput<$PrismaModel> | null
+    in?: $Enums.Size[] | ListEnumSizeFieldRefInput<$PrismaModel> | null
+    notIn?: $Enums.Size[] | ListEnumSizeFieldRefInput<$PrismaModel> | null
+    not?: NestedEnumSizeNullableWithAggregatesFilter<$PrismaModel> | $Enums.Size | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedEnumSizeNullableFilter<$PrismaModel>
+    _max?: NestedEnumSizeNullableFilter<$PrismaModel>
+  }
+
+  export type EnumPetSpeciesFilter<$PrismaModel = never> = {
+    equals?: $Enums.PetSpecies | EnumPetSpeciesFieldRefInput<$PrismaModel>
+    in?: $Enums.PetSpecies[] | ListEnumPetSpeciesFieldRefInput<$PrismaModel>
+    notIn?: $Enums.PetSpecies[] | ListEnumPetSpeciesFieldRefInput<$PrismaModel>
+    not?: NestedEnumPetSpeciesFilter<$PrismaModel> | $Enums.PetSpecies
   }
 
   export type FloatFilter<$PrismaModel = never> = {
@@ -22744,6 +28082,11 @@ export namespace Prisma {
     not?: NestedDecimalNullableFilter<$PrismaModel> | Decimal | DecimalJsLike | number | string | null
   }
 
+  export type PetNullableScalarRelationFilter = {
+    is?: PetWhereInput | null
+    isNot?: PetWhereInput | null
+  }
+
   export type NotificationListRelationFilter = {
     every?: NotificationWhereInput
     some?: NotificationWhereInput
@@ -22757,6 +28100,7 @@ export namespace Prisma {
   export type AlertCountOrderByAggregateInput = {
     id?: SortOrder
     creator_id?: SortOrder
+    pet_id?: SortOrder
     pet_name?: SortOrder
     pet_species?: SortOrder
     pet_breed?: SortOrder
@@ -22782,11 +28126,14 @@ export namespace Prisma {
     notes?: SortOrder
     reward_offered?: SortOrder
     reward_amount?: SortOrder
+    meta?: SortOrder
+    settings?: SortOrder
   }
 
   export type AlertAvgOrderByAggregateInput = {
     id?: SortOrder
     creator_id?: SortOrder
+    pet_id?: SortOrder
     pet_age_years?: SortOrder
     last_seen_lat?: SortOrder
     last_seen_lon?: SortOrder
@@ -22798,6 +28145,7 @@ export namespace Prisma {
   export type AlertMaxOrderByAggregateInput = {
     id?: SortOrder
     creator_id?: SortOrder
+    pet_id?: SortOrder
     pet_name?: SortOrder
     pet_species?: SortOrder
     pet_breed?: SortOrder
@@ -22826,6 +28174,7 @@ export namespace Prisma {
   export type AlertMinOrderByAggregateInput = {
     id?: SortOrder
     creator_id?: SortOrder
+    pet_id?: SortOrder
     pet_name?: SortOrder
     pet_species?: SortOrder
     pet_breed?: SortOrder
@@ -22854,6 +28203,7 @@ export namespace Prisma {
   export type AlertSumOrderByAggregateInput = {
     id?: SortOrder
     creator_id?: SortOrder
+    pet_id?: SortOrder
     pet_age_years?: SortOrder
     last_seen_lat?: SortOrder
     last_seen_lon?: SortOrder
@@ -23126,6 +28476,63 @@ export namespace Prisma {
     priority?: SortOrder
   }
 
+  export type AlertZoneCountOrderByAggregateInput = {
+    id?: SortOrder
+    user_id?: SortOrder
+    name?: SortOrder
+    lat?: SortOrder
+    lon?: SortOrder
+    radius_meters?: SortOrder
+    is_active?: SortOrder
+    priority?: SortOrder
+    created_at?: SortOrder
+    updated_at?: SortOrder
+  }
+
+  export type AlertZoneAvgOrderByAggregateInput = {
+    id?: SortOrder
+    user_id?: SortOrder
+    lat?: SortOrder
+    lon?: SortOrder
+    radius_meters?: SortOrder
+    priority?: SortOrder
+  }
+
+  export type AlertZoneMaxOrderByAggregateInput = {
+    id?: SortOrder
+    user_id?: SortOrder
+    name?: SortOrder
+    lat?: SortOrder
+    lon?: SortOrder
+    radius_meters?: SortOrder
+    is_active?: SortOrder
+    priority?: SortOrder
+    created_at?: SortOrder
+    updated_at?: SortOrder
+  }
+
+  export type AlertZoneMinOrderByAggregateInput = {
+    id?: SortOrder
+    user_id?: SortOrder
+    name?: SortOrder
+    lat?: SortOrder
+    lon?: SortOrder
+    radius_meters?: SortOrder
+    is_active?: SortOrder
+    priority?: SortOrder
+    created_at?: SortOrder
+    updated_at?: SortOrder
+  }
+
+  export type AlertZoneSumOrderByAggregateInput = {
+    id?: SortOrder
+    user_id?: SortOrder
+    lat?: SortOrder
+    lon?: SortOrder
+    radius_meters?: SortOrder
+    priority?: SortOrder
+  }
+
   export type AlertScalarRelationFilter = {
     is?: AlertWhereInput
     isNot?: AlertWhereInput
@@ -23146,6 +28553,8 @@ export namespace Prisma {
     dismissed?: SortOrder
     dismissed_at?: SortOrder
     dismissed_reason?: SortOrder
+    meta?: SortOrder
+    settings?: SortOrder
     created_at?: SortOrder
     updated_at?: SortOrder
   }
@@ -23236,6 +28645,8 @@ export namespace Prisma {
     exclusion_reason?: SortOrder
     push_message_id?: SortOrder
     push_response?: SortOrder
+    meta?: SortOrder
+    settings?: SortOrder
     created_at?: SortOrder
     updated_at?: SortOrder
   }
@@ -23359,6 +28770,24 @@ export namespace Prisma {
     connect?: SightingWhereUniqueInput | SightingWhereUniqueInput[]
   }
 
+  export type AuditLogCreateNestedManyWithoutUserInput = {
+    create?: XOR<AuditLogCreateWithoutUserInput, AuditLogUncheckedCreateWithoutUserInput> | AuditLogCreateWithoutUserInput[] | AuditLogUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: AuditLogCreateOrConnectWithoutUserInput | AuditLogCreateOrConnectWithoutUserInput[]
+    createMany?: AuditLogCreateManyUserInputEnvelope
+    connect?: AuditLogWhereUniqueInput | AuditLogWhereUniqueInput[]
+  }
+
+  export type PetCreateNestedManyWithoutUserInput = {
+    create?: XOR<PetCreateWithoutUserInput, PetUncheckedCreateWithoutUserInput> | PetCreateWithoutUserInput[] | PetUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: PetCreateOrConnectWithoutUserInput | PetCreateOrConnectWithoutUserInput[]
+    createMany?: PetCreateManyUserInputEnvelope
+    connect?: PetWhereUniqueInput | PetWhereUniqueInput[]
+  }
+
+  export type AlertZoneCreateNestedManyWithoutUserInput = {
+    connect?: AlertZoneWhereUniqueInput | AlertZoneWhereUniqueInput[]
+  }
+
   export type UserRoleUncheckedCreateNestedManyWithoutUserInput = {
     create?: XOR<UserRoleCreateWithoutUserInput, UserRoleUncheckedCreateWithoutUserInput> | UserRoleCreateWithoutUserInput[] | UserRoleUncheckedCreateWithoutUserInput[]
     connectOrCreate?: UserRoleCreateOrConnectWithoutUserInput | UserRoleCreateOrConnectWithoutUserInput[]
@@ -23400,6 +28829,24 @@ export namespace Prisma {
 
   export type SightingUncheckedCreateNestedManyWithoutReporterInput = {
     connect?: SightingWhereUniqueInput | SightingWhereUniqueInput[]
+  }
+
+  export type AuditLogUncheckedCreateNestedManyWithoutUserInput = {
+    create?: XOR<AuditLogCreateWithoutUserInput, AuditLogUncheckedCreateWithoutUserInput> | AuditLogCreateWithoutUserInput[] | AuditLogUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: AuditLogCreateOrConnectWithoutUserInput | AuditLogCreateOrConnectWithoutUserInput[]
+    createMany?: AuditLogCreateManyUserInputEnvelope
+    connect?: AuditLogWhereUniqueInput | AuditLogWhereUniqueInput[]
+  }
+
+  export type PetUncheckedCreateNestedManyWithoutUserInput = {
+    create?: XOR<PetCreateWithoutUserInput, PetUncheckedCreateWithoutUserInput> | PetCreateWithoutUserInput[] | PetUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: PetCreateOrConnectWithoutUserInput | PetCreateOrConnectWithoutUserInput[]
+    createMany?: PetCreateManyUserInputEnvelope
+    connect?: PetWhereUniqueInput | PetWhereUniqueInput[]
+  }
+
+  export type AlertZoneUncheckedCreateNestedManyWithoutUserInput = {
+    connect?: AlertZoneWhereUniqueInput | AlertZoneWhereUniqueInput[]
   }
 
   export type StringFieldUpdateOperationsInput = {
@@ -23512,6 +28959,44 @@ export namespace Prisma {
     deleteMany?: SightingScalarWhereInput | SightingScalarWhereInput[]
   }
 
+  export type AuditLogUpdateManyWithoutUserNestedInput = {
+    create?: XOR<AuditLogCreateWithoutUserInput, AuditLogUncheckedCreateWithoutUserInput> | AuditLogCreateWithoutUserInput[] | AuditLogUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: AuditLogCreateOrConnectWithoutUserInput | AuditLogCreateOrConnectWithoutUserInput[]
+    upsert?: AuditLogUpsertWithWhereUniqueWithoutUserInput | AuditLogUpsertWithWhereUniqueWithoutUserInput[]
+    createMany?: AuditLogCreateManyUserInputEnvelope
+    set?: AuditLogWhereUniqueInput | AuditLogWhereUniqueInput[]
+    disconnect?: AuditLogWhereUniqueInput | AuditLogWhereUniqueInput[]
+    delete?: AuditLogWhereUniqueInput | AuditLogWhereUniqueInput[]
+    connect?: AuditLogWhereUniqueInput | AuditLogWhereUniqueInput[]
+    update?: AuditLogUpdateWithWhereUniqueWithoutUserInput | AuditLogUpdateWithWhereUniqueWithoutUserInput[]
+    updateMany?: AuditLogUpdateManyWithWhereWithoutUserInput | AuditLogUpdateManyWithWhereWithoutUserInput[]
+    deleteMany?: AuditLogScalarWhereInput | AuditLogScalarWhereInput[]
+  }
+
+  export type PetUpdateManyWithoutUserNestedInput = {
+    create?: XOR<PetCreateWithoutUserInput, PetUncheckedCreateWithoutUserInput> | PetCreateWithoutUserInput[] | PetUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: PetCreateOrConnectWithoutUserInput | PetCreateOrConnectWithoutUserInput[]
+    upsert?: PetUpsertWithWhereUniqueWithoutUserInput | PetUpsertWithWhereUniqueWithoutUserInput[]
+    createMany?: PetCreateManyUserInputEnvelope
+    set?: PetWhereUniqueInput | PetWhereUniqueInput[]
+    disconnect?: PetWhereUniqueInput | PetWhereUniqueInput[]
+    delete?: PetWhereUniqueInput | PetWhereUniqueInput[]
+    connect?: PetWhereUniqueInput | PetWhereUniqueInput[]
+    update?: PetUpdateWithWhereUniqueWithoutUserInput | PetUpdateWithWhereUniqueWithoutUserInput[]
+    updateMany?: PetUpdateManyWithWhereWithoutUserInput | PetUpdateManyWithWhereWithoutUserInput[]
+    deleteMany?: PetScalarWhereInput | PetScalarWhereInput[]
+  }
+
+  export type AlertZoneUpdateManyWithoutUserNestedInput = {
+    set?: AlertZoneWhereUniqueInput | AlertZoneWhereUniqueInput[]
+    disconnect?: AlertZoneWhereUniqueInput | AlertZoneWhereUniqueInput[]
+    delete?: AlertZoneWhereUniqueInput | AlertZoneWhereUniqueInput[]
+    connect?: AlertZoneWhereUniqueInput | AlertZoneWhereUniqueInput[]
+    update?: AlertZoneUpdateWithWhereUniqueWithoutUserInput | AlertZoneUpdateWithWhereUniqueWithoutUserInput[]
+    updateMany?: AlertZoneUpdateManyWithWhereWithoutUserInput | AlertZoneUpdateManyWithWhereWithoutUserInput[]
+    deleteMany?: AlertZoneScalarWhereInput | AlertZoneScalarWhereInput[]
+  }
+
   export type IntFieldUpdateOperationsInput = {
     set?: number
     increment?: number
@@ -23608,6 +29093,44 @@ export namespace Prisma {
     update?: SightingUpdateWithWhereUniqueWithoutReporterInput | SightingUpdateWithWhereUniqueWithoutReporterInput[]
     updateMany?: SightingUpdateManyWithWhereWithoutReporterInput | SightingUpdateManyWithWhereWithoutReporterInput[]
     deleteMany?: SightingScalarWhereInput | SightingScalarWhereInput[]
+  }
+
+  export type AuditLogUncheckedUpdateManyWithoutUserNestedInput = {
+    create?: XOR<AuditLogCreateWithoutUserInput, AuditLogUncheckedCreateWithoutUserInput> | AuditLogCreateWithoutUserInput[] | AuditLogUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: AuditLogCreateOrConnectWithoutUserInput | AuditLogCreateOrConnectWithoutUserInput[]
+    upsert?: AuditLogUpsertWithWhereUniqueWithoutUserInput | AuditLogUpsertWithWhereUniqueWithoutUserInput[]
+    createMany?: AuditLogCreateManyUserInputEnvelope
+    set?: AuditLogWhereUniqueInput | AuditLogWhereUniqueInput[]
+    disconnect?: AuditLogWhereUniqueInput | AuditLogWhereUniqueInput[]
+    delete?: AuditLogWhereUniqueInput | AuditLogWhereUniqueInput[]
+    connect?: AuditLogWhereUniqueInput | AuditLogWhereUniqueInput[]
+    update?: AuditLogUpdateWithWhereUniqueWithoutUserInput | AuditLogUpdateWithWhereUniqueWithoutUserInput[]
+    updateMany?: AuditLogUpdateManyWithWhereWithoutUserInput | AuditLogUpdateManyWithWhereWithoutUserInput[]
+    deleteMany?: AuditLogScalarWhereInput | AuditLogScalarWhereInput[]
+  }
+
+  export type PetUncheckedUpdateManyWithoutUserNestedInput = {
+    create?: XOR<PetCreateWithoutUserInput, PetUncheckedCreateWithoutUserInput> | PetCreateWithoutUserInput[] | PetUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: PetCreateOrConnectWithoutUserInput | PetCreateOrConnectWithoutUserInput[]
+    upsert?: PetUpsertWithWhereUniqueWithoutUserInput | PetUpsertWithWhereUniqueWithoutUserInput[]
+    createMany?: PetCreateManyUserInputEnvelope
+    set?: PetWhereUniqueInput | PetWhereUniqueInput[]
+    disconnect?: PetWhereUniqueInput | PetWhereUniqueInput[]
+    delete?: PetWhereUniqueInput | PetWhereUniqueInput[]
+    connect?: PetWhereUniqueInput | PetWhereUniqueInput[]
+    update?: PetUpdateWithWhereUniqueWithoutUserInput | PetUpdateWithWhereUniqueWithoutUserInput[]
+    updateMany?: PetUpdateManyWithWhereWithoutUserInput | PetUpdateManyWithWhereWithoutUserInput[]
+    deleteMany?: PetScalarWhereInput | PetScalarWhereInput[]
+  }
+
+  export type AlertZoneUncheckedUpdateManyWithoutUserNestedInput = {
+    set?: AlertZoneWhereUniqueInput | AlertZoneWhereUniqueInput[]
+    disconnect?: AlertZoneWhereUniqueInput | AlertZoneWhereUniqueInput[]
+    delete?: AlertZoneWhereUniqueInput | AlertZoneWhereUniqueInput[]
+    connect?: AlertZoneWhereUniqueInput | AlertZoneWhereUniqueInput[]
+    update?: AlertZoneUpdateWithWhereUniqueWithoutUserInput | AlertZoneUpdateWithWhereUniqueWithoutUserInput[]
+    updateMany?: AlertZoneUpdateManyWithWhereWithoutUserInput | AlertZoneUpdateManyWithWhereWithoutUserInput[]
+    deleteMany?: AlertZoneScalarWhereInput | AlertZoneScalarWhereInput[]
   }
 
   export type UserCreateNestedOneWithoutRolesInput = {
@@ -23786,6 +29309,145 @@ export namespace Prisma {
     deleteMany?: UserGateScalarWhereInput | UserGateScalarWhereInput[]
   }
 
+  export type UserCreateNestedOneWithoutAuditLogsInput = {
+    create?: XOR<UserCreateWithoutAuditLogsInput, UserUncheckedCreateWithoutAuditLogsInput>
+    connectOrCreate?: UserCreateOrConnectWithoutAuditLogsInput
+    connect?: UserWhereUniqueInput
+  }
+
+  export type EnumAuditEventTypeFieldUpdateOperationsInput = {
+    set?: $Enums.AuditEventType
+  }
+
+  export type NullableEnumAuditEntityTypeFieldUpdateOperationsInput = {
+    set?: $Enums.AuditEntityType | null
+  }
+
+  export type UserUpdateOneWithoutAuditLogsNestedInput = {
+    create?: XOR<UserCreateWithoutAuditLogsInput, UserUncheckedCreateWithoutAuditLogsInput>
+    connectOrCreate?: UserCreateOrConnectWithoutAuditLogsInput
+    upsert?: UserUpsertWithoutAuditLogsInput
+    disconnect?: UserWhereInput | boolean
+    delete?: UserWhereInput | boolean
+    connect?: UserWhereUniqueInput
+    update?: XOR<XOR<UserUpdateToOneWithWhereWithoutAuditLogsInput, UserUpdateWithoutAuditLogsInput>, UserUncheckedUpdateWithoutAuditLogsInput>
+  }
+
+  export type PetCreateNestedManyWithoutPetTypeInput = {
+    create?: XOR<PetCreateWithoutPetTypeInput, PetUncheckedCreateWithoutPetTypeInput> | PetCreateWithoutPetTypeInput[] | PetUncheckedCreateWithoutPetTypeInput[]
+    connectOrCreate?: PetCreateOrConnectWithoutPetTypeInput | PetCreateOrConnectWithoutPetTypeInput[]
+    createMany?: PetCreateManyPetTypeInputEnvelope
+    connect?: PetWhereUniqueInput | PetWhereUniqueInput[]
+  }
+
+  export type PetUncheckedCreateNestedManyWithoutPetTypeInput = {
+    create?: XOR<PetCreateWithoutPetTypeInput, PetUncheckedCreateWithoutPetTypeInput> | PetCreateWithoutPetTypeInput[] | PetUncheckedCreateWithoutPetTypeInput[]
+    connectOrCreate?: PetCreateOrConnectWithoutPetTypeInput | PetCreateOrConnectWithoutPetTypeInput[]
+    createMany?: PetCreateManyPetTypeInputEnvelope
+    connect?: PetWhereUniqueInput | PetWhereUniqueInput[]
+  }
+
+  export type PetUpdateManyWithoutPetTypeNestedInput = {
+    create?: XOR<PetCreateWithoutPetTypeInput, PetUncheckedCreateWithoutPetTypeInput> | PetCreateWithoutPetTypeInput[] | PetUncheckedCreateWithoutPetTypeInput[]
+    connectOrCreate?: PetCreateOrConnectWithoutPetTypeInput | PetCreateOrConnectWithoutPetTypeInput[]
+    upsert?: PetUpsertWithWhereUniqueWithoutPetTypeInput | PetUpsertWithWhereUniqueWithoutPetTypeInput[]
+    createMany?: PetCreateManyPetTypeInputEnvelope
+    set?: PetWhereUniqueInput | PetWhereUniqueInput[]
+    disconnect?: PetWhereUniqueInput | PetWhereUniqueInput[]
+    delete?: PetWhereUniqueInput | PetWhereUniqueInput[]
+    connect?: PetWhereUniqueInput | PetWhereUniqueInput[]
+    update?: PetUpdateWithWhereUniqueWithoutPetTypeInput | PetUpdateWithWhereUniqueWithoutPetTypeInput[]
+    updateMany?: PetUpdateManyWithWhereWithoutPetTypeInput | PetUpdateManyWithWhereWithoutPetTypeInput[]
+    deleteMany?: PetScalarWhereInput | PetScalarWhereInput[]
+  }
+
+  export type PetUncheckedUpdateManyWithoutPetTypeNestedInput = {
+    create?: XOR<PetCreateWithoutPetTypeInput, PetUncheckedCreateWithoutPetTypeInput> | PetCreateWithoutPetTypeInput[] | PetUncheckedCreateWithoutPetTypeInput[]
+    connectOrCreate?: PetCreateOrConnectWithoutPetTypeInput | PetCreateOrConnectWithoutPetTypeInput[]
+    upsert?: PetUpsertWithWhereUniqueWithoutPetTypeInput | PetUpsertWithWhereUniqueWithoutPetTypeInput[]
+    createMany?: PetCreateManyPetTypeInputEnvelope
+    set?: PetWhereUniqueInput | PetWhereUniqueInput[]
+    disconnect?: PetWhereUniqueInput | PetWhereUniqueInput[]
+    delete?: PetWhereUniqueInput | PetWhereUniqueInput[]
+    connect?: PetWhereUniqueInput | PetWhereUniqueInput[]
+    update?: PetUpdateWithWhereUniqueWithoutPetTypeInput | PetUpdateWithWhereUniqueWithoutPetTypeInput[]
+    updateMany?: PetUpdateManyWithWhereWithoutPetTypeInput | PetUpdateManyWithWhereWithoutPetTypeInput[]
+    deleteMany?: PetScalarWhereInput | PetScalarWhereInput[]
+  }
+
+  export type PetCreatephotosInput = {
+    set: string[]
+  }
+
+  export type UserCreateNestedOneWithoutPetsInput = {
+    create?: XOR<UserCreateWithoutPetsInput, UserUncheckedCreateWithoutPetsInput>
+    connectOrCreate?: UserCreateOrConnectWithoutPetsInput
+    connect?: UserWhereUniqueInput
+  }
+
+  export type PetTypeCreateNestedOneWithoutPetsInput = {
+    create?: XOR<PetTypeCreateWithoutPetsInput, PetTypeUncheckedCreateWithoutPetsInput>
+    connectOrCreate?: PetTypeCreateOrConnectWithoutPetsInput
+    connect?: PetTypeWhereUniqueInput
+  }
+
+  export type AlertCreateNestedManyWithoutPetInput = {
+    connect?: AlertWhereUniqueInput | AlertWhereUniqueInput[]
+  }
+
+  export type AlertUncheckedCreateNestedManyWithoutPetInput = {
+    connect?: AlertWhereUniqueInput | AlertWhereUniqueInput[]
+  }
+
+  export type NullableEnumGenderFieldUpdateOperationsInput = {
+    set?: $Enums.Gender | null
+  }
+
+  export type PetUpdatephotosInput = {
+    set?: string[]
+    push?: string | string[]
+  }
+
+  export type NullableEnumSizeFieldUpdateOperationsInput = {
+    set?: $Enums.Size | null
+  }
+
+  export type UserUpdateOneRequiredWithoutPetsNestedInput = {
+    create?: XOR<UserCreateWithoutPetsInput, UserUncheckedCreateWithoutPetsInput>
+    connectOrCreate?: UserCreateOrConnectWithoutPetsInput
+    upsert?: UserUpsertWithoutPetsInput
+    connect?: UserWhereUniqueInput
+    update?: XOR<XOR<UserUpdateToOneWithWhereWithoutPetsInput, UserUpdateWithoutPetsInput>, UserUncheckedUpdateWithoutPetsInput>
+  }
+
+  export type PetTypeUpdateOneRequiredWithoutPetsNestedInput = {
+    create?: XOR<PetTypeCreateWithoutPetsInput, PetTypeUncheckedCreateWithoutPetsInput>
+    connectOrCreate?: PetTypeCreateOrConnectWithoutPetsInput
+    upsert?: PetTypeUpsertWithoutPetsInput
+    connect?: PetTypeWhereUniqueInput
+    update?: XOR<XOR<PetTypeUpdateToOneWithWhereWithoutPetsInput, PetTypeUpdateWithoutPetsInput>, PetTypeUncheckedUpdateWithoutPetsInput>
+  }
+
+  export type AlertUpdateManyWithoutPetNestedInput = {
+    set?: AlertWhereUniqueInput | AlertWhereUniqueInput[]
+    disconnect?: AlertWhereUniqueInput | AlertWhereUniqueInput[]
+    delete?: AlertWhereUniqueInput | AlertWhereUniqueInput[]
+    connect?: AlertWhereUniqueInput | AlertWhereUniqueInput[]
+    update?: AlertUpdateWithWhereUniqueWithoutPetInput | AlertUpdateWithWhereUniqueWithoutPetInput[]
+    updateMany?: AlertUpdateManyWithWhereWithoutPetInput | AlertUpdateManyWithWhereWithoutPetInput[]
+    deleteMany?: AlertScalarWhereInput | AlertScalarWhereInput[]
+  }
+
+  export type AlertUncheckedUpdateManyWithoutPetNestedInput = {
+    set?: AlertWhereUniqueInput | AlertWhereUniqueInput[]
+    disconnect?: AlertWhereUniqueInput | AlertWhereUniqueInput[]
+    delete?: AlertWhereUniqueInput | AlertWhereUniqueInput[]
+    connect?: AlertWhereUniqueInput | AlertWhereUniqueInput[]
+    update?: AlertUpdateWithWhereUniqueWithoutPetInput | AlertUpdateWithWhereUniqueWithoutPetInput[]
+    updateMany?: AlertUpdateManyWithWhereWithoutPetInput | AlertUpdateManyWithWhereWithoutPetInput[]
+    deleteMany?: AlertScalarWhereInput | AlertScalarWhereInput[]
+  }
+
   export type EnumPetSpeciesFieldUpdateOperationsInput = {
     set?: $Enums.PetSpecies
   }
@@ -23826,6 +29488,16 @@ export namespace Prisma {
     upsert?: UserUpsertWithoutCreated_alertsInput
     connect?: UserWhereUniqueInput
     update?: XOR<XOR<UserUpdateToOneWithWhereWithoutCreated_alertsInput, UserUpdateWithoutCreated_alertsInput>, UserUncheckedUpdateWithoutCreated_alertsInput>
+  }
+
+  export type PetUpdateOneWithoutAlertsNestedInput = {
+    create?: XOR<PetCreateWithoutAlertsInput, PetUncheckedCreateWithoutAlertsInput>
+    connectOrCreate?: PetCreateOrConnectWithoutAlertsInput
+    upsert?: PetUpsertWithoutAlertsInput
+    disconnect?: PetWhereInput | boolean
+    delete?: PetWhereInput | boolean
+    connect?: PetWhereUniqueInput
+    update?: XOR<XOR<PetUpdateToOneWithWhereWithoutAlertsInput, PetUpdateWithoutAlertsInput>, PetUncheckedUpdateWithoutAlertsInput>
   }
 
   export type SightingUpdateManyWithoutAlertNestedInput = {
@@ -23987,6 +29659,14 @@ export namespace Prisma {
     upsert?: DeviceUpsertWithoutSaved_zonesInput
     connect?: DeviceWhereUniqueInput
     update?: XOR<XOR<DeviceUpdateToOneWithWhereWithoutSaved_zonesInput, DeviceUpdateWithoutSaved_zonesInput>, DeviceUncheckedUpdateWithoutSaved_zonesInput>
+  }
+
+  export type UserUpdateOneRequiredWithoutAlert_zonesNestedInput = {
+    create?: XOR<UserCreateWithoutAlert_zonesInput, UserUncheckedCreateWithoutAlert_zonesInput>
+    connectOrCreate?: UserCreateOrConnectWithoutAlert_zonesInput
+    upsert?: UserUpsertWithoutAlert_zonesInput
+    connect?: UserWhereUniqueInput
+    update?: XOR<XOR<UserUpdateToOneWithWhereWithoutAlert_zonesInput, UserUpdateWithoutAlert_zonesInput>, UserUncheckedUpdateWithoutAlert_zonesInput>
   }
 
   export type AlertUpdateOneRequiredWithoutSightingsNestedInput = {
@@ -24257,6 +29937,74 @@ export namespace Prisma {
     not?: NestedFloatNullableFilter<$PrismaModel> | number | null
   }
 
+  export type NestedEnumAuditEventTypeFilter<$PrismaModel = never> = {
+    equals?: $Enums.AuditEventType | EnumAuditEventTypeFieldRefInput<$PrismaModel>
+    in?: $Enums.AuditEventType[] | ListEnumAuditEventTypeFieldRefInput<$PrismaModel>
+    notIn?: $Enums.AuditEventType[] | ListEnumAuditEventTypeFieldRefInput<$PrismaModel>
+    not?: NestedEnumAuditEventTypeFilter<$PrismaModel> | $Enums.AuditEventType
+  }
+
+  export type NestedEnumAuditEntityTypeNullableFilter<$PrismaModel = never> = {
+    equals?: $Enums.AuditEntityType | EnumAuditEntityTypeFieldRefInput<$PrismaModel> | null
+    in?: $Enums.AuditEntityType[] | ListEnumAuditEntityTypeFieldRefInput<$PrismaModel> | null
+    notIn?: $Enums.AuditEntityType[] | ListEnumAuditEntityTypeFieldRefInput<$PrismaModel> | null
+    not?: NestedEnumAuditEntityTypeNullableFilter<$PrismaModel> | $Enums.AuditEntityType | null
+  }
+
+  export type NestedEnumAuditEventTypeWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.AuditEventType | EnumAuditEventTypeFieldRefInput<$PrismaModel>
+    in?: $Enums.AuditEventType[] | ListEnumAuditEventTypeFieldRefInput<$PrismaModel>
+    notIn?: $Enums.AuditEventType[] | ListEnumAuditEventTypeFieldRefInput<$PrismaModel>
+    not?: NestedEnumAuditEventTypeWithAggregatesFilter<$PrismaModel> | $Enums.AuditEventType
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumAuditEventTypeFilter<$PrismaModel>
+    _max?: NestedEnumAuditEventTypeFilter<$PrismaModel>
+  }
+
+  export type NestedEnumAuditEntityTypeNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.AuditEntityType | EnumAuditEntityTypeFieldRefInput<$PrismaModel> | null
+    in?: $Enums.AuditEntityType[] | ListEnumAuditEntityTypeFieldRefInput<$PrismaModel> | null
+    notIn?: $Enums.AuditEntityType[] | ListEnumAuditEntityTypeFieldRefInput<$PrismaModel> | null
+    not?: NestedEnumAuditEntityTypeNullableWithAggregatesFilter<$PrismaModel> | $Enums.AuditEntityType | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedEnumAuditEntityTypeNullableFilter<$PrismaModel>
+    _max?: NestedEnumAuditEntityTypeNullableFilter<$PrismaModel>
+  }
+
+  export type NestedEnumGenderNullableFilter<$PrismaModel = never> = {
+    equals?: $Enums.Gender | EnumGenderFieldRefInput<$PrismaModel> | null
+    in?: $Enums.Gender[] | ListEnumGenderFieldRefInput<$PrismaModel> | null
+    notIn?: $Enums.Gender[] | ListEnumGenderFieldRefInput<$PrismaModel> | null
+    not?: NestedEnumGenderNullableFilter<$PrismaModel> | $Enums.Gender | null
+  }
+
+  export type NestedEnumSizeNullableFilter<$PrismaModel = never> = {
+    equals?: $Enums.Size | EnumSizeFieldRefInput<$PrismaModel> | null
+    in?: $Enums.Size[] | ListEnumSizeFieldRefInput<$PrismaModel> | null
+    notIn?: $Enums.Size[] | ListEnumSizeFieldRefInput<$PrismaModel> | null
+    not?: NestedEnumSizeNullableFilter<$PrismaModel> | $Enums.Size | null
+  }
+
+  export type NestedEnumGenderNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.Gender | EnumGenderFieldRefInput<$PrismaModel> | null
+    in?: $Enums.Gender[] | ListEnumGenderFieldRefInput<$PrismaModel> | null
+    notIn?: $Enums.Gender[] | ListEnumGenderFieldRefInput<$PrismaModel> | null
+    not?: NestedEnumGenderNullableWithAggregatesFilter<$PrismaModel> | $Enums.Gender | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedEnumGenderNullableFilter<$PrismaModel>
+    _max?: NestedEnumGenderNullableFilter<$PrismaModel>
+  }
+
+  export type NestedEnumSizeNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.Size | EnumSizeFieldRefInput<$PrismaModel> | null
+    in?: $Enums.Size[] | ListEnumSizeFieldRefInput<$PrismaModel> | null
+    notIn?: $Enums.Size[] | ListEnumSizeFieldRefInput<$PrismaModel> | null
+    not?: NestedEnumSizeNullableWithAggregatesFilter<$PrismaModel> | $Enums.Size | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedEnumSizeNullableFilter<$PrismaModel>
+    _max?: NestedEnumSizeNullableFilter<$PrismaModel>
+  }
+
   export type NestedEnumPetSpeciesFilter<$PrismaModel = never> = {
     equals?: $Enums.PetSpecies | EnumPetSpeciesFieldRefInput<$PrismaModel>
     in?: $Enums.PetSpecies[] | ListEnumPetSpeciesFieldRefInput<$PrismaModel>
@@ -24494,6 +30242,8 @@ export namespace Prisma {
     refreshTokenExpiresAt?: Date | string | null
     scope?: string | null
     password?: string | null
+    meta?: NullableJsonNullValueInput | InputJsonValue
+    settings?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -24509,6 +30259,8 @@ export namespace Prisma {
     refreshTokenExpiresAt?: Date | string | null
     scope?: string | null
     password?: string | null
+    meta?: NullableJsonNullValueInput | InputJsonValue
+    settings?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -24583,6 +30335,100 @@ export namespace Prisma {
 
   export type DeviceCreateManyUserInputEnvelope = {
     data: DeviceCreateManyUserInput | DeviceCreateManyUserInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type AuditLogCreateWithoutUserInput = {
+    action: string
+    actorId?: string | null
+    actorType?: string | null
+    metadata?: NullableJsonNullValueInput | InputJsonValue
+    ipAddress?: string | null
+    userAgent?: string | null
+    createdAt?: Date | string
+    eventType: $Enums.AuditEventType
+    entityType?: $Enums.AuditEntityType | null
+    entityId?: number | null
+    description?: string | null
+    oldValues?: NullableJsonNullValueInput | InputJsonValue
+    newValues?: NullableJsonNullValueInput | InputJsonValue
+    sessionId?: string | null
+    requestId?: string | null
+    success?: boolean
+    errorMessage?: string | null
+    errorStack?: string | null
+    timestamp?: Date | string
+  }
+
+  export type AuditLogUncheckedCreateWithoutUserInput = {
+    id?: number
+    action: string
+    actorId?: string | null
+    actorType?: string | null
+    metadata?: NullableJsonNullValueInput | InputJsonValue
+    ipAddress?: string | null
+    userAgent?: string | null
+    createdAt?: Date | string
+    eventType: $Enums.AuditEventType
+    entityType?: $Enums.AuditEntityType | null
+    entityId?: number | null
+    description?: string | null
+    oldValues?: NullableJsonNullValueInput | InputJsonValue
+    newValues?: NullableJsonNullValueInput | InputJsonValue
+    sessionId?: string | null
+    requestId?: string | null
+    success?: boolean
+    errorMessage?: string | null
+    errorStack?: string | null
+    timestamp?: Date | string
+  }
+
+  export type AuditLogCreateOrConnectWithoutUserInput = {
+    where: AuditLogWhereUniqueInput
+    create: XOR<AuditLogCreateWithoutUserInput, AuditLogUncheckedCreateWithoutUserInput>
+  }
+
+  export type AuditLogCreateManyUserInputEnvelope = {
+    data: AuditLogCreateManyUserInput | AuditLogCreateManyUserInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type PetCreateWithoutUserInput = {
+    tagId: string
+    name: string
+    gender?: $Enums.Gender | null
+    photos?: PetCreatephotosInput | string[]
+    size?: $Enums.Size | null
+    isMissing?: boolean
+    birthday?: Date | string | null
+    created_at?: Date | string
+    updated_at?: Date | string
+    petType: PetTypeCreateNestedOneWithoutPetsInput
+    alerts?: AlertCreateNestedManyWithoutPetInput
+  }
+
+  export type PetUncheckedCreateWithoutUserInput = {
+    id?: number
+    tagId: string
+    petTypeId: number
+    name: string
+    gender?: $Enums.Gender | null
+    photos?: PetCreatephotosInput | string[]
+    size?: $Enums.Size | null
+    isMissing?: boolean
+    birthday?: Date | string | null
+    created_at?: Date | string
+    updated_at?: Date | string
+    alerts?: AlertUncheckedCreateNestedManyWithoutPetInput
+  }
+
+  export type PetCreateOrConnectWithoutUserInput = {
+    where: PetWhereUniqueInput
+    create: XOR<PetCreateWithoutUserInput, PetUncheckedCreateWithoutUserInput>
+  }
+
+  export type PetCreateManyUserInputEnvelope = {
+    data: PetCreateManyUserInput | PetCreateManyUserInput[]
     skipDuplicates?: boolean
   }
 
@@ -24705,6 +30551,8 @@ export namespace Prisma {
     refreshTokenExpiresAt?: DateTimeNullableFilter<"Account"> | Date | string | null
     scope?: StringNullableFilter<"Account"> | string | null
     password?: StringNullableFilter<"Account"> | string | null
+    meta?: JsonNullableFilter<"Account">
+    settings?: JsonNullableFilter<"Account">
     createdAt?: DateTimeFilter<"Account"> | Date | string
     updatedAt?: DateTimeFilter<"Account"> | Date | string
   }
@@ -24770,6 +30618,7 @@ export namespace Prisma {
     NOT?: AlertScalarWhereInput | AlertScalarWhereInput[]
     id?: IntFilter<"Alert"> | number
     creator_id?: IntFilter<"Alert"> | number
+    pet_id?: IntNullableFilter<"Alert"> | number | null
     pet_name?: StringFilter<"Alert"> | string
     pet_species?: EnumPetSpeciesFilter<"Alert"> | $Enums.PetSpecies
     pet_breed?: StringNullableFilter<"Alert"> | string | null
@@ -24795,6 +30644,8 @@ export namespace Prisma {
     notes?: StringNullableFilter<"Alert"> | string | null
     reward_offered?: BoolFilter<"Alert"> | boolean
     reward_amount?: DecimalNullableFilter<"Alert"> | Decimal | DecimalJsLike | number | string | null
+    meta?: JsonNullableFilter<"Alert">
+    settings?: JsonNullableFilter<"Alert">
   }
 
   export type SightingUpdateWithWhereUniqueWithoutReporterInput = {
@@ -24825,8 +30676,113 @@ export namespace Prisma {
     dismissed?: BoolFilter<"Sighting"> | boolean
     dismissed_at?: DateTimeNullableFilter<"Sighting"> | Date | string | null
     dismissed_reason?: StringNullableFilter<"Sighting"> | string | null
+    meta?: JsonNullableFilter<"Sighting">
+    settings?: JsonNullableFilter<"Sighting">
     created_at?: DateTimeFilter<"Sighting"> | Date | string
     updated_at?: DateTimeFilter<"Sighting"> | Date | string
+  }
+
+  export type AuditLogUpsertWithWhereUniqueWithoutUserInput = {
+    where: AuditLogWhereUniqueInput
+    update: XOR<AuditLogUpdateWithoutUserInput, AuditLogUncheckedUpdateWithoutUserInput>
+    create: XOR<AuditLogCreateWithoutUserInput, AuditLogUncheckedCreateWithoutUserInput>
+  }
+
+  export type AuditLogUpdateWithWhereUniqueWithoutUserInput = {
+    where: AuditLogWhereUniqueInput
+    data: XOR<AuditLogUpdateWithoutUserInput, AuditLogUncheckedUpdateWithoutUserInput>
+  }
+
+  export type AuditLogUpdateManyWithWhereWithoutUserInput = {
+    where: AuditLogScalarWhereInput
+    data: XOR<AuditLogUpdateManyMutationInput, AuditLogUncheckedUpdateManyWithoutUserInput>
+  }
+
+  export type AuditLogScalarWhereInput = {
+    AND?: AuditLogScalarWhereInput | AuditLogScalarWhereInput[]
+    OR?: AuditLogScalarWhereInput[]
+    NOT?: AuditLogScalarWhereInput | AuditLogScalarWhereInput[]
+    id?: IntFilter<"AuditLog"> | number
+    action?: StringFilter<"AuditLog"> | string
+    userId?: IntNullableFilter<"AuditLog"> | number | null
+    actorId?: StringNullableFilter<"AuditLog"> | string | null
+    actorType?: StringNullableFilter<"AuditLog"> | string | null
+    metadata?: JsonNullableFilter<"AuditLog">
+    ipAddress?: StringNullableFilter<"AuditLog"> | string | null
+    userAgent?: StringNullableFilter<"AuditLog"> | string | null
+    createdAt?: DateTimeFilter<"AuditLog"> | Date | string
+    eventType?: EnumAuditEventTypeFilter<"AuditLog"> | $Enums.AuditEventType
+    entityType?: EnumAuditEntityTypeNullableFilter<"AuditLog"> | $Enums.AuditEntityType | null
+    entityId?: IntNullableFilter<"AuditLog"> | number | null
+    description?: StringNullableFilter<"AuditLog"> | string | null
+    oldValues?: JsonNullableFilter<"AuditLog">
+    newValues?: JsonNullableFilter<"AuditLog">
+    sessionId?: StringNullableFilter<"AuditLog"> | string | null
+    requestId?: StringNullableFilter<"AuditLog"> | string | null
+    success?: BoolFilter<"AuditLog"> | boolean
+    errorMessage?: StringNullableFilter<"AuditLog"> | string | null
+    errorStack?: StringNullableFilter<"AuditLog"> | string | null
+    timestamp?: DateTimeFilter<"AuditLog"> | Date | string
+  }
+
+  export type PetUpsertWithWhereUniqueWithoutUserInput = {
+    where: PetWhereUniqueInput
+    update: XOR<PetUpdateWithoutUserInput, PetUncheckedUpdateWithoutUserInput>
+    create: XOR<PetCreateWithoutUserInput, PetUncheckedCreateWithoutUserInput>
+  }
+
+  export type PetUpdateWithWhereUniqueWithoutUserInput = {
+    where: PetWhereUniqueInput
+    data: XOR<PetUpdateWithoutUserInput, PetUncheckedUpdateWithoutUserInput>
+  }
+
+  export type PetUpdateManyWithWhereWithoutUserInput = {
+    where: PetScalarWhereInput
+    data: XOR<PetUpdateManyMutationInput, PetUncheckedUpdateManyWithoutUserInput>
+  }
+
+  export type PetScalarWhereInput = {
+    AND?: PetScalarWhereInput | PetScalarWhereInput[]
+    OR?: PetScalarWhereInput[]
+    NOT?: PetScalarWhereInput | PetScalarWhereInput[]
+    id?: IntFilter<"Pet"> | number
+    tagId?: StringFilter<"Pet"> | string
+    userId?: IntFilter<"Pet"> | number
+    petTypeId?: IntFilter<"Pet"> | number
+    name?: StringFilter<"Pet"> | string
+    gender?: EnumGenderNullableFilter<"Pet"> | $Enums.Gender | null
+    photos?: StringNullableListFilter<"Pet">
+    size?: EnumSizeNullableFilter<"Pet"> | $Enums.Size | null
+    isMissing?: BoolFilter<"Pet"> | boolean
+    birthday?: DateTimeNullableFilter<"Pet"> | Date | string | null
+    created_at?: DateTimeFilter<"Pet"> | Date | string
+    updated_at?: DateTimeFilter<"Pet"> | Date | string
+  }
+
+  export type AlertZoneUpdateWithWhereUniqueWithoutUserInput = {
+    where: AlertZoneWhereUniqueInput
+    data: XOR<AlertZoneUpdateWithoutUserInput, AlertZoneUncheckedUpdateWithoutUserInput>
+  }
+
+  export type AlertZoneUpdateManyWithWhereWithoutUserInput = {
+    where: AlertZoneScalarWhereInput
+    data: XOR<AlertZoneUpdateManyMutationInput, AlertZoneUncheckedUpdateManyWithoutUserInput>
+  }
+
+  export type AlertZoneScalarWhereInput = {
+    AND?: AlertZoneScalarWhereInput | AlertZoneScalarWhereInput[]
+    OR?: AlertZoneScalarWhereInput[]
+    NOT?: AlertZoneScalarWhereInput | AlertZoneScalarWhereInput[]
+    id?: IntFilter<"AlertZone"> | number
+    user_id?: IntFilter<"AlertZone"> | number
+    name?: StringFilter<"AlertZone"> | string
+    lat?: FloatFilter<"AlertZone"> | number
+    lon?: FloatFilter<"AlertZone"> | number
+    radius_meters?: IntFilter<"AlertZone"> | number
+    is_active?: BoolFilter<"AlertZone"> | boolean
+    priority?: IntFilter<"AlertZone"> | number
+    created_at?: DateTimeFilter<"AlertZone"> | Date | string
+    updated_at?: DateTimeFilter<"AlertZone"> | Date | string
   }
 
   export type UserCreateWithoutRolesInput = {
@@ -24849,6 +30805,9 @@ export namespace Prisma {
     devices?: DeviceCreateNestedManyWithoutUserInput
     created_alerts?: AlertCreateNestedManyWithoutCreatorInput
     reported_sightings?: SightingCreateNestedManyWithoutReporterInput
+    auditLogs?: AuditLogCreateNestedManyWithoutUserInput
+    pets?: PetCreateNestedManyWithoutUserInput
+    alert_zones?: AlertZoneCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutRolesInput = {
@@ -24872,6 +30831,9 @@ export namespace Prisma {
     devices?: DeviceUncheckedCreateNestedManyWithoutUserInput
     created_alerts?: AlertUncheckedCreateNestedManyWithoutCreatorInput
     reported_sightings?: SightingUncheckedCreateNestedManyWithoutReporterInput
+    auditLogs?: AuditLogUncheckedCreateNestedManyWithoutUserInput
+    pets?: PetUncheckedCreateNestedManyWithoutUserInput
+    alert_zones?: AlertZoneUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutRolesInput = {
@@ -24887,6 +30849,7 @@ export namespace Prisma {
     active?: boolean
     permissions?: NullableJsonNullValueInput | InputJsonValue
     meta?: NullableJsonNullValueInput | InputJsonValue
+    settings?: NullableJsonNullValueInput | InputJsonValue
     conditions?: NullableJsonNullValueInput | InputJsonValue
     rules?: NullableJsonNullValueInput | InputJsonValue
     created_at?: Date | string
@@ -24902,6 +30865,7 @@ export namespace Prisma {
     active?: boolean
     permissions?: NullableJsonNullValueInput | InputJsonValue
     meta?: NullableJsonNullValueInput | InputJsonValue
+    settings?: NullableJsonNullValueInput | InputJsonValue
     conditions?: NullableJsonNullValueInput | InputJsonValue
     rules?: NullableJsonNullValueInput | InputJsonValue
     created_at?: Date | string
@@ -24944,6 +30908,9 @@ export namespace Prisma {
     devices?: DeviceUpdateManyWithoutUserNestedInput
     created_alerts?: AlertUpdateManyWithoutCreatorNestedInput
     reported_sightings?: SightingUpdateManyWithoutReporterNestedInput
+    auditLogs?: AuditLogUpdateManyWithoutUserNestedInput
+    pets?: PetUpdateManyWithoutUserNestedInput
+    alert_zones?: AlertZoneUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutRolesInput = {
@@ -24967,6 +30934,9 @@ export namespace Prisma {
     devices?: DeviceUncheckedUpdateManyWithoutUserNestedInput
     created_alerts?: AlertUncheckedUpdateManyWithoutCreatorNestedInput
     reported_sightings?: SightingUncheckedUpdateManyWithoutReporterNestedInput
+    auditLogs?: AuditLogUncheckedUpdateManyWithoutUserNestedInput
+    pets?: PetUncheckedUpdateManyWithoutUserNestedInput
+    alert_zones?: AlertZoneUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type RoleUpsertWithoutUsersInput = {
@@ -24988,6 +30958,7 @@ export namespace Prisma {
     active?: BoolFieldUpdateOperationsInput | boolean
     permissions?: NullableJsonNullValueInput | InputJsonValue
     meta?: NullableJsonNullValueInput | InputJsonValue
+    settings?: NullableJsonNullValueInput | InputJsonValue
     conditions?: NullableJsonNullValueInput | InputJsonValue
     rules?: NullableJsonNullValueInput | InputJsonValue
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -25003,6 +30974,7 @@ export namespace Prisma {
     active?: BoolFieldUpdateOperationsInput | boolean
     permissions?: NullableJsonNullValueInput | InputJsonValue
     meta?: NullableJsonNullValueInput | InputJsonValue
+    settings?: NullableJsonNullValueInput | InputJsonValue
     conditions?: NullableJsonNullValueInput | InputJsonValue
     rules?: NullableJsonNullValueInput | InputJsonValue
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -25029,6 +31001,9 @@ export namespace Prisma {
     devices?: DeviceCreateNestedManyWithoutUserInput
     created_alerts?: AlertCreateNestedManyWithoutCreatorInput
     reported_sightings?: SightingCreateNestedManyWithoutReporterInput
+    auditLogs?: AuditLogCreateNestedManyWithoutUserInput
+    pets?: PetCreateNestedManyWithoutUserInput
+    alert_zones?: AlertZoneCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutGatesInput = {
@@ -25052,6 +31027,9 @@ export namespace Prisma {
     devices?: DeviceUncheckedCreateNestedManyWithoutUserInput
     created_alerts?: AlertUncheckedCreateNestedManyWithoutCreatorInput
     reported_sightings?: SightingUncheckedCreateNestedManyWithoutReporterInput
+    auditLogs?: AuditLogUncheckedCreateNestedManyWithoutUserInput
+    pets?: PetUncheckedCreateNestedManyWithoutUserInput
+    alert_zones?: AlertZoneUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutGatesInput = {
@@ -25116,6 +31094,9 @@ export namespace Prisma {
     devices?: DeviceUpdateManyWithoutUserNestedInput
     created_alerts?: AlertUpdateManyWithoutCreatorNestedInput
     reported_sightings?: SightingUpdateManyWithoutReporterNestedInput
+    auditLogs?: AuditLogUpdateManyWithoutUserNestedInput
+    pets?: PetUpdateManyWithoutUserNestedInput
+    alert_zones?: AlertZoneUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutGatesInput = {
@@ -25139,6 +31120,9 @@ export namespace Prisma {
     devices?: DeviceUncheckedUpdateManyWithoutUserNestedInput
     created_alerts?: AlertUncheckedUpdateManyWithoutCreatorNestedInput
     reported_sightings?: SightingUncheckedUpdateManyWithoutReporterNestedInput
+    auditLogs?: AuditLogUncheckedUpdateManyWithoutUserNestedInput
+    pets?: PetUncheckedUpdateManyWithoutUserNestedInput
+    alert_zones?: AlertZoneUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type GateUpsertWithoutUsersInput = {
@@ -25232,6 +31216,9 @@ export namespace Prisma {
     devices?: DeviceCreateNestedManyWithoutUserInput
     created_alerts?: AlertCreateNestedManyWithoutCreatorInput
     reported_sightings?: SightingCreateNestedManyWithoutReporterInput
+    auditLogs?: AuditLogCreateNestedManyWithoutUserInput
+    pets?: PetCreateNestedManyWithoutUserInput
+    alert_zones?: AlertZoneCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutSessionsInput = {
@@ -25255,6 +31242,9 @@ export namespace Prisma {
     devices?: DeviceUncheckedCreateNestedManyWithoutUserInput
     created_alerts?: AlertUncheckedCreateNestedManyWithoutCreatorInput
     reported_sightings?: SightingUncheckedCreateNestedManyWithoutReporterInput
+    auditLogs?: AuditLogUncheckedCreateNestedManyWithoutUserInput
+    pets?: PetUncheckedCreateNestedManyWithoutUserInput
+    alert_zones?: AlertZoneUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutSessionsInput = {
@@ -25293,6 +31283,9 @@ export namespace Prisma {
     devices?: DeviceUpdateManyWithoutUserNestedInput
     created_alerts?: AlertUpdateManyWithoutCreatorNestedInput
     reported_sightings?: SightingUpdateManyWithoutReporterNestedInput
+    auditLogs?: AuditLogUpdateManyWithoutUserNestedInput
+    pets?: PetUpdateManyWithoutUserNestedInput
+    alert_zones?: AlertZoneUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutSessionsInput = {
@@ -25316,6 +31309,9 @@ export namespace Prisma {
     devices?: DeviceUncheckedUpdateManyWithoutUserNestedInput
     created_alerts?: AlertUncheckedUpdateManyWithoutCreatorNestedInput
     reported_sightings?: SightingUncheckedUpdateManyWithoutReporterNestedInput
+    auditLogs?: AuditLogUncheckedUpdateManyWithoutUserNestedInput
+    pets?: PetUncheckedUpdateManyWithoutUserNestedInput
+    alert_zones?: AlertZoneUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type UserCreateWithoutAccountsInput = {
@@ -25338,6 +31334,9 @@ export namespace Prisma {
     devices?: DeviceCreateNestedManyWithoutUserInput
     created_alerts?: AlertCreateNestedManyWithoutCreatorInput
     reported_sightings?: SightingCreateNestedManyWithoutReporterInput
+    auditLogs?: AuditLogCreateNestedManyWithoutUserInput
+    pets?: PetCreateNestedManyWithoutUserInput
+    alert_zones?: AlertZoneCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutAccountsInput = {
@@ -25361,6 +31360,9 @@ export namespace Prisma {
     devices?: DeviceUncheckedCreateNestedManyWithoutUserInput
     created_alerts?: AlertUncheckedCreateNestedManyWithoutCreatorInput
     reported_sightings?: SightingUncheckedCreateNestedManyWithoutReporterInput
+    auditLogs?: AuditLogUncheckedCreateNestedManyWithoutUserInput
+    pets?: PetUncheckedCreateNestedManyWithoutUserInput
+    alert_zones?: AlertZoneUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutAccountsInput = {
@@ -25399,6 +31401,9 @@ export namespace Prisma {
     devices?: DeviceUpdateManyWithoutUserNestedInput
     created_alerts?: AlertUpdateManyWithoutCreatorNestedInput
     reported_sightings?: SightingUpdateManyWithoutReporterNestedInput
+    auditLogs?: AuditLogUpdateManyWithoutUserNestedInput
+    pets?: PetUpdateManyWithoutUserNestedInput
+    alert_zones?: AlertZoneUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutAccountsInput = {
@@ -25422,6 +31427,9 @@ export namespace Prisma {
     devices?: DeviceUncheckedUpdateManyWithoutUserNestedInput
     created_alerts?: AlertUncheckedUpdateManyWithoutCreatorNestedInput
     reported_sightings?: SightingUncheckedUpdateManyWithoutReporterNestedInput
+    auditLogs?: AuditLogUncheckedUpdateManyWithoutUserNestedInput
+    pets?: PetUncheckedUpdateManyWithoutUserNestedInput
+    alert_zones?: AlertZoneUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type UserGateCreateWithoutGateInput = {
@@ -25463,6 +31471,361 @@ export namespace Prisma {
     data: XOR<UserGateUpdateManyMutationInput, UserGateUncheckedUpdateManyWithoutGateInput>
   }
 
+  export type UserCreateWithoutAuditLogsInput = {
+    name?: string
+    firstName?: string
+    lastName?: string
+    email: string
+    emailVerified?: boolean
+    image?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    banned?: boolean
+    banReason?: string | null
+    banExpires?: Date | string | null
+    settings?: NullableJsonNullValueInput | InputJsonValue
+    meta?: NullableJsonNullValueInput | InputJsonValue
+    roles?: UserRoleCreateNestedManyWithoutUserInput
+    gates?: UserGateCreateNestedManyWithoutUserInput
+    sessions?: SessionCreateNestedManyWithoutUserInput
+    accounts?: AccountCreateNestedManyWithoutUserInput
+    devices?: DeviceCreateNestedManyWithoutUserInput
+    created_alerts?: AlertCreateNestedManyWithoutCreatorInput
+    reported_sightings?: SightingCreateNestedManyWithoutReporterInput
+    pets?: PetCreateNestedManyWithoutUserInput
+    alert_zones?: AlertZoneCreateNestedManyWithoutUserInput
+  }
+
+  export type UserUncheckedCreateWithoutAuditLogsInput = {
+    id?: number
+    name?: string
+    firstName?: string
+    lastName?: string
+    email: string
+    emailVerified?: boolean
+    image?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    banned?: boolean
+    banReason?: string | null
+    banExpires?: Date | string | null
+    settings?: NullableJsonNullValueInput | InputJsonValue
+    meta?: NullableJsonNullValueInput | InputJsonValue
+    roles?: UserRoleUncheckedCreateNestedManyWithoutUserInput
+    gates?: UserGateUncheckedCreateNestedManyWithoutUserInput
+    sessions?: SessionUncheckedCreateNestedManyWithoutUserInput
+    accounts?: AccountUncheckedCreateNestedManyWithoutUserInput
+    devices?: DeviceUncheckedCreateNestedManyWithoutUserInput
+    created_alerts?: AlertUncheckedCreateNestedManyWithoutCreatorInput
+    reported_sightings?: SightingUncheckedCreateNestedManyWithoutReporterInput
+    pets?: PetUncheckedCreateNestedManyWithoutUserInput
+    alert_zones?: AlertZoneUncheckedCreateNestedManyWithoutUserInput
+  }
+
+  export type UserCreateOrConnectWithoutAuditLogsInput = {
+    where: UserWhereUniqueInput
+    create: XOR<UserCreateWithoutAuditLogsInput, UserUncheckedCreateWithoutAuditLogsInput>
+  }
+
+  export type UserUpsertWithoutAuditLogsInput = {
+    update: XOR<UserUpdateWithoutAuditLogsInput, UserUncheckedUpdateWithoutAuditLogsInput>
+    create: XOR<UserCreateWithoutAuditLogsInput, UserUncheckedCreateWithoutAuditLogsInput>
+    where?: UserWhereInput
+  }
+
+  export type UserUpdateToOneWithWhereWithoutAuditLogsInput = {
+    where?: UserWhereInput
+    data: XOR<UserUpdateWithoutAuditLogsInput, UserUncheckedUpdateWithoutAuditLogsInput>
+  }
+
+  export type UserUpdateWithoutAuditLogsInput = {
+    name?: StringFieldUpdateOperationsInput | string
+    firstName?: StringFieldUpdateOperationsInput | string
+    lastName?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    emailVerified?: BoolFieldUpdateOperationsInput | boolean
+    image?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    banned?: BoolFieldUpdateOperationsInput | boolean
+    banReason?: NullableStringFieldUpdateOperationsInput | string | null
+    banExpires?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    settings?: NullableJsonNullValueInput | InputJsonValue
+    meta?: NullableJsonNullValueInput | InputJsonValue
+    roles?: UserRoleUpdateManyWithoutUserNestedInput
+    gates?: UserGateUpdateManyWithoutUserNestedInput
+    sessions?: SessionUpdateManyWithoutUserNestedInput
+    accounts?: AccountUpdateManyWithoutUserNestedInput
+    devices?: DeviceUpdateManyWithoutUserNestedInput
+    created_alerts?: AlertUpdateManyWithoutCreatorNestedInput
+    reported_sightings?: SightingUpdateManyWithoutReporterNestedInput
+    pets?: PetUpdateManyWithoutUserNestedInput
+    alert_zones?: AlertZoneUpdateManyWithoutUserNestedInput
+  }
+
+  export type UserUncheckedUpdateWithoutAuditLogsInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    name?: StringFieldUpdateOperationsInput | string
+    firstName?: StringFieldUpdateOperationsInput | string
+    lastName?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    emailVerified?: BoolFieldUpdateOperationsInput | boolean
+    image?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    banned?: BoolFieldUpdateOperationsInput | boolean
+    banReason?: NullableStringFieldUpdateOperationsInput | string | null
+    banExpires?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    settings?: NullableJsonNullValueInput | InputJsonValue
+    meta?: NullableJsonNullValueInput | InputJsonValue
+    roles?: UserRoleUncheckedUpdateManyWithoutUserNestedInput
+    gates?: UserGateUncheckedUpdateManyWithoutUserNestedInput
+    sessions?: SessionUncheckedUpdateManyWithoutUserNestedInput
+    accounts?: AccountUncheckedUpdateManyWithoutUserNestedInput
+    devices?: DeviceUncheckedUpdateManyWithoutUserNestedInput
+    created_alerts?: AlertUncheckedUpdateManyWithoutCreatorNestedInput
+    reported_sightings?: SightingUncheckedUpdateManyWithoutReporterNestedInput
+    pets?: PetUncheckedUpdateManyWithoutUserNestedInput
+    alert_zones?: AlertZoneUncheckedUpdateManyWithoutUserNestedInput
+  }
+
+  export type PetCreateWithoutPetTypeInput = {
+    tagId: string
+    name: string
+    gender?: $Enums.Gender | null
+    photos?: PetCreatephotosInput | string[]
+    size?: $Enums.Size | null
+    isMissing?: boolean
+    birthday?: Date | string | null
+    created_at?: Date | string
+    updated_at?: Date | string
+    user: UserCreateNestedOneWithoutPetsInput
+    alerts?: AlertCreateNestedManyWithoutPetInput
+  }
+
+  export type PetUncheckedCreateWithoutPetTypeInput = {
+    id?: number
+    tagId: string
+    userId: number
+    name: string
+    gender?: $Enums.Gender | null
+    photos?: PetCreatephotosInput | string[]
+    size?: $Enums.Size | null
+    isMissing?: boolean
+    birthday?: Date | string | null
+    created_at?: Date | string
+    updated_at?: Date | string
+    alerts?: AlertUncheckedCreateNestedManyWithoutPetInput
+  }
+
+  export type PetCreateOrConnectWithoutPetTypeInput = {
+    where: PetWhereUniqueInput
+    create: XOR<PetCreateWithoutPetTypeInput, PetUncheckedCreateWithoutPetTypeInput>
+  }
+
+  export type PetCreateManyPetTypeInputEnvelope = {
+    data: PetCreateManyPetTypeInput | PetCreateManyPetTypeInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type PetUpsertWithWhereUniqueWithoutPetTypeInput = {
+    where: PetWhereUniqueInput
+    update: XOR<PetUpdateWithoutPetTypeInput, PetUncheckedUpdateWithoutPetTypeInput>
+    create: XOR<PetCreateWithoutPetTypeInput, PetUncheckedCreateWithoutPetTypeInput>
+  }
+
+  export type PetUpdateWithWhereUniqueWithoutPetTypeInput = {
+    where: PetWhereUniqueInput
+    data: XOR<PetUpdateWithoutPetTypeInput, PetUncheckedUpdateWithoutPetTypeInput>
+  }
+
+  export type PetUpdateManyWithWhereWithoutPetTypeInput = {
+    where: PetScalarWhereInput
+    data: XOR<PetUpdateManyMutationInput, PetUncheckedUpdateManyWithoutPetTypeInput>
+  }
+
+  export type UserCreateWithoutPetsInput = {
+    name?: string
+    firstName?: string
+    lastName?: string
+    email: string
+    emailVerified?: boolean
+    image?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    banned?: boolean
+    banReason?: string | null
+    banExpires?: Date | string | null
+    settings?: NullableJsonNullValueInput | InputJsonValue
+    meta?: NullableJsonNullValueInput | InputJsonValue
+    roles?: UserRoleCreateNestedManyWithoutUserInput
+    gates?: UserGateCreateNestedManyWithoutUserInput
+    sessions?: SessionCreateNestedManyWithoutUserInput
+    accounts?: AccountCreateNestedManyWithoutUserInput
+    devices?: DeviceCreateNestedManyWithoutUserInput
+    created_alerts?: AlertCreateNestedManyWithoutCreatorInput
+    reported_sightings?: SightingCreateNestedManyWithoutReporterInput
+    auditLogs?: AuditLogCreateNestedManyWithoutUserInput
+    alert_zones?: AlertZoneCreateNestedManyWithoutUserInput
+  }
+
+  export type UserUncheckedCreateWithoutPetsInput = {
+    id?: number
+    name?: string
+    firstName?: string
+    lastName?: string
+    email: string
+    emailVerified?: boolean
+    image?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    banned?: boolean
+    banReason?: string | null
+    banExpires?: Date | string | null
+    settings?: NullableJsonNullValueInput | InputJsonValue
+    meta?: NullableJsonNullValueInput | InputJsonValue
+    roles?: UserRoleUncheckedCreateNestedManyWithoutUserInput
+    gates?: UserGateUncheckedCreateNestedManyWithoutUserInput
+    sessions?: SessionUncheckedCreateNestedManyWithoutUserInput
+    accounts?: AccountUncheckedCreateNestedManyWithoutUserInput
+    devices?: DeviceUncheckedCreateNestedManyWithoutUserInput
+    created_alerts?: AlertUncheckedCreateNestedManyWithoutCreatorInput
+    reported_sightings?: SightingUncheckedCreateNestedManyWithoutReporterInput
+    auditLogs?: AuditLogUncheckedCreateNestedManyWithoutUserInput
+    alert_zones?: AlertZoneUncheckedCreateNestedManyWithoutUserInput
+  }
+
+  export type UserCreateOrConnectWithoutPetsInput = {
+    where: UserWhereUniqueInput
+    create: XOR<UserCreateWithoutPetsInput, UserUncheckedCreateWithoutPetsInput>
+  }
+
+  export type PetTypeCreateWithoutPetsInput = {
+    name: string
+    slug: string
+    meta?: NullableJsonNullValueInput | InputJsonValue
+    settings?: NullableJsonNullValueInput | InputJsonValue
+    created_at?: Date | string
+    updated_at?: Date | string
+  }
+
+  export type PetTypeUncheckedCreateWithoutPetsInput = {
+    id?: number
+    name: string
+    slug: string
+    meta?: NullableJsonNullValueInput | InputJsonValue
+    settings?: NullableJsonNullValueInput | InputJsonValue
+    created_at?: Date | string
+    updated_at?: Date | string
+  }
+
+  export type PetTypeCreateOrConnectWithoutPetsInput = {
+    where: PetTypeWhereUniqueInput
+    create: XOR<PetTypeCreateWithoutPetsInput, PetTypeUncheckedCreateWithoutPetsInput>
+  }
+
+  export type UserUpsertWithoutPetsInput = {
+    update: XOR<UserUpdateWithoutPetsInput, UserUncheckedUpdateWithoutPetsInput>
+    create: XOR<UserCreateWithoutPetsInput, UserUncheckedCreateWithoutPetsInput>
+    where?: UserWhereInput
+  }
+
+  export type UserUpdateToOneWithWhereWithoutPetsInput = {
+    where?: UserWhereInput
+    data: XOR<UserUpdateWithoutPetsInput, UserUncheckedUpdateWithoutPetsInput>
+  }
+
+  export type UserUpdateWithoutPetsInput = {
+    name?: StringFieldUpdateOperationsInput | string
+    firstName?: StringFieldUpdateOperationsInput | string
+    lastName?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    emailVerified?: BoolFieldUpdateOperationsInput | boolean
+    image?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    banned?: BoolFieldUpdateOperationsInput | boolean
+    banReason?: NullableStringFieldUpdateOperationsInput | string | null
+    banExpires?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    settings?: NullableJsonNullValueInput | InputJsonValue
+    meta?: NullableJsonNullValueInput | InputJsonValue
+    roles?: UserRoleUpdateManyWithoutUserNestedInput
+    gates?: UserGateUpdateManyWithoutUserNestedInput
+    sessions?: SessionUpdateManyWithoutUserNestedInput
+    accounts?: AccountUpdateManyWithoutUserNestedInput
+    devices?: DeviceUpdateManyWithoutUserNestedInput
+    created_alerts?: AlertUpdateManyWithoutCreatorNestedInput
+    reported_sightings?: SightingUpdateManyWithoutReporterNestedInput
+    auditLogs?: AuditLogUpdateManyWithoutUserNestedInput
+    alert_zones?: AlertZoneUpdateManyWithoutUserNestedInput
+  }
+
+  export type UserUncheckedUpdateWithoutPetsInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    name?: StringFieldUpdateOperationsInput | string
+    firstName?: StringFieldUpdateOperationsInput | string
+    lastName?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    emailVerified?: BoolFieldUpdateOperationsInput | boolean
+    image?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    banned?: BoolFieldUpdateOperationsInput | boolean
+    banReason?: NullableStringFieldUpdateOperationsInput | string | null
+    banExpires?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    settings?: NullableJsonNullValueInput | InputJsonValue
+    meta?: NullableJsonNullValueInput | InputJsonValue
+    roles?: UserRoleUncheckedUpdateManyWithoutUserNestedInput
+    gates?: UserGateUncheckedUpdateManyWithoutUserNestedInput
+    sessions?: SessionUncheckedUpdateManyWithoutUserNestedInput
+    accounts?: AccountUncheckedUpdateManyWithoutUserNestedInput
+    devices?: DeviceUncheckedUpdateManyWithoutUserNestedInput
+    created_alerts?: AlertUncheckedUpdateManyWithoutCreatorNestedInput
+    reported_sightings?: SightingUncheckedUpdateManyWithoutReporterNestedInput
+    auditLogs?: AuditLogUncheckedUpdateManyWithoutUserNestedInput
+    alert_zones?: AlertZoneUncheckedUpdateManyWithoutUserNestedInput
+  }
+
+  export type PetTypeUpsertWithoutPetsInput = {
+    update: XOR<PetTypeUpdateWithoutPetsInput, PetTypeUncheckedUpdateWithoutPetsInput>
+    create: XOR<PetTypeCreateWithoutPetsInput, PetTypeUncheckedCreateWithoutPetsInput>
+    where?: PetTypeWhereInput
+  }
+
+  export type PetTypeUpdateToOneWithWhereWithoutPetsInput = {
+    where?: PetTypeWhereInput
+    data: XOR<PetTypeUpdateWithoutPetsInput, PetTypeUncheckedUpdateWithoutPetsInput>
+  }
+
+  export type PetTypeUpdateWithoutPetsInput = {
+    name?: StringFieldUpdateOperationsInput | string
+    slug?: StringFieldUpdateOperationsInput | string
+    meta?: NullableJsonNullValueInput | InputJsonValue
+    settings?: NullableJsonNullValueInput | InputJsonValue
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type PetTypeUncheckedUpdateWithoutPetsInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    name?: StringFieldUpdateOperationsInput | string
+    slug?: StringFieldUpdateOperationsInput | string
+    meta?: NullableJsonNullValueInput | InputJsonValue
+    settings?: NullableJsonNullValueInput | InputJsonValue
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type AlertUpdateWithWhereUniqueWithoutPetInput = {
+    where: AlertWhereUniqueInput
+    data: XOR<AlertUpdateWithoutPetInput, AlertUncheckedUpdateWithoutPetInput>
+  }
+
+  export type AlertUpdateManyWithWhereWithoutPetInput = {
+    where: AlertScalarWhereInput
+    data: XOR<AlertUpdateManyMutationInput, AlertUncheckedUpdateManyWithoutPetInput>
+  }
+
   export type UserCreateWithoutCreated_alertsInput = {
     name?: string
     firstName?: string
@@ -25483,6 +31846,9 @@ export namespace Prisma {
     accounts?: AccountCreateNestedManyWithoutUserInput
     devices?: DeviceCreateNestedManyWithoutUserInput
     reported_sightings?: SightingCreateNestedManyWithoutReporterInput
+    auditLogs?: AuditLogCreateNestedManyWithoutUserInput
+    pets?: PetCreateNestedManyWithoutUserInput
+    alert_zones?: AlertZoneCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutCreated_alertsInput = {
@@ -25506,6 +31872,9 @@ export namespace Prisma {
     accounts?: AccountUncheckedCreateNestedManyWithoutUserInput
     devices?: DeviceUncheckedCreateNestedManyWithoutUserInput
     reported_sightings?: SightingUncheckedCreateNestedManyWithoutReporterInput
+    auditLogs?: AuditLogUncheckedCreateNestedManyWithoutUserInput
+    pets?: PetUncheckedCreateNestedManyWithoutUserInput
+    alert_zones?: AlertZoneUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutCreated_alertsInput = {
@@ -25544,6 +31913,9 @@ export namespace Prisma {
     accounts?: AccountUpdateManyWithoutUserNestedInput
     devices?: DeviceUpdateManyWithoutUserNestedInput
     reported_sightings?: SightingUpdateManyWithoutReporterNestedInput
+    auditLogs?: AuditLogUpdateManyWithoutUserNestedInput
+    pets?: PetUpdateManyWithoutUserNestedInput
+    alert_zones?: AlertZoneUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutCreated_alertsInput = {
@@ -25567,6 +31939,83 @@ export namespace Prisma {
     accounts?: AccountUncheckedUpdateManyWithoutUserNestedInput
     devices?: DeviceUncheckedUpdateManyWithoutUserNestedInput
     reported_sightings?: SightingUncheckedUpdateManyWithoutReporterNestedInput
+    auditLogs?: AuditLogUncheckedUpdateManyWithoutUserNestedInput
+    pets?: PetUncheckedUpdateManyWithoutUserNestedInput
+    alert_zones?: AlertZoneUncheckedUpdateManyWithoutUserNestedInput
+  }
+
+  export type PetCreateWithoutAlertsInput = {
+    tagId: string
+    name: string
+    gender?: $Enums.Gender | null
+    photos?: PetCreatephotosInput | string[]
+    size?: $Enums.Size | null
+    isMissing?: boolean
+    birthday?: Date | string | null
+    created_at?: Date | string
+    updated_at?: Date | string
+    user: UserCreateNestedOneWithoutPetsInput
+    petType: PetTypeCreateNestedOneWithoutPetsInput
+  }
+
+  export type PetUncheckedCreateWithoutAlertsInput = {
+    id?: number
+    tagId: string
+    userId: number
+    petTypeId: number
+    name: string
+    gender?: $Enums.Gender | null
+    photos?: PetCreatephotosInput | string[]
+    size?: $Enums.Size | null
+    isMissing?: boolean
+    birthday?: Date | string | null
+    created_at?: Date | string
+    updated_at?: Date | string
+  }
+
+  export type PetCreateOrConnectWithoutAlertsInput = {
+    where: PetWhereUniqueInput
+    create: XOR<PetCreateWithoutAlertsInput, PetUncheckedCreateWithoutAlertsInput>
+  }
+
+  export type PetUpsertWithoutAlertsInput = {
+    update: XOR<PetUpdateWithoutAlertsInput, PetUncheckedUpdateWithoutAlertsInput>
+    create: XOR<PetCreateWithoutAlertsInput, PetUncheckedCreateWithoutAlertsInput>
+    where?: PetWhereInput
+  }
+
+  export type PetUpdateToOneWithWhereWithoutAlertsInput = {
+    where?: PetWhereInput
+    data: XOR<PetUpdateWithoutAlertsInput, PetUncheckedUpdateWithoutAlertsInput>
+  }
+
+  export type PetUpdateWithoutAlertsInput = {
+    tagId?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    gender?: NullableEnumGenderFieldUpdateOperationsInput | $Enums.Gender | null
+    photos?: PetUpdatephotosInput | string[]
+    size?: NullableEnumSizeFieldUpdateOperationsInput | $Enums.Size | null
+    isMissing?: BoolFieldUpdateOperationsInput | boolean
+    birthday?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    user?: UserUpdateOneRequiredWithoutPetsNestedInput
+    petType?: PetTypeUpdateOneRequiredWithoutPetsNestedInput
+  }
+
+  export type PetUncheckedUpdateWithoutAlertsInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    tagId?: StringFieldUpdateOperationsInput | string
+    userId?: IntFieldUpdateOperationsInput | number
+    petTypeId?: IntFieldUpdateOperationsInput | number
+    name?: StringFieldUpdateOperationsInput | string
+    gender?: NullableEnumGenderFieldUpdateOperationsInput | $Enums.Gender | null
+    photos?: PetUpdatephotosInput | string[]
+    size?: NullableEnumSizeFieldUpdateOperationsInput | $Enums.Size | null
+    isMissing?: BoolFieldUpdateOperationsInput | boolean
+    birthday?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type SightingUpdateWithWhereUniqueWithoutAlertInput = {
@@ -25594,6 +32043,8 @@ export namespace Prisma {
     exclusion_reason?: string | null
     push_message_id?: string | null
     push_response?: NullableJsonNullValueInput | InputJsonValue
+    meta?: NullableJsonNullValueInput | InputJsonValue
+    settings?: NullableJsonNullValueInput | InputJsonValue
     created_at?: Date | string
     updated_at?: Date | string
     device: DeviceCreateNestedOneWithoutNotificationsInput
@@ -25616,6 +32067,8 @@ export namespace Prisma {
     exclusion_reason?: string | null
     push_message_id?: string | null
     push_response?: NullableJsonNullValueInput | InputJsonValue
+    meta?: NullableJsonNullValueInput | InputJsonValue
+    settings?: NullableJsonNullValueInput | InputJsonValue
     created_at?: Date | string
     updated_at?: Date | string
   }
@@ -25667,6 +32120,8 @@ export namespace Prisma {
     exclusion_reason?: StringNullableFilter<"Notification"> | string | null
     push_message_id?: StringNullableFilter<"Notification"> | string | null
     push_response?: JsonNullableFilter<"Notification">
+    meta?: JsonNullableFilter<"Notification">
+    settings?: JsonNullableFilter<"Notification">
     created_at?: DateTimeFilter<"Notification"> | Date | string
     updated_at?: DateTimeFilter<"Notification"> | Date | string
   }
@@ -25691,6 +32146,9 @@ export namespace Prisma {
     accounts?: AccountCreateNestedManyWithoutUserInput
     created_alerts?: AlertCreateNestedManyWithoutCreatorInput
     reported_sightings?: SightingCreateNestedManyWithoutReporterInput
+    auditLogs?: AuditLogCreateNestedManyWithoutUserInput
+    pets?: PetCreateNestedManyWithoutUserInput
+    alert_zones?: AlertZoneCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutDevicesInput = {
@@ -25714,6 +32172,9 @@ export namespace Prisma {
     accounts?: AccountUncheckedCreateNestedManyWithoutUserInput
     created_alerts?: AlertUncheckedCreateNestedManyWithoutCreatorInput
     reported_sightings?: SightingUncheckedCreateNestedManyWithoutReporterInput
+    auditLogs?: AuditLogUncheckedCreateNestedManyWithoutUserInput
+    pets?: PetUncheckedCreateNestedManyWithoutUserInput
+    alert_zones?: AlertZoneUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutDevicesInput = {
@@ -25736,6 +32197,8 @@ export namespace Prisma {
     exclusion_reason?: string | null
     push_message_id?: string | null
     push_response?: NullableJsonNullValueInput | InputJsonValue
+    meta?: NullableJsonNullValueInput | InputJsonValue
+    settings?: NullableJsonNullValueInput | InputJsonValue
     created_at?: Date | string
     updated_at?: Date | string
     alert: AlertCreateNestedOneWithoutNotificationsInput
@@ -25758,6 +32221,8 @@ export namespace Prisma {
     exclusion_reason?: string | null
     push_message_id?: string | null
     push_response?: NullableJsonNullValueInput | InputJsonValue
+    meta?: NullableJsonNullValueInput | InputJsonValue
+    settings?: NullableJsonNullValueInput | InputJsonValue
     created_at?: Date | string
     updated_at?: Date | string
   }
@@ -25803,6 +32268,9 @@ export namespace Prisma {
     accounts?: AccountUpdateManyWithoutUserNestedInput
     created_alerts?: AlertUpdateManyWithoutCreatorNestedInput
     reported_sightings?: SightingUpdateManyWithoutReporterNestedInput
+    auditLogs?: AuditLogUpdateManyWithoutUserNestedInput
+    pets?: PetUpdateManyWithoutUserNestedInput
+    alert_zones?: AlertZoneUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutDevicesInput = {
@@ -25826,6 +32294,9 @@ export namespace Prisma {
     accounts?: AccountUncheckedUpdateManyWithoutUserNestedInput
     created_alerts?: AlertUncheckedUpdateManyWithoutCreatorNestedInput
     reported_sightings?: SightingUncheckedUpdateManyWithoutReporterNestedInput
+    auditLogs?: AuditLogUncheckedUpdateManyWithoutUserNestedInput
+    pets?: PetUncheckedUpdateManyWithoutUserNestedInput
+    alert_zones?: AlertZoneUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type SavedZoneUpdateWithWhereUniqueWithoutDeviceInput = {
@@ -25992,6 +32463,124 @@ export namespace Prisma {
     notifications?: NotificationUncheckedUpdateManyWithoutDeviceNestedInput
   }
 
+  export type UserCreateWithoutAlert_zonesInput = {
+    name?: string
+    firstName?: string
+    lastName?: string
+    email: string
+    emailVerified?: boolean
+    image?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    banned?: boolean
+    banReason?: string | null
+    banExpires?: Date | string | null
+    settings?: NullableJsonNullValueInput | InputJsonValue
+    meta?: NullableJsonNullValueInput | InputJsonValue
+    roles?: UserRoleCreateNestedManyWithoutUserInput
+    gates?: UserGateCreateNestedManyWithoutUserInput
+    sessions?: SessionCreateNestedManyWithoutUserInput
+    accounts?: AccountCreateNestedManyWithoutUserInput
+    devices?: DeviceCreateNestedManyWithoutUserInput
+    created_alerts?: AlertCreateNestedManyWithoutCreatorInput
+    reported_sightings?: SightingCreateNestedManyWithoutReporterInput
+    auditLogs?: AuditLogCreateNestedManyWithoutUserInput
+    pets?: PetCreateNestedManyWithoutUserInput
+  }
+
+  export type UserUncheckedCreateWithoutAlert_zonesInput = {
+    id?: number
+    name?: string
+    firstName?: string
+    lastName?: string
+    email: string
+    emailVerified?: boolean
+    image?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    banned?: boolean
+    banReason?: string | null
+    banExpires?: Date | string | null
+    settings?: NullableJsonNullValueInput | InputJsonValue
+    meta?: NullableJsonNullValueInput | InputJsonValue
+    roles?: UserRoleUncheckedCreateNestedManyWithoutUserInput
+    gates?: UserGateUncheckedCreateNestedManyWithoutUserInput
+    sessions?: SessionUncheckedCreateNestedManyWithoutUserInput
+    accounts?: AccountUncheckedCreateNestedManyWithoutUserInput
+    devices?: DeviceUncheckedCreateNestedManyWithoutUserInput
+    created_alerts?: AlertUncheckedCreateNestedManyWithoutCreatorInput
+    reported_sightings?: SightingUncheckedCreateNestedManyWithoutReporterInput
+    auditLogs?: AuditLogUncheckedCreateNestedManyWithoutUserInput
+    pets?: PetUncheckedCreateNestedManyWithoutUserInput
+  }
+
+  export type UserCreateOrConnectWithoutAlert_zonesInput = {
+    where: UserWhereUniqueInput
+    create: XOR<UserCreateWithoutAlert_zonesInput, UserUncheckedCreateWithoutAlert_zonesInput>
+  }
+
+  export type UserUpsertWithoutAlert_zonesInput = {
+    update: XOR<UserUpdateWithoutAlert_zonesInput, UserUncheckedUpdateWithoutAlert_zonesInput>
+    create: XOR<UserCreateWithoutAlert_zonesInput, UserUncheckedCreateWithoutAlert_zonesInput>
+    where?: UserWhereInput
+  }
+
+  export type UserUpdateToOneWithWhereWithoutAlert_zonesInput = {
+    where?: UserWhereInput
+    data: XOR<UserUpdateWithoutAlert_zonesInput, UserUncheckedUpdateWithoutAlert_zonesInput>
+  }
+
+  export type UserUpdateWithoutAlert_zonesInput = {
+    name?: StringFieldUpdateOperationsInput | string
+    firstName?: StringFieldUpdateOperationsInput | string
+    lastName?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    emailVerified?: BoolFieldUpdateOperationsInput | boolean
+    image?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    banned?: BoolFieldUpdateOperationsInput | boolean
+    banReason?: NullableStringFieldUpdateOperationsInput | string | null
+    banExpires?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    settings?: NullableJsonNullValueInput | InputJsonValue
+    meta?: NullableJsonNullValueInput | InputJsonValue
+    roles?: UserRoleUpdateManyWithoutUserNestedInput
+    gates?: UserGateUpdateManyWithoutUserNestedInput
+    sessions?: SessionUpdateManyWithoutUserNestedInput
+    accounts?: AccountUpdateManyWithoutUserNestedInput
+    devices?: DeviceUpdateManyWithoutUserNestedInput
+    created_alerts?: AlertUpdateManyWithoutCreatorNestedInput
+    reported_sightings?: SightingUpdateManyWithoutReporterNestedInput
+    auditLogs?: AuditLogUpdateManyWithoutUserNestedInput
+    pets?: PetUpdateManyWithoutUserNestedInput
+  }
+
+  export type UserUncheckedUpdateWithoutAlert_zonesInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    name?: StringFieldUpdateOperationsInput | string
+    firstName?: StringFieldUpdateOperationsInput | string
+    lastName?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    emailVerified?: BoolFieldUpdateOperationsInput | boolean
+    image?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    banned?: BoolFieldUpdateOperationsInput | boolean
+    banReason?: NullableStringFieldUpdateOperationsInput | string | null
+    banExpires?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    settings?: NullableJsonNullValueInput | InputJsonValue
+    meta?: NullableJsonNullValueInput | InputJsonValue
+    roles?: UserRoleUncheckedUpdateManyWithoutUserNestedInput
+    gates?: UserGateUncheckedUpdateManyWithoutUserNestedInput
+    sessions?: SessionUncheckedUpdateManyWithoutUserNestedInput
+    accounts?: AccountUncheckedUpdateManyWithoutUserNestedInput
+    devices?: DeviceUncheckedUpdateManyWithoutUserNestedInput
+    created_alerts?: AlertUncheckedUpdateManyWithoutCreatorNestedInput
+    reported_sightings?: SightingUncheckedUpdateManyWithoutReporterNestedInput
+    auditLogs?: AuditLogUncheckedUpdateManyWithoutUserNestedInput
+    pets?: PetUncheckedUpdateManyWithoutUserNestedInput
+  }
+
   export type AlertUpdateToOneWithWhereWithoutSightingsInput = {
     where?: AlertWhereInput
     data: XOR<AlertUpdateWithoutSightingsInput, AlertUncheckedUpdateWithoutSightingsInput>
@@ -26023,13 +32612,17 @@ export namespace Prisma {
     notes?: NullableStringFieldUpdateOperationsInput | string | null
     reward_offered?: BoolFieldUpdateOperationsInput | boolean
     reward_amount?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    meta?: NullableJsonNullValueInput | InputJsonValue
+    settings?: NullableJsonNullValueInput | InputJsonValue
     creator?: UserUpdateOneRequiredWithoutCreated_alertsNestedInput
+    pet?: PetUpdateOneWithoutAlertsNestedInput
     notifications?: NotificationUpdateManyWithoutAlertNestedInput
   }
 
   export type AlertUncheckedUpdateWithoutSightingsInput = {
     id?: IntFieldUpdateOperationsInput | number
     creator_id?: IntFieldUpdateOperationsInput | number
+    pet_id?: NullableIntFieldUpdateOperationsInput | number | null
     pet_name?: StringFieldUpdateOperationsInput | string
     pet_species?: EnumPetSpeciesFieldUpdateOperationsInput | $Enums.PetSpecies
     pet_breed?: NullableStringFieldUpdateOperationsInput | string | null
@@ -26055,6 +32648,8 @@ export namespace Prisma {
     notes?: NullableStringFieldUpdateOperationsInput | string | null
     reward_offered?: BoolFieldUpdateOperationsInput | boolean
     reward_amount?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    meta?: NullableJsonNullValueInput | InputJsonValue
+    settings?: NullableJsonNullValueInput | InputJsonValue
     notifications?: NotificationUncheckedUpdateManyWithoutAlertNestedInput
   }
 
@@ -26078,6 +32673,9 @@ export namespace Prisma {
     accounts?: AccountCreateNestedManyWithoutUserInput
     devices?: DeviceCreateNestedManyWithoutUserInput
     created_alerts?: AlertCreateNestedManyWithoutCreatorInput
+    auditLogs?: AuditLogCreateNestedManyWithoutUserInput
+    pets?: PetCreateNestedManyWithoutUserInput
+    alert_zones?: AlertZoneCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutReported_sightingsInput = {
@@ -26101,6 +32699,9 @@ export namespace Prisma {
     accounts?: AccountUncheckedCreateNestedManyWithoutUserInput
     devices?: DeviceUncheckedCreateNestedManyWithoutUserInput
     created_alerts?: AlertUncheckedCreateNestedManyWithoutCreatorInput
+    auditLogs?: AuditLogUncheckedCreateNestedManyWithoutUserInput
+    pets?: PetUncheckedCreateNestedManyWithoutUserInput
+    alert_zones?: AlertZoneUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutReported_sightingsInput = {
@@ -26139,6 +32740,9 @@ export namespace Prisma {
     accounts?: AccountUpdateManyWithoutUserNestedInput
     devices?: DeviceUpdateManyWithoutUserNestedInput
     created_alerts?: AlertUpdateManyWithoutCreatorNestedInput
+    auditLogs?: AuditLogUpdateManyWithoutUserNestedInput
+    pets?: PetUpdateManyWithoutUserNestedInput
+    alert_zones?: AlertZoneUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutReported_sightingsInput = {
@@ -26162,6 +32766,9 @@ export namespace Prisma {
     accounts?: AccountUncheckedUpdateManyWithoutUserNestedInput
     devices?: DeviceUncheckedUpdateManyWithoutUserNestedInput
     created_alerts?: AlertUncheckedUpdateManyWithoutCreatorNestedInput
+    auditLogs?: AuditLogUncheckedUpdateManyWithoutUserNestedInput
+    pets?: PetUncheckedUpdateManyWithoutUserNestedInput
+    alert_zones?: AlertZoneUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type DeviceCreateWithoutNotificationsInput = {
@@ -26253,13 +32860,17 @@ export namespace Prisma {
     notes?: NullableStringFieldUpdateOperationsInput | string | null
     reward_offered?: BoolFieldUpdateOperationsInput | boolean
     reward_amount?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    meta?: NullableJsonNullValueInput | InputJsonValue
+    settings?: NullableJsonNullValueInput | InputJsonValue
     creator?: UserUpdateOneRequiredWithoutCreated_alertsNestedInput
+    pet?: PetUpdateOneWithoutAlertsNestedInput
     sightings?: SightingUpdateManyWithoutAlertNestedInput
   }
 
   export type AlertUncheckedUpdateWithoutNotificationsInput = {
     id?: IntFieldUpdateOperationsInput | number
     creator_id?: IntFieldUpdateOperationsInput | number
+    pet_id?: NullableIntFieldUpdateOperationsInput | number | null
     pet_name?: StringFieldUpdateOperationsInput | string
     pet_species?: EnumPetSpeciesFieldUpdateOperationsInput | $Enums.PetSpecies
     pet_breed?: NullableStringFieldUpdateOperationsInput | string | null
@@ -26285,6 +32896,8 @@ export namespace Prisma {
     notes?: NullableStringFieldUpdateOperationsInput | string | null
     reward_offered?: BoolFieldUpdateOperationsInput | boolean
     reward_amount?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    meta?: NullableJsonNullValueInput | InputJsonValue
+    settings?: NullableJsonNullValueInput | InputJsonValue
     sightings?: SightingUncheckedUpdateManyWithoutAlertNestedInput
   }
 
@@ -26391,6 +33004,8 @@ export namespace Prisma {
     refreshTokenExpiresAt?: Date | string | null
     scope?: string | null
     password?: string | null
+    meta?: NullableJsonNullValueInput | InputJsonValue
+    settings?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -26416,6 +33031,43 @@ export namespace Prisma {
     ip_updated_at?: Date | string | null
     postal_codes?: DeviceCreatepostal_codesInput | string[]
     last_app_open?: Date | string | null
+    created_at?: Date | string
+    updated_at?: Date | string
+  }
+
+  export type AuditLogCreateManyUserInput = {
+    id?: number
+    action: string
+    actorId?: string | null
+    actorType?: string | null
+    metadata?: NullableJsonNullValueInput | InputJsonValue
+    ipAddress?: string | null
+    userAgent?: string | null
+    createdAt?: Date | string
+    eventType: $Enums.AuditEventType
+    entityType?: $Enums.AuditEntityType | null
+    entityId?: number | null
+    description?: string | null
+    oldValues?: NullableJsonNullValueInput | InputJsonValue
+    newValues?: NullableJsonNullValueInput | InputJsonValue
+    sessionId?: string | null
+    requestId?: string | null
+    success?: boolean
+    errorMessage?: string | null
+    errorStack?: string | null
+    timestamp?: Date | string
+  }
+
+  export type PetCreateManyUserInput = {
+    id?: number
+    tagId: string
+    petTypeId: number
+    name: string
+    gender?: $Enums.Gender | null
+    photos?: PetCreatephotosInput | string[]
+    size?: $Enums.Size | null
+    isMissing?: boolean
+    birthday?: Date | string | null
     created_at?: Date | string
     updated_at?: Date | string
   }
@@ -26511,6 +33163,8 @@ export namespace Prisma {
     refreshTokenExpiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     scope?: NullableStringFieldUpdateOperationsInput | string | null
     password?: NullableStringFieldUpdateOperationsInput | string | null
+    meta?: NullableJsonNullValueInput | InputJsonValue
+    settings?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -26526,6 +33180,8 @@ export namespace Prisma {
     refreshTokenExpiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     scope?: NullableStringFieldUpdateOperationsInput | string | null
     password?: NullableStringFieldUpdateOperationsInput | string | null
+    meta?: NullableJsonNullValueInput | InputJsonValue
+    settings?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -26541,6 +33197,8 @@ export namespace Prisma {
     refreshTokenExpiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     scope?: NullableStringFieldUpdateOperationsInput | string | null
     password?: NullableStringFieldUpdateOperationsInput | string | null
+    meta?: NullableJsonNullValueInput | InputJsonValue
+    settings?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -26649,12 +33307,16 @@ export namespace Prisma {
     notes?: NullableStringFieldUpdateOperationsInput | string | null
     reward_offered?: BoolFieldUpdateOperationsInput | boolean
     reward_amount?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    meta?: NullableJsonNullValueInput | InputJsonValue
+    settings?: NullableJsonNullValueInput | InputJsonValue
+    pet?: PetUpdateOneWithoutAlertsNestedInput
     sightings?: SightingUpdateManyWithoutAlertNestedInput
     notifications?: NotificationUpdateManyWithoutAlertNestedInput
   }
 
   export type AlertUncheckedUpdateWithoutCreatorInput = {
     id?: IntFieldUpdateOperationsInput | number
+    pet_id?: NullableIntFieldUpdateOperationsInput | number | null
     pet_name?: StringFieldUpdateOperationsInput | string
     pet_species?: EnumPetSpeciesFieldUpdateOperationsInput | $Enums.PetSpecies
     pet_breed?: NullableStringFieldUpdateOperationsInput | string | null
@@ -26680,12 +33342,15 @@ export namespace Prisma {
     notes?: NullableStringFieldUpdateOperationsInput | string | null
     reward_offered?: BoolFieldUpdateOperationsInput | boolean
     reward_amount?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    meta?: NullableJsonNullValueInput | InputJsonValue
+    settings?: NullableJsonNullValueInput | InputJsonValue
     sightings?: SightingUncheckedUpdateManyWithoutAlertNestedInput
     notifications?: NotificationUncheckedUpdateManyWithoutAlertNestedInput
   }
 
   export type AlertUncheckedUpdateManyWithoutCreatorInput = {
     id?: IntFieldUpdateOperationsInput | number
+    pet_id?: NullableIntFieldUpdateOperationsInput | number | null
     pet_name?: StringFieldUpdateOperationsInput | string
     pet_species?: EnumPetSpeciesFieldUpdateOperationsInput | $Enums.PetSpecies
     pet_breed?: NullableStringFieldUpdateOperationsInput | string | null
@@ -26711,6 +33376,8 @@ export namespace Prisma {
     notes?: NullableStringFieldUpdateOperationsInput | string | null
     reward_offered?: BoolFieldUpdateOperationsInput | boolean
     reward_amount?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    meta?: NullableJsonNullValueInput | InputJsonValue
+    settings?: NullableJsonNullValueInput | InputJsonValue
   }
 
   export type SightingUpdateWithoutReporterInput = {
@@ -26725,6 +33392,8 @@ export namespace Prisma {
     dismissed?: BoolFieldUpdateOperationsInput | boolean
     dismissed_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     dismissed_reason?: NullableStringFieldUpdateOperationsInput | string | null
+    meta?: NullableJsonNullValueInput | InputJsonValue
+    settings?: NullableJsonNullValueInput | InputJsonValue
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
     alert?: AlertUpdateOneRequiredWithoutSightingsNestedInput
@@ -26744,6 +33413,8 @@ export namespace Prisma {
     dismissed?: BoolFieldUpdateOperationsInput | boolean
     dismissed_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     dismissed_reason?: NullableStringFieldUpdateOperationsInput | string | null
+    meta?: NullableJsonNullValueInput | InputJsonValue
+    settings?: NullableJsonNullValueInput | InputJsonValue
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -26762,6 +33433,154 @@ export namespace Prisma {
     dismissed?: BoolFieldUpdateOperationsInput | boolean
     dismissed_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     dismissed_reason?: NullableStringFieldUpdateOperationsInput | string | null
+    meta?: NullableJsonNullValueInput | InputJsonValue
+    settings?: NullableJsonNullValueInput | InputJsonValue
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type AuditLogUpdateWithoutUserInput = {
+    action?: StringFieldUpdateOperationsInput | string
+    actorId?: NullableStringFieldUpdateOperationsInput | string | null
+    actorType?: NullableStringFieldUpdateOperationsInput | string | null
+    metadata?: NullableJsonNullValueInput | InputJsonValue
+    ipAddress?: NullableStringFieldUpdateOperationsInput | string | null
+    userAgent?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    eventType?: EnumAuditEventTypeFieldUpdateOperationsInput | $Enums.AuditEventType
+    entityType?: NullableEnumAuditEntityTypeFieldUpdateOperationsInput | $Enums.AuditEntityType | null
+    entityId?: NullableIntFieldUpdateOperationsInput | number | null
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    oldValues?: NullableJsonNullValueInput | InputJsonValue
+    newValues?: NullableJsonNullValueInput | InputJsonValue
+    sessionId?: NullableStringFieldUpdateOperationsInput | string | null
+    requestId?: NullableStringFieldUpdateOperationsInput | string | null
+    success?: BoolFieldUpdateOperationsInput | boolean
+    errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    errorStack?: NullableStringFieldUpdateOperationsInput | string | null
+    timestamp?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type AuditLogUncheckedUpdateWithoutUserInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    action?: StringFieldUpdateOperationsInput | string
+    actorId?: NullableStringFieldUpdateOperationsInput | string | null
+    actorType?: NullableStringFieldUpdateOperationsInput | string | null
+    metadata?: NullableJsonNullValueInput | InputJsonValue
+    ipAddress?: NullableStringFieldUpdateOperationsInput | string | null
+    userAgent?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    eventType?: EnumAuditEventTypeFieldUpdateOperationsInput | $Enums.AuditEventType
+    entityType?: NullableEnumAuditEntityTypeFieldUpdateOperationsInput | $Enums.AuditEntityType | null
+    entityId?: NullableIntFieldUpdateOperationsInput | number | null
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    oldValues?: NullableJsonNullValueInput | InputJsonValue
+    newValues?: NullableJsonNullValueInput | InputJsonValue
+    sessionId?: NullableStringFieldUpdateOperationsInput | string | null
+    requestId?: NullableStringFieldUpdateOperationsInput | string | null
+    success?: BoolFieldUpdateOperationsInput | boolean
+    errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    errorStack?: NullableStringFieldUpdateOperationsInput | string | null
+    timestamp?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type AuditLogUncheckedUpdateManyWithoutUserInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    action?: StringFieldUpdateOperationsInput | string
+    actorId?: NullableStringFieldUpdateOperationsInput | string | null
+    actorType?: NullableStringFieldUpdateOperationsInput | string | null
+    metadata?: NullableJsonNullValueInput | InputJsonValue
+    ipAddress?: NullableStringFieldUpdateOperationsInput | string | null
+    userAgent?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    eventType?: EnumAuditEventTypeFieldUpdateOperationsInput | $Enums.AuditEventType
+    entityType?: NullableEnumAuditEntityTypeFieldUpdateOperationsInput | $Enums.AuditEntityType | null
+    entityId?: NullableIntFieldUpdateOperationsInput | number | null
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    oldValues?: NullableJsonNullValueInput | InputJsonValue
+    newValues?: NullableJsonNullValueInput | InputJsonValue
+    sessionId?: NullableStringFieldUpdateOperationsInput | string | null
+    requestId?: NullableStringFieldUpdateOperationsInput | string | null
+    success?: BoolFieldUpdateOperationsInput | boolean
+    errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    errorStack?: NullableStringFieldUpdateOperationsInput | string | null
+    timestamp?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type PetUpdateWithoutUserInput = {
+    tagId?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    gender?: NullableEnumGenderFieldUpdateOperationsInput | $Enums.Gender | null
+    photos?: PetUpdatephotosInput | string[]
+    size?: NullableEnumSizeFieldUpdateOperationsInput | $Enums.Size | null
+    isMissing?: BoolFieldUpdateOperationsInput | boolean
+    birthday?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    petType?: PetTypeUpdateOneRequiredWithoutPetsNestedInput
+    alerts?: AlertUpdateManyWithoutPetNestedInput
+  }
+
+  export type PetUncheckedUpdateWithoutUserInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    tagId?: StringFieldUpdateOperationsInput | string
+    petTypeId?: IntFieldUpdateOperationsInput | number
+    name?: StringFieldUpdateOperationsInput | string
+    gender?: NullableEnumGenderFieldUpdateOperationsInput | $Enums.Gender | null
+    photos?: PetUpdatephotosInput | string[]
+    size?: NullableEnumSizeFieldUpdateOperationsInput | $Enums.Size | null
+    isMissing?: BoolFieldUpdateOperationsInput | boolean
+    birthday?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    alerts?: AlertUncheckedUpdateManyWithoutPetNestedInput
+  }
+
+  export type PetUncheckedUpdateManyWithoutUserInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    tagId?: StringFieldUpdateOperationsInput | string
+    petTypeId?: IntFieldUpdateOperationsInput | number
+    name?: StringFieldUpdateOperationsInput | string
+    gender?: NullableEnumGenderFieldUpdateOperationsInput | $Enums.Gender | null
+    photos?: PetUpdatephotosInput | string[]
+    size?: NullableEnumSizeFieldUpdateOperationsInput | $Enums.Size | null
+    isMissing?: BoolFieldUpdateOperationsInput | boolean
+    birthday?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type AlertZoneUpdateWithoutUserInput = {
+    name?: StringFieldUpdateOperationsInput | string
+    lat?: FloatFieldUpdateOperationsInput | number
+    lon?: FloatFieldUpdateOperationsInput | number
+    radius_meters?: IntFieldUpdateOperationsInput | number
+    is_active?: BoolFieldUpdateOperationsInput | boolean
+    priority?: IntFieldUpdateOperationsInput | number
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type AlertZoneUncheckedUpdateWithoutUserInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    name?: StringFieldUpdateOperationsInput | string
+    lat?: FloatFieldUpdateOperationsInput | number
+    lon?: FloatFieldUpdateOperationsInput | number
+    radius_meters?: IntFieldUpdateOperationsInput | number
+    is_active?: BoolFieldUpdateOperationsInput | boolean
+    priority?: IntFieldUpdateOperationsInput | number
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type AlertZoneUncheckedUpdateManyWithoutUserInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    name?: StringFieldUpdateOperationsInput | string
+    lat?: FloatFieldUpdateOperationsInput | number
+    lon?: FloatFieldUpdateOperationsInput | number
+    radius_meters?: IntFieldUpdateOperationsInput | number
+    is_active?: BoolFieldUpdateOperationsInput | boolean
+    priority?: IntFieldUpdateOperationsInput | number
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -26820,6 +33639,162 @@ export namespace Prisma {
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
+  export type PetCreateManyPetTypeInput = {
+    id?: number
+    tagId: string
+    userId: number
+    name: string
+    gender?: $Enums.Gender | null
+    photos?: PetCreatephotosInput | string[]
+    size?: $Enums.Size | null
+    isMissing?: boolean
+    birthday?: Date | string | null
+    created_at?: Date | string
+    updated_at?: Date | string
+  }
+
+  export type PetUpdateWithoutPetTypeInput = {
+    tagId?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    gender?: NullableEnumGenderFieldUpdateOperationsInput | $Enums.Gender | null
+    photos?: PetUpdatephotosInput | string[]
+    size?: NullableEnumSizeFieldUpdateOperationsInput | $Enums.Size | null
+    isMissing?: BoolFieldUpdateOperationsInput | boolean
+    birthday?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    user?: UserUpdateOneRequiredWithoutPetsNestedInput
+    alerts?: AlertUpdateManyWithoutPetNestedInput
+  }
+
+  export type PetUncheckedUpdateWithoutPetTypeInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    tagId?: StringFieldUpdateOperationsInput | string
+    userId?: IntFieldUpdateOperationsInput | number
+    name?: StringFieldUpdateOperationsInput | string
+    gender?: NullableEnumGenderFieldUpdateOperationsInput | $Enums.Gender | null
+    photos?: PetUpdatephotosInput | string[]
+    size?: NullableEnumSizeFieldUpdateOperationsInput | $Enums.Size | null
+    isMissing?: BoolFieldUpdateOperationsInput | boolean
+    birthday?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    alerts?: AlertUncheckedUpdateManyWithoutPetNestedInput
+  }
+
+  export type PetUncheckedUpdateManyWithoutPetTypeInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    tagId?: StringFieldUpdateOperationsInput | string
+    userId?: IntFieldUpdateOperationsInput | number
+    name?: StringFieldUpdateOperationsInput | string
+    gender?: NullableEnumGenderFieldUpdateOperationsInput | $Enums.Gender | null
+    photos?: PetUpdatephotosInput | string[]
+    size?: NullableEnumSizeFieldUpdateOperationsInput | $Enums.Size | null
+    isMissing?: BoolFieldUpdateOperationsInput | boolean
+    birthday?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type AlertUpdateWithoutPetInput = {
+    pet_name?: StringFieldUpdateOperationsInput | string
+    pet_species?: EnumPetSpeciesFieldUpdateOperationsInput | $Enums.PetSpecies
+    pet_breed?: NullableStringFieldUpdateOperationsInput | string | null
+    pet_description?: StringFieldUpdateOperationsInput | string
+    pet_color?: NullableStringFieldUpdateOperationsInput | string | null
+    pet_age_years?: NullableIntFieldUpdateOperationsInput | number | null
+    pet_photos?: AlertUpdatepet_photosInput | string[]
+    last_seen_lat?: FloatFieldUpdateOperationsInput | number
+    last_seen_lon?: FloatFieldUpdateOperationsInput | number
+    location_address?: NullableStringFieldUpdateOperationsInput | string | null
+    alert_radius_km?: FloatFieldUpdateOperationsInput | number
+    status?: EnumAlertStatusFieldUpdateOperationsInput | $Enums.AlertStatus
+    time_last_seen?: DateTimeFieldUpdateOperationsInput | Date | string
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    expires_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    resolved_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    renewal_count?: IntFieldUpdateOperationsInput | number
+    contact_phone?: NullableStringFieldUpdateOperationsInput | string | null
+    contact_email?: NullableStringFieldUpdateOperationsInput | string | null
+    is_phone_public?: BoolFieldUpdateOperationsInput | boolean
+    affected_postal_codes?: AlertUpdateaffected_postal_codesInput | string[]
+    notes?: NullableStringFieldUpdateOperationsInput | string | null
+    reward_offered?: BoolFieldUpdateOperationsInput | boolean
+    reward_amount?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    meta?: NullableJsonNullValueInput | InputJsonValue
+    settings?: NullableJsonNullValueInput | InputJsonValue
+    creator?: UserUpdateOneRequiredWithoutCreated_alertsNestedInput
+    sightings?: SightingUpdateManyWithoutAlertNestedInput
+    notifications?: NotificationUpdateManyWithoutAlertNestedInput
+  }
+
+  export type AlertUncheckedUpdateWithoutPetInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    creator_id?: IntFieldUpdateOperationsInput | number
+    pet_name?: StringFieldUpdateOperationsInput | string
+    pet_species?: EnumPetSpeciesFieldUpdateOperationsInput | $Enums.PetSpecies
+    pet_breed?: NullableStringFieldUpdateOperationsInput | string | null
+    pet_description?: StringFieldUpdateOperationsInput | string
+    pet_color?: NullableStringFieldUpdateOperationsInput | string | null
+    pet_age_years?: NullableIntFieldUpdateOperationsInput | number | null
+    pet_photos?: AlertUpdatepet_photosInput | string[]
+    last_seen_lat?: FloatFieldUpdateOperationsInput | number
+    last_seen_lon?: FloatFieldUpdateOperationsInput | number
+    location_address?: NullableStringFieldUpdateOperationsInput | string | null
+    alert_radius_km?: FloatFieldUpdateOperationsInput | number
+    status?: EnumAlertStatusFieldUpdateOperationsInput | $Enums.AlertStatus
+    time_last_seen?: DateTimeFieldUpdateOperationsInput | Date | string
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    expires_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    resolved_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    renewal_count?: IntFieldUpdateOperationsInput | number
+    contact_phone?: NullableStringFieldUpdateOperationsInput | string | null
+    contact_email?: NullableStringFieldUpdateOperationsInput | string | null
+    is_phone_public?: BoolFieldUpdateOperationsInput | boolean
+    affected_postal_codes?: AlertUpdateaffected_postal_codesInput | string[]
+    notes?: NullableStringFieldUpdateOperationsInput | string | null
+    reward_offered?: BoolFieldUpdateOperationsInput | boolean
+    reward_amount?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    meta?: NullableJsonNullValueInput | InputJsonValue
+    settings?: NullableJsonNullValueInput | InputJsonValue
+    sightings?: SightingUncheckedUpdateManyWithoutAlertNestedInput
+    notifications?: NotificationUncheckedUpdateManyWithoutAlertNestedInput
+  }
+
+  export type AlertUncheckedUpdateManyWithoutPetInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    creator_id?: IntFieldUpdateOperationsInput | number
+    pet_name?: StringFieldUpdateOperationsInput | string
+    pet_species?: EnumPetSpeciesFieldUpdateOperationsInput | $Enums.PetSpecies
+    pet_breed?: NullableStringFieldUpdateOperationsInput | string | null
+    pet_description?: StringFieldUpdateOperationsInput | string
+    pet_color?: NullableStringFieldUpdateOperationsInput | string | null
+    pet_age_years?: NullableIntFieldUpdateOperationsInput | number | null
+    pet_photos?: AlertUpdatepet_photosInput | string[]
+    last_seen_lat?: FloatFieldUpdateOperationsInput | number
+    last_seen_lon?: FloatFieldUpdateOperationsInput | number
+    location_address?: NullableStringFieldUpdateOperationsInput | string | null
+    alert_radius_km?: FloatFieldUpdateOperationsInput | number
+    status?: EnumAlertStatusFieldUpdateOperationsInput | $Enums.AlertStatus
+    time_last_seen?: DateTimeFieldUpdateOperationsInput | Date | string
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    expires_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    resolved_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    renewal_count?: IntFieldUpdateOperationsInput | number
+    contact_phone?: NullableStringFieldUpdateOperationsInput | string | null
+    contact_email?: NullableStringFieldUpdateOperationsInput | string | null
+    is_phone_public?: BoolFieldUpdateOperationsInput | boolean
+    affected_postal_codes?: AlertUpdateaffected_postal_codesInput | string[]
+    notes?: NullableStringFieldUpdateOperationsInput | string | null
+    reward_offered?: BoolFieldUpdateOperationsInput | boolean
+    reward_amount?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    meta?: NullableJsonNullValueInput | InputJsonValue
+    settings?: NullableJsonNullValueInput | InputJsonValue
+  }
+
   export type SightingUpdateWithoutAlertInput = {
     sighting_lat?: FloatFieldUpdateOperationsInput | number
     sighting_lon?: FloatFieldUpdateOperationsInput | number
@@ -26832,6 +33807,8 @@ export namespace Prisma {
     dismissed?: BoolFieldUpdateOperationsInput | boolean
     dismissed_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     dismissed_reason?: NullableStringFieldUpdateOperationsInput | string | null
+    meta?: NullableJsonNullValueInput | InputJsonValue
+    settings?: NullableJsonNullValueInput | InputJsonValue
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
     reporter?: UserUpdateOneRequiredWithoutReported_sightingsNestedInput
@@ -26851,6 +33828,8 @@ export namespace Prisma {
     dismissed?: BoolFieldUpdateOperationsInput | boolean
     dismissed_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     dismissed_reason?: NullableStringFieldUpdateOperationsInput | string | null
+    meta?: NullableJsonNullValueInput | InputJsonValue
+    settings?: NullableJsonNullValueInput | InputJsonValue
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -26869,6 +33848,8 @@ export namespace Prisma {
     dismissed?: BoolFieldUpdateOperationsInput | boolean
     dismissed_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     dismissed_reason?: NullableStringFieldUpdateOperationsInput | string | null
+    meta?: NullableJsonNullValueInput | InputJsonValue
+    settings?: NullableJsonNullValueInput | InputJsonValue
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -26888,6 +33869,8 @@ export namespace Prisma {
     exclusion_reason?: NullableStringFieldUpdateOperationsInput | string | null
     push_message_id?: NullableStringFieldUpdateOperationsInput | string | null
     push_response?: NullableJsonNullValueInput | InputJsonValue
+    meta?: NullableJsonNullValueInput | InputJsonValue
+    settings?: NullableJsonNullValueInput | InputJsonValue
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
     device?: DeviceUpdateOneRequiredWithoutNotificationsNestedInput
@@ -26910,6 +33893,8 @@ export namespace Prisma {
     exclusion_reason?: NullableStringFieldUpdateOperationsInput | string | null
     push_message_id?: NullableStringFieldUpdateOperationsInput | string | null
     push_response?: NullableJsonNullValueInput | InputJsonValue
+    meta?: NullableJsonNullValueInput | InputJsonValue
+    settings?: NullableJsonNullValueInput | InputJsonValue
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -26931,6 +33916,8 @@ export namespace Prisma {
     exclusion_reason?: string | null
     push_message_id?: string | null
     push_response?: NullableJsonNullValueInput | InputJsonValue
+    meta?: NullableJsonNullValueInput | InputJsonValue
+    settings?: NullableJsonNullValueInput | InputJsonValue
     created_at?: Date | string
     updated_at?: Date | string
   }
@@ -26952,6 +33939,8 @@ export namespace Prisma {
     exclusion_reason?: NullableStringFieldUpdateOperationsInput | string | null
     push_message_id?: NullableStringFieldUpdateOperationsInput | string | null
     push_response?: NullableJsonNullValueInput | InputJsonValue
+    meta?: NullableJsonNullValueInput | InputJsonValue
+    settings?: NullableJsonNullValueInput | InputJsonValue
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -26973,6 +33962,8 @@ export namespace Prisma {
     exclusion_reason?: string | null
     push_message_id?: string | null
     push_response?: NullableJsonNullValueInput | InputJsonValue
+    meta?: NullableJsonNullValueInput | InputJsonValue
+    settings?: NullableJsonNullValueInput | InputJsonValue
     created_at?: Date | string
     updated_at?: Date | string
   }
@@ -27027,6 +34018,8 @@ export namespace Prisma {
     exclusion_reason?: NullableStringFieldUpdateOperationsInput | string | null
     push_message_id?: NullableStringFieldUpdateOperationsInput | string | null
     push_response?: NullableJsonNullValueInput | InputJsonValue
+    meta?: NullableJsonNullValueInput | InputJsonValue
+    settings?: NullableJsonNullValueInput | InputJsonValue
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
     alert?: AlertUpdateOneRequiredWithoutNotificationsNestedInput
@@ -27049,6 +34042,8 @@ export namespace Prisma {
     exclusion_reason?: NullableStringFieldUpdateOperationsInput | string | null
     push_message_id?: NullableStringFieldUpdateOperationsInput | string | null
     push_response?: NullableJsonNullValueInput | InputJsonValue
+    meta?: NullableJsonNullValueInput | InputJsonValue
+    settings?: NullableJsonNullValueInput | InputJsonValue
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -27070,6 +34065,8 @@ export namespace Prisma {
     exclusion_reason?: NullableStringFieldUpdateOperationsInput | string | null
     push_message_id?: NullableStringFieldUpdateOperationsInput | string | null
     push_response?: NullableJsonNullValueInput | InputJsonValue
+    meta?: NullableJsonNullValueInput | InputJsonValue
+    settings?: NullableJsonNullValueInput | InputJsonValue
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
   }

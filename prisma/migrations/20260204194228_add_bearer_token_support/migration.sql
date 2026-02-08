@@ -1,3 +1,6 @@
+-- Enable PostGIS extension for spatial operations (required for MVP Phase 1 models)
+CREATE EXTENSION IF NOT EXISTS postgis;
+
 -- CreateTable
 CREATE TABLE "user" (
     "id" SERIAL NOT NULL,

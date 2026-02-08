@@ -1,9 +1,12 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException, ForbiddenException, UnprocessableEntityException } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { AlertService } from './alert.service';
 import { PrismaService } from '../services/prisma.service';
+import { RateLimitService } from './rate-limit.service';
 import { AlertStatus, PetSpecies } from '../generated/prisma';
 import { CreateAlertDto, UpdateAlertDto, ResolveAlertDto, AlertOutcome } from './dto';
+import type { IEmailProvider } from '@shared/email/interfaces/email-provider.interface';
 
 describe('AlertService', () => {
     let service: AlertService;
@@ -11,11 +14,34 @@ describe('AlertService', () => {
 
     const mockPrismaService = {
         $queryRaw: jest.fn(),
+        $executeRaw: jest.fn(),
         alert: {
             findUnique: jest.fn(),
             findMany: jest.fn(),
             update: jest.fn(),
         },
+        user: {
+            findUnique: jest.fn(),
+            findMany: jest.fn(),
+        },
+        pet: {
+            findUnique: jest.fn(),
+        },
+    };
+
+    const mockRateLimitService = {
+        checkAlertCreationLimit: jest.fn(),
+    };
+
+    const mockEventEmitter = {
+        emit: jest.fn(),
+    };
+
+    const mockEmailProvider = {
+        send: jest.fn().mockResolvedValue({
+            id: 'test-message-id',
+            success: true,
+        }),
     };
 
     beforeEach(async () => {
@@ -25,6 +51,18 @@ describe('AlertService', () => {
                 {
                     provide: PrismaService,
                     useValue: mockPrismaService,
+                },
+                {
+                    provide: RateLimitService,
+                    useValue: mockRateLimitService,
+                },
+                {
+                    provide: EventEmitter2,
+                    useValue: mockEventEmitter,
+                },
+                {
+                    provide: 'IEmailProvider',
+                    useValue: mockEmailProvider,
                 },
             ],
         }).compile();
@@ -479,3 +517,169 @@ describe('AlertService', () => {
             expect(mockPrismaService.$queryRaw).toHaveBeenCalledTimes(1);
         });
     });
+    describe('Email Methods', () => {
+        const mockUser = {
+            id: 1,
+            email: 'test@example.com',
+            firstName: 'John',
+            lastName: 'Doe',
+            name: 'John Doe',
+            emailVerified: false,
+            image: null,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            banned: false,
+            banReason: null,
+            banExpires: null,
+            settings: {},
+            meta: {},
+        };
+
+        const mockAlert = {
+            id: 42,
+            creatorId: 1,
+            pet: {
+                name: 'Max',
+                species: PetSpecies.DOG,
+                breed: 'Golden Retriever',
+                description: 'Friendly dog',
+                color: 'Golden',
+                ageYears: 3,
+                photos: ['https://example.com/photo1.jpg'],
+            },
+            location: {
+                lat: 37.7749,
+                lon: -122.4194,
+                address: '123 Market St, San Francisco, CA',
+                radiusKm: 5.0,
+            },
+            status: AlertStatus.ACTIVE,
+            resolvedAt: null,
+            reward: {
+                offered: true,
+                amount: 500,
+            },
+        };
+
+        beforeEach(() => {
+            process.env.MAIL_NOTIFICATIONS_FROM = 'noreply@fifi-alert.com';
+            process.env.APP_URL = 'https://fifi-alert.com';
+        });
+
+        describe('sendAlertCreatedEmail', () => {
+            it('should send alert created email successfully', async () => {
+                mockPrismaService.user.findUnique.mockResolvedValueOnce(mockUser);
+
+                const result = await service.sendAlertCreatedEmail(mockAlert as any);
+
+                expect(result.success).toBe(true);
+                expect(result.message).toContain('Alert created email sent');
+                expect(mockPrismaService.user.findUnique).toHaveBeenCalledWith({
+                    where: { id: mockUser.id },
+                });
+            });
+
+            it('should throw error when user not found', async () => {
+                mockPrismaService.user.findUnique.mockResolvedValueOnce(null);
+
+                await expect(service.sendAlertCreatedEmail(mockAlert as any)).rejects.toThrow(
+                    'USER_NOT_FOUND',
+                );
+            });
+
+            it('should throw error when email send fails', async () => {
+                mockPrismaService.user.findUnique.mockResolvedValueOnce(mockUser);
+                mockEmailProvider.send.mockRejectedValueOnce(new Error('Send failed'));
+
+                await expect(service.sendAlertCreatedEmail(mockAlert as any)).rejects.toThrow(
+                    'FAILED_TO_SEND_ALERT_CREATED_EMAIL',
+                );
+            });
+        });
+
+        describe('sendAlertResolvedEmail', () => {
+            const resolvedAlert = {
+                ...mockAlert,
+                status: AlertStatus.RESOLVED,
+                resolvedAt: new Date(),
+            };
+
+            it('should send alert resolved email successfully', async () => {
+                mockPrismaService.user.findUnique.mockResolvedValueOnce(mockUser);
+
+                const result = await service.sendAlertResolvedEmail(
+                    resolvedAlert as any,
+                    'FOUND',
+                );
+
+                expect(result.success).toBe(true);
+                expect(result.message).toContain('Alert resolved email sent');
+                expect(mockPrismaService.user.findUnique).toHaveBeenCalledWith({
+                    where: { id: mockUser.id },
+                });
+            });
+
+            it('should throw error when user not found', async () => {
+                mockPrismaService.user.findUnique.mockResolvedValueOnce(null);
+
+                await expect(
+                    service.sendAlertResolvedEmail(resolvedAlert as any, 'FOUND'),
+                ).rejects.toThrow('USER_NOT_FOUND');
+            });
+
+            it('should throw error when email send fails', async () => {
+                mockPrismaService.user.findUnique.mockResolvedValueOnce(mockUser);
+                mockEmailProvider.send.mockRejectedValueOnce(new Error('Send failed'));
+
+                await expect(
+                    service.sendAlertResolvedEmail(resolvedAlert as any, 'FOUND'),
+                ).rejects.toThrow('FAILED_TO_SEND_ALERT_RESOLVED_EMAIL');
+            });
+        });
+
+        describe('sendAlertNearYouEmails', () => {
+            const userIds = [1, 2, 3];
+            const users = [
+                { ...mockUser, id: 1 },
+                { ...mockUser, id: 2, email: 'user2@example.com' },
+                { ...mockUser, id: 3, email: 'user3@example.com' },
+            ];
+
+            it('should send emails to all nearby users successfully', async () => {
+                mockPrismaService.user.findMany.mockResolvedValueOnce(users);
+
+                const result = await service.sendAlertNearYouEmails(userIds, mockAlert as any);
+
+                expect(result.success).toBe(3);
+                expect(result.failed).toBe(0);
+                expect(mockPrismaService.user.findMany).toHaveBeenCalledWith({
+                    where: { id: { in: userIds } },
+                });
+            });
+
+            it('should return zeros when no users found', async () => {
+                mockPrismaService.user.findMany.mockResolvedValueOnce([]);
+
+                const result = await service.sendAlertNearYouEmails(userIds, mockAlert as any);
+
+                expect(result.success).toBe(0);
+                expect(result.failed).toBe(0);
+            });
+
+            it('should handle partial failures gracefully', async () => {
+                mockPrismaService.user.findMany.mockResolvedValueOnce(users);
+
+                // First email succeeds, second fails, third succeeds
+                mockEmailProvider.send
+                    .mockResolvedValueOnce({ id: 'msg-1', success: true })
+                    .mockRejectedValueOnce(new Error('Send failed'))
+                    .mockResolvedValueOnce({ id: 'msg-3', success: true });
+
+                const result = await service.sendAlertNearYouEmails(userIds, mockAlert as any);
+
+                expect(result.success).toBe(2);
+                expect(result.failed).toBe(1);
+            });
+        });
+    });
+});

@@ -1,0 +1,68 @@
+{% extends "common/layout.nunj" %}
+
+{% block title %}Verify Your Email Address{% endblock %}
+
+{% block header %}Verify Your Email Address{% endblock %}
+
+{% block content %}
+  <mj-text font-size="20px" font-weight="bold" color="#333333" padding-bottom="20px">
+    Hello {{ user.firstName|default('there') }}!
+  </mj-text>
+  
+  <mj-text padding-bottom="20px">
+    Thank you for signing up for FiFi Alert! To complete your registration and start helping reunite lost pets with their families, please verify your email address.
+  </mj-text>
+
+  <mj-text padding-bottom="20px">
+    Click the button below to verify your email:
+  </mj-text>
+  
+  <mj-button background-color="#28a745" color="#ffffff" href="{{ verificationUrl }}" padding="15px 0px">
+    Verify Email Address
+  </mj-button>
+  
+  <mj-text padding-top="20px" font-size="12px" color="#666666">
+    If the button doesn't work, copy and paste this URL into your browser:<br/>
+    <a href="{{ verificationUrl }}" style="color: #28a745;">{{ verificationUrl }}</a>
+  </mj-text>
+
+  <mj-divider border-color="#E0E0E0" border-width="1px" padding="20px 0px"></mj-divider>
+
+  <mj-text padding-bottom="10px" font-size="14px" color="#666666">
+    <strong>Security Note:</strong> This verification link will expire in {{ expirationHours }} hours.
+  </mj-text>
+
+  <mj-text padding-bottom="10px" font-size="14px" color="#666666">
+    If you didn't create an account with FiFi Alert, please ignore this email or contact our support team if you have concerns.
+  </mj-text>
+
+  <mj-text padding-bottom="20px" font-size="14px" color="#666666">
+    Once verified, you'll be able to:
+  </mj-text>
+
+  <mj-text padding-bottom="5px">
+    ✅ Create alerts for lost pets
+  </mj-text>
+  
+  <mj-text padding-bottom="5px">
+    ✅ Receive notifications about nearby missing pets
+  </mj-text>
+  
+  <mj-text padding-bottom="5px">
+    ✅ Report sightings to help others
+  </mj-text>
+  
+  <mj-text padding-bottom="20px">
+    ✅ Join our community of pet lovers
+  </mj-text>
+{% endblock %}
+
+{% block footer %}
+  <mj-text align="center" font-size="12px" color="#999999" padding="10px 0px">
+    Need help? Visit our <a href="{{ appUrl }}/support" style="color: #007bff;">Support Center</a>
+  </mj-text>
+  
+  <mj-text align="center" font-size="12px" color="#999999" padding="5px 0px">
+    FiFi Alert - Helping reunite families with their lost pets
+  </mj-text>
+{% endblock %}

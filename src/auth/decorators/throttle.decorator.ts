@@ -9,4 +9,4 @@ export const THROTTLE_TTL_KEY = 'throttle_ttl';
  * @param ttl - Time window in seconds
  */
 export const CustomThrottle = (limit: number, ttl: number = 60) =>
-    SetMetadata(THROTTLE_LIMIT_KEY, { limit, ttl });
+  SetMetadata(THROTTLE_LIMIT_KEY, { limit, ttl });

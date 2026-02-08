@@ -30,11 +30,13 @@ FiFi Alert is a real-time notification platform that helps reunite lost pets wit
 - **Sighting Reports**: Community members can report pet sightings with photos and locations
 - **Rate Limiting**: Prevents abuse with Redis-backed rate limits (5 alerts/hour, 20/24h, 50/7days)
 - **File Upload**: Local storage with planned S3 migration support
+- **Authentication & Authorization**: JWT bearer token authentication with role-based and level-based access control
 
 ### Location Intelligence
-- **Saved Zones**: Users can define priority areas (home, work, etc.) for HIGH confidence alerts
+- **Alert Zones**: User-scoped geographic zones (50m-5km radius) for receiving alerts on all devices
+- **Saved Zones**: Device-specific priority areas (home, work, etc.) for HIGH confidence alerts
 - **GPS Freshness**: Fresh GPS (<2h) → HIGH confidence, Stale (<24h) → MEDIUM confidence
-- **Multi-Source Matching**: Matches devices via saved zones, GPS, postal codes, or IP geolocation
+- **Multi-Source Matching**: Matches devices via alert zones, saved zones, GPS, postal codes, or IP geolocation
 - **Distance Calculations**: Accurate PostGIS-based distance calculations with configurable radii
 
 ### Notification System
@@ -281,6 +283,13 @@ Interactive API documentation: `http://localhost:3000/api`
 - `GET /devices/:id/saved-zones` - List saved zones
 - `PATCH /devices/saved-zones/:zoneId` - Update saved zone
 - `DELETE /devices/saved-zones/:zoneId` - Delete saved zone
+
+#### Alert Zones
+- `POST /users/me/alert-zones` - Create user-scoped alert zone (requires auth)
+- `GET /users/me/alert-zones` - List user's alert zones
+- `GET /users/me/alert-zones/:id` - Get specific alert zone
+- `PATCH /users/me/alert-zones/:id` - Update alert zone (owner only)
+- `DELETE /users/me/alert-zones/:id` - Delete alert zone (owner only)
 
 #### Health & Monitoring
 - `GET /health` - System health check (database, Redis, disk)

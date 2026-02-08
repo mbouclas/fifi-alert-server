@@ -88,7 +88,9 @@ describe('ListAdminsCommand', () => {
 
   describe('run', () => {
     it('should query for admin role by slug', async () => {
-      (prismaService.role.findFirst as jest.Mock).mockResolvedValue(mockAdminRole);
+      (prismaService.role.findFirst as jest.Mock).mockResolvedValue(
+        mockAdminRole,
+      );
       userService.findMany.mockResolvedValue(mockPaginatedResponse);
 
       await command.run();
@@ -99,7 +101,9 @@ describe('ListAdminsCommand', () => {
     });
 
     it('should call userService.findMany with admin role level as maxLevel', async () => {
-      (prismaService.role.findFirst as jest.Mock).mockResolvedValue(mockAdminRole);
+      (prismaService.role.findFirst as jest.Mock).mockResolvedValue(
+        mockAdminRole,
+      );
       userService.findMany.mockResolvedValue(mockPaginatedResponse);
 
       await command.run();
@@ -127,7 +131,9 @@ describe('ListAdminsCommand', () => {
     });
 
     it('should display admin list when users are found', async () => {
-      (prismaService.role.findFirst as jest.Mock).mockResolvedValue(mockAdminRole);
+      (prismaService.role.findFirst as jest.Mock).mockResolvedValue(
+        mockAdminRole,
+      );
       userService.findMany.mockResolvedValue(mockPaginatedResponse);
 
       await command.run();
@@ -147,7 +153,9 @@ describe('ListAdminsCommand', () => {
     });
 
     it('should display message when no admins are found', async () => {
-      (prismaService.role.findFirst as jest.Mock).mockResolvedValue(mockAdminRole);
+      (prismaService.role.findFirst as jest.Mock).mockResolvedValue(
+        mockAdminRole,
+      );
       userService.findMany.mockResolvedValue({
         data: [],
         meta: { pages: 0, page: 1, count: 0, limit: 100, offset: 0 },

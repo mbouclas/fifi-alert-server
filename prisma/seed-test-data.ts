@@ -90,6 +90,27 @@ async function main() {
 
     console.log(`✓ Created gates: ${premiumGate.name}, ${betaGate.name}, ${analyticsGate.name}, ${exportGate.name}`);
 
+    // Create Pet Types
+    console.log('Creating pet types...');
+    await prisma.petType.createMany({
+        data: [
+            { name: 'Dog', slug: 'dog' },
+            { name: 'Cat', slug: 'cat' },
+            { name: 'Bird', slug: 'bird' },
+            { name: 'Rabbit', slug: 'rabbit' },
+            { name: 'Hamster', slug: 'hamster' },
+            { name: 'Guinea Pig', slug: 'guinea-pig' },
+            { name: 'Ferret', slug: 'ferret' },
+            { name: 'Turtle', slug: 'turtle' },
+            { name: 'Lizard', slug: 'lizard' },
+            { name: 'Snake', slug: 'snake' },
+            { name: 'Fish', slug: 'fish' },
+            { name: 'Other', slug: 'other' },
+        ],
+        skipDuplicates: true,
+    });
+    console.log('✓ Pet types created');
+
     // Find test user and assign role + gates
     const testUser = await prisma.user.findFirst({
         where: {

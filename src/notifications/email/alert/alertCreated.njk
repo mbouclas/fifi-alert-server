@@ -1,0 +1,78 @@
+{% extends "common/layout.nunj" %}
+
+{% block title %}Your Pet Alert Has Been Created - FiFi Alert{% endblock %}
+
+{% block header %}📢 Alert Created Successfully{% endblock %}
+
+{% block content %}
+  <mj-text font-size="18px" font-weight="bold" color="#333333" padding-bottom="20px">
+    Hi {{ user.firstName|default('there') }},
+  </mj-text>
+  
+  <mj-text padding-bottom="20px" font-size="16px">
+    Your pet alert has been successfully created and is now active in our system.
+  </mj-text>
+  
+  <mj-divider border-width="2px" border-color="#007bff" padding="20px 0px" />
+  
+  <mj-text font-size="18px" font-weight="bold" color="#007bff" padding-bottom="20px" align="center">
+    Alert for {{ alert.petName }}
+  </mj-text>
+  
+  <mj-text padding-bottom="20px">
+    <strong>Pet Name:</strong> {{ alert.petName }}<br/>
+    <strong>Species:</strong> {{ alert.petSpecies }}<br/>
+    {% if alert.petBreed %}<strong>Breed:</strong> {{ alert.petBreed }}<br/>{% endif %}
+    <strong>Last Seen:</strong> {{ alert.location }}<br/>
+    <strong>Search Radius:</strong> {{ alert.radiusKm }} km<br/>
+    <strong>Alert Status:</strong> <span style="color: #28a745;">{{ alert.status }}</span>
+  </mj-text>
+  
+  <mj-divider border-width="1px" border-color="#e0e0e0" padding="20px 0px" />
+  
+  <mj-text font-size="16px" font-weight="bold" padding-bottom="10px" color="#333333">
+    What Happens Next?
+  </mj-text>
+  
+  <mj-text padding-bottom="20px">
+    📱 <strong>Nearby Users Notified:</strong> People within {{ alert.radiusKm }} km will receive notifications about {{ alert.petName }}<br/><br/>
+    
+    👀 <strong>Community Watching:</strong> FiFi Alert users in your area are now keeping an eye out<br/><br/>
+    
+    🔔 <strong>Sighting Alerts:</strong> You'll be notified immediately if someone reports a sighting<br/><br/>
+    
+    📍 <strong>Location Tracking:</strong> All sighting reports will include location details to help you search
+  </mj-text>
+  
+  <mj-divider border-width="1px" border-color="#e0e0e0" padding="20px 0px" />
+  
+  <mj-text font-size="16px" font-weight="bold" padding-bottom="10px" color="#333333">
+    Tips for Success
+  </mj-text>
+  
+  <mj-text padding-bottom="20px">
+    ✅ Check your phone notifications regularly for sighting reports<br/>
+    ✅ Share your alert on social media to reach more people<br/>
+    ✅ Walk through the search area during quiet hours<br/>
+    ✅ Leave familiar items (blanket, toy) near where they were last seen<br/>
+    ✅ Contact local shelters and veterinary clinics
+  </mj-text>
+  
+  <mj-button background-color="#007bff" color="#ffffff" href="{{ appUrl }}/alerts/{{ alert.id }}" padding="15px 0px">
+    View Alert Details
+  </mj-button>
+  
+  <mj-divider border-width="1px" border-color="#e0e0e0" padding="20px 0px" />
+  
+  <mj-text padding-bottom="20px" font-size="14px">
+    <strong>Need to update your alert?</strong> You can edit details, add photos, or mark {{ alert.petName }} as found anytime in the app.
+  </mj-text>
+  
+  <mj-text padding-bottom="10px" font-size="14px" color="#666666">
+    💙 <strong>We're here to help bring {{ alert.petName }} home safely.</strong>
+  </mj-text>
+  
+  <mj-text padding-top="20px" font-size="12px" color="#999999">
+    You're receiving this email because you created an alert on FiFi Alert. If you need assistance, reply to this email or contact us at support@fifi-alert.com.
+  </mj-text>
+{% endblock %}

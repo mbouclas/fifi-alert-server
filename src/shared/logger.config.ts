@@ -56,7 +56,10 @@ export const loggerConfig: WinstonModuleOptions = {
   transports: [
     // Console transport (development-friendly)
     new winston.transports.Console({
-      format: process.env.NODE_ENV === 'production' ? structuredFormat : consoleFormat,
+      format:
+        process.env.NODE_ENV === 'production'
+          ? structuredFormat
+          : consoleFormat,
     }),
     // Application logs (all levels)
     new winston.transports.DailyRotateFile({
@@ -103,7 +106,16 @@ export const sanitizeLogData = (data: any): any => {
   }
 
   const sanitized = { ...data };
-  const piiFields = ['email', 'phone', 'name', 'full_name', 'address', 'password', 'token', 'push_token'];
+  const piiFields = [
+    'email',
+    'phone',
+    'name',
+    'full_name',
+    'address',
+    'password',
+    'token',
+    'push_token',
+  ];
 
   for (const field of piiFields) {
     if (sanitized[field]) {
@@ -113,12 +125,20 @@ export const sanitizeLogData = (data: any): any => {
 
   // Redact exact GPS coordinates (keep approximate location only)
   if (sanitized.latitude || sanitized.lat) {
-    sanitized.latitude = sanitized.latitude ? parseFloat(sanitized.latitude.toFixed(2)) : undefined;
-    sanitized.lat = sanitized.lat ? parseFloat(sanitized.lat.toFixed(2)) : undefined;
+    sanitized.latitude = sanitized.latitude
+      ? parseFloat(sanitized.latitude.toFixed(2))
+      : undefined;
+    sanitized.lat = sanitized.lat
+      ? parseFloat(sanitized.lat.toFixed(2))
+      : undefined;
   }
   if (sanitized.longitude || sanitized.lon) {
-    sanitized.longitude = sanitized.longitude ? parseFloat(sanitized.longitude.toFixed(2)) : undefined;
-    sanitized.lon = sanitized.lon ? parseFloat(sanitized.lon.toFixed(2)) : undefined;
+    sanitized.longitude = sanitized.longitude
+      ? parseFloat(sanitized.longitude.toFixed(2))
+      : undefined;
+    sanitized.lon = sanitized.lon
+      ? parseFloat(sanitized.lon.toFixed(2))
+      : undefined;
   }
 
   return sanitized;

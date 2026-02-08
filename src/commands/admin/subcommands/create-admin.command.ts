@@ -1,4 +1,9 @@
-import { SubCommand, CommandRunner, Option, InquirerService } from 'nest-commander';
+import {
+  SubCommand,
+  CommandRunner,
+  Option,
+  InquirerService,
+} from 'nest-commander';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { UserService } from '../../../user/user.service';
 import { PrismaService } from '@services/prisma.service';

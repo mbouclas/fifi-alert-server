@@ -7,12 +7,10 @@ import { NestExpressApplication } from '@nestjs/platform-express';
 import { join } from 'path';
 import helmet from 'helmet';
 
-
-
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
     logger: WinstonModule.createLogger(loggerConfig),
-    bodyParser: false
+    bodyParser: false,
   });
 
   // Task 7.4: Serve static files from uploads directory
@@ -21,21 +19,25 @@ async function bootstrap() {
   });
 
   // Security headers
-  app.use(helmet({
-    contentSecurityPolicy: {
-      directives: {
-        defaultSrc: ["'self'"],
-        styleSrc: ["'self'", "'unsafe-inline'"],
-        scriptSrc: ["'self'", "'unsafe-inline'"],
-        imgSrc: ["'self'", 'data:', 'https:'],
+  app.use(
+    helmet({
+      contentSecurityPolicy: {
+        directives: {
+          defaultSrc: ["'self'"],
+          styleSrc: ["'self'", "'unsafe-inline'"],
+          scriptSrc: ["'self'", "'unsafe-inline'"],
+          imgSrc: ["'self'", 'data:', 'https:'],
+        },
       },
-    },
-    crossOriginEmbedderPolicy: false, // Disable for Swagger UI
-  }));
+      crossOriginEmbedderPolicy: false, // Disable for Swagger UI
+    }),
+  );
 
   const config = new DocumentBuilder()
     .setTitle('FiFi Alert API')
-    .setDescription('Geolocation-based missing pet notification system - API documentation for alerts, sightings, devices, and push notifications')
+    .setDescription(
+      'Geolocation-based missing pet notification system - API documentation for alerts, sightings, devices, and push notifications',
+    )
     .setVersion('1.0.0')
     .addBearerAuth({
       type: 'http',
@@ -44,10 +46,16 @@ async function bootstrap() {
       description: 'Enter your bearer token from authentication',
     })
     .addTag('alerts', 'Missing pet alert management')
-    .addTag('sightings', 'Pet sighting reports')
-    .addTag('devices', 'Device registration and location management')
+    .addTag('Authentication', 'User authentication and session management')
+    .addTag('Users', 'User profile and account management')
+    .addTag('Pets', 'Pet profile management')
+    .addTag('Pet Types', 'Pet type management')
+    .addTag('Sightings', 'Pet sighting reports')
+    .addTag('Devices', 'Device registration and location management')
+    .addTag('Admin', 'Administrative operations')
+    .addTag('Gates', 'Feature gate management')
+    .addTag('Audit Logs', 'System audit log queries')
     .addTag('health', 'System health monitoring')
-    .addTag('Users', 'User management')
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
@@ -60,7 +68,9 @@ async function bootstrap() {
 
   // Configure CORS for production
   const allowedOrigins = process.env.ALLOWED_ORIGINS
-    ? process.env.ALLOWED_ORIGINS.split(',').map((s) => s.trim()).filter(Boolean)
+    ? process.env.ALLOWED_ORIGINS.split(',')
+        .map((s) => s.trim())
+        .filter(Boolean)
     : ['*']; // Default to allow all in development
 
   app.enableCors({
@@ -91,9 +101,6 @@ async function bootstrap() {
     ],
     maxAge: 86400, // Cache preflight requests for 24 hours
   });
-
-
-
 
   // @ts-ignore
   app.set('query parser', 'extended');

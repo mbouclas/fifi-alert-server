@@ -1,8 +1,4 @@
-import {
-  QuestionSet,
-  Question,
-  ValidateFor,
-} from 'nest-commander';
+import { QuestionSet, Question, ValidateFor } from 'nest-commander';
 import { ConfigService } from '@nestjs/config';
 
 /**
@@ -19,9 +15,7 @@ import { ConfigService } from '@nestjs/config';
  */
 @QuestionSet({ name: 'admin-create-questions' })
 export class AdminCreateQuestions {
-  constructor(
-    private readonly configService: ConfigService,
-  ) {}
+  constructor(private readonly configService: ConfigService) {}
 
   /**
    * Prompts for the admin user's full name
@@ -100,7 +94,10 @@ export class AdminCreateQuestions {
     if (!val) {
       return 'Password is required';
     }
-    const minLength = this.configService.get<number>('auth.password.minLength', 4);
+    const minLength = this.configService.get<number>(
+      'auth.password.minLength',
+      4,
+    );
     if (val.length < minLength) {
       return `Password must be at least ${minLength} characters long`;
     }

@@ -42,7 +42,7 @@ export class ListAdminsCommand extends CommandRunner {
       }
 
       // Query users with role level <= admin level
-   
+
       const result = await this.userService.findMany(
         {},
         100, // Get up to 100 admins
@@ -50,8 +50,8 @@ export class ListAdminsCommand extends CommandRunner {
         ['roles'],
         'firstName',
         'asc',
-        undefined,// no maxLevel
-        adminRole.level
+        undefined, // no maxLevel
+        adminRole.level,
       );
 
       this.displayAdminList(result.data, result.meta.count);
@@ -92,7 +92,10 @@ export class ListAdminsCommand extends CommandRunner {
       ...users.map((u) => (u.lastName || '').length),
     );
     const maxEmail = Math.max(5, ...users.map((u) => (u.email || '').length));
-    const maxId = Math.max(2, ...users.map((u) => (u.id ? u.id.toString().length : 0)));
+    const maxId = Math.max(
+      2,
+      ...users.map((u) => (u.id ? u.id.toString().length : 0)),
+    );
 
     // Print header
     const header = ` ${'ID'.padEnd(maxId)}  ${'First Name'.padEnd(maxFirstName)}  ${'Last Name'.padEnd(maxLastName)}  ${'Email'.padEnd(maxEmail)}`;

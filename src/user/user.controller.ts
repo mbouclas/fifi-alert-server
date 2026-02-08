@@ -3,6 +3,7 @@ import {
   Get,
   Post,
   Put,
+  Patch,
   Delete,
   Body,
   Param,
@@ -12,6 +13,8 @@ import {
   HttpStatus,
   NotFoundException,
   UseGuards,
+  ForbiddenException,
+  UseInterceptors,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -22,13 +25,23 @@ import {
   ApiBearerAuth,
 } from '@nestjs/swagger';
 import { UserService } from './user.service';
-import { CreateUserDto, UpdateUserDto, FindUsersQueryDto } from './dto';
+import { AlertZoneService } from './alert-zone.service';
+import {
+  CreateUserDto,
+  UpdateUserDto,
+  FindUsersQueryDto,
+  CreateAlertZoneDto,
+  UpdateAlertZoneDto,
+  AlertZoneResponseDto,
+} from './dto';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
-import { Audit } from '../auth/decorators/audit.decorator';
 import { CurrentUser } from '../decorators/session.decorator';
 import { ITokenUser } from '../auth/interfaces/token-user.interface';
 import { Session } from '@thallesp/nestjs-better-auth';
+import { PetService } from '../pet/pet.service';
+import { CreatePetDto, UpdatePetDto, PetResponseDto } from '../pet/dto';
+import { SanitizeUserInterceptor } from '../shared/interceptors/sanitize-user.interceptor';
 
 /**
  * User Controller
@@ -38,9 +51,14 @@ import { Session } from '@thallesp/nestjs-better-auth';
  */
 @ApiTags('Users')
 @ApiBearerAuth()
+@UseInterceptors(SanitizeUserInterceptor)
 @Controller('users')
 export class UserController {
-  constructor(private readonly userService: UserService) { }
+  constructor(
+    private readonly userService: UserService,
+    private readonly petService: PetService,
+    private readonly alertZoneService: AlertZoneService,
+  ) { }
 
   /**
    * Create a new user
@@ -50,7 +68,8 @@ export class UserController {
   @Roles('admin')
   @ApiOperation({
     summary: 'Create a new user',
-    description: 'Creates a new user with the provided details and assigns roles. Admin only.',
+    description:
+      'Creates a new user with the provided details and assigns roles. Admin only.',
   })
   @ApiBody({ type: CreateUserDto })
   @ApiResponse({
@@ -75,13 +94,14 @@ export class UserController {
   @Get()
   @ApiOperation({
     summary: 'Get all users',
-    description: 'Retrieves a paginated list of users with optional filtering and includes.',
+    description:
+      'Retrieves a paginated list of users with optional filtering and includes.',
   })
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'List of users retrieved successfully',
   })
-  async findAll(@Query() query: FindUsersQueryDto, @Session() session: any,) {
+  async findAll(@Query() query: FindUsersQueryDto, @Session() session: any) {
     const {
       limit = 10,
       offset = 0,
@@ -119,7 +139,8 @@ export class UserController {
   @Get(':id')
   @ApiOperation({
     summary: 'Get user by ID',
-    description: 'Retrieves a single user by their ID with optional relationship includes.',
+    description:
+      'Retrieves a single user by their ID with optional relationship includes.',
   })
   @ApiParam({
     name: 'id',
@@ -196,7 +217,8 @@ export class UserController {
   @Roles('admin', 'manager')
   @ApiOperation({
     summary: 'Update a user',
-    description: 'Updates an existing user with the provided data. Password will be hashed if provided. Admin or Manager only.',
+    description:
+      'Updates an existing user with the provided data. Password will be hashed if provided. Admin or Manager only.',
   })
   @ApiParam({
     name: 'id',
@@ -233,7 +255,8 @@ export class UserController {
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({
     summary: 'Delete a user',
-    description: 'Permanently deletes a user by their ID. This will cascade delete related records. Admin only.',
+    description:
+      'Permanently deletes a user by their ID. This will cascade delete related records. Admin only.',
   })
   @ApiParam({
     name: 'id',
@@ -258,7 +281,6 @@ export class UserController {
    */
   @Post(':id/gates')
   @UseGuards(RolesGuard)
-  @Audit('gate_assigned')
   @Roles('admin', 'manager')
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({
@@ -294,7 +316,6 @@ export class UserController {
    */
   @Delete(':id/gates/:gateId')
   @UseGuards(RolesGuard)
-  @Audit('gate_removed')
   @Roles('admin', 'manager')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({
@@ -350,5 +371,408 @@ export class UserController {
   async getUserGates(@Param('id', ParseIntPipe) userId: number) {
     return this.userService.getUserGates(userId);
   }
-}
 
+  // ============================================================================
+  // Pet Management Endpoints
+  // ============================================================================
+
+  /**
+   * Get all pets for a specific user
+   */
+  @Get(':userId/pets')
+  @ApiOperation({
+    summary: 'Get all pets for a user',
+    description:
+      'Retrieves all pets owned by the specified user. Users can only access their own pets unless they are admins.',
+  })
+  @ApiParam({
+    name: 'userId',
+    description: 'User ID',
+    type: Number,
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'List of user pets',
+    type: [PetResponseDto],
+  })
+  @ApiResponse({
+    status: HttpStatus.FORBIDDEN,
+    description: "Forbidden - cannot access other user's pets",
+  })
+  async getUserPets(
+    @Param('userId', ParseIntPipe) userId: number,
+    @Session() session: any,
+  ): Promise<PetResponseDto[]> {
+    // Check if user is accessing their own pets (or is admin)
+    if (session.userId !== userId) {
+      // TODO: Add admin role check when roles are implemented
+      throw new ForbiddenException('You can only access your own pets');
+    }
+
+    return this.petService.findAllByUser(userId);
+  }
+
+  /**
+   * Get a specific pet for a user
+   */
+  @Get(':userId/pets/:petId')
+  @ApiOperation({
+    summary: 'Get a specific pet for a user',
+    description: 'Retrieves details of a specific pet owned by the user.',
+  })
+  @ApiParam({
+    name: 'userId',
+    description: 'User ID',
+    type: Number,
+  })
+  @ApiParam({
+    name: 'petId',
+    description: 'Pet ID',
+    type: Number,
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Pet details',
+    type: PetResponseDto,
+  })
+  @ApiResponse({
+    status: HttpStatus.FORBIDDEN,
+    description: 'Forbidden - not your pet',
+  })
+  @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: 'Pet not found',
+  })
+  async getUserPet(
+    @Param('userId', ParseIntPipe) userId: number,
+    @Param('petId', ParseIntPipe) petId: number,
+    @Session() session: any,
+  ): Promise<PetResponseDto> {
+    // Check if user is accessing their own pet
+    if (session.userId !== userId) {
+      throw new ForbiddenException('You can only access your own pets');
+    }
+
+    return this.petService.findOne(petId, userId);
+  }
+
+  /**
+   * Register a new pet for a user
+   */
+  @Post(':userId/pets')
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({
+    summary: 'Register a new pet for a user',
+    description:
+      'Create a new pet for the specified user. Users can only register pets for themselves.',
+  })
+  @ApiParam({
+    name: 'userId',
+    description: 'User ID',
+    type: Number,
+  })
+  @ApiBody({ type: CreatePetDto })
+  @ApiResponse({
+    status: HttpStatus.CREATED,
+    description: 'Pet registered successfully',
+    type: PetResponseDto,
+  })
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    description: 'Invalid input data',
+  })
+  @ApiResponse({
+    status: HttpStatus.FORBIDDEN,
+    description: 'Forbidden - cannot register pets for other users',
+  })
+  @ApiResponse({
+    status: HttpStatus.UNPROCESSABLE_ENTITY,
+    description: 'Validation failed',
+  })
+  async registerPet(
+    @Param('userId', ParseIntPipe) userId: number,
+    @Body() createPetDto: CreatePetDto,
+    @Session() session: any,
+  ): Promise<PetResponseDto> {
+    // Check if user is registering for themselves
+    if (session.userId !== userId) {
+      throw new ForbiddenException('You can only register pets for yourself');
+    }
+
+    return this.petService.createPet(userId, createPetDto);
+  }
+
+  /**
+   * Update a user's pet
+   */
+  @Put(':userId/pets/:petId')
+  @ApiOperation({
+    summary: "Update a user's pet",
+    description:
+      'Update details of a specific pet. Users can only update their own pets.',
+  })
+  @ApiParam({
+    name: 'userId',
+    description: 'User ID',
+    type: Number,
+  })
+  @ApiParam({
+    name: 'petId',
+    description: 'Pet ID',
+    type: Number,
+  })
+  @ApiBody({ type: UpdatePetDto })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Pet updated successfully',
+    type: PetResponseDto,
+  })
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    description: 'Invalid input data',
+  })
+  @ApiResponse({
+    status: HttpStatus.FORBIDDEN,
+    description: 'Forbidden - not your pet',
+  })
+  @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: 'Pet not found',
+  })
+  async updateUserPet(
+    @Param('userId', ParseIntPipe) userId: number,
+    @Param('petId', ParseIntPipe) petId: number,
+    @Body() updatePetDto: UpdatePetDto,
+    @Session() session: any,
+  ): Promise<PetResponseDto> {
+    // Check if user owns the pet
+    if (session.userId !== userId) {
+      throw new ForbiddenException('You can only update your own pets');
+    }
+
+    return this.petService.updatePet(petId, userId, updatePetDto);
+  }
+
+  /**
+   * Delete a user's pet
+   */
+  @Delete(':userId/pets/:petId')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({
+    summary: "Delete a user's pet",
+    description:
+      'Delete a pet from the system. Users can only delete their own pets.',
+  })
+  @ApiParam({
+    name: 'userId',
+    description: 'User ID',
+    type: Number,
+  })
+  @ApiParam({
+    name: 'petId',
+    description: 'Pet ID',
+    type: Number,
+  })
+  @ApiResponse({
+    status: HttpStatus.NO_CONTENT,
+    description: 'Pet deleted successfully',
+  })
+  @ApiResponse({
+    status: HttpStatus.FORBIDDEN,
+    description: 'Forbidden - not your pet',
+  })
+  @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: 'Pet not found',
+  })
+  async deleteUserPet(
+    @Param('userId', ParseIntPipe) userId: number,
+    @Param('petId', ParseIntPipe) petId: number,
+    @Session() session: any,
+  ): Promise<void> {
+    // Check if user owns the pet
+    if (session.userId !== userId) {
+      throw new ForbiddenException('You can only delete your own pets');
+    }
+
+    return this.petService.deletePet(petId, userId);
+  }
+
+  // ============================================================================
+  // Alert Zones
+  // ============================================================================
+
+  /**
+   * Create a new alert zone for the current user
+   */
+  @Post('me/alert-zones')
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({
+    summary: 'Create a new alert zone',
+    description:
+      'Creates a new alert zone for the authenticated user. Alert zones are user-scoped ' +
+      'geographic areas where the user wants to receive notifications. Max 10 zones per user.',
+  })
+  @ApiBody({ type: CreateAlertZoneDto })
+  @ApiResponse({
+    status: HttpStatus.CREATED,
+    description: 'Alert zone created successfully',
+    type: AlertZoneResponseDto,
+  })
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    description: 'Max zones exceeded or invalid input',
+  })
+  @ApiResponse({
+    status: HttpStatus.UNAUTHORIZED,
+    description: 'Not authenticated',
+  })
+  async createAlertZone(
+    @Body() createAlertZoneDto: CreateAlertZoneDto,
+    @Session() session: any,
+  ): Promise<AlertZoneResponseDto> {
+    return this.alertZoneService.create(createAlertZoneDto, session.userId);
+  }
+
+  /**
+   * Get all alert zones for the current user
+   */
+  @Get('me/alert-zones')
+  @ApiOperation({
+    summary: 'Get all alert zones for current user',
+    description:
+      'Retrieves all alert zones for the authenticated user, ordered by priority.',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Alert zones retrieved successfully',
+    type: [AlertZoneResponseDto],
+  })
+  @ApiResponse({
+    status: HttpStatus.UNAUTHORIZED,
+    description: 'Not authenticated',
+  })
+  async getAlertZones(
+    @Session() session: any,
+  ): Promise<AlertZoneResponseDto[]> {
+    return this.alertZoneService.findByUser(session.userId);
+  }
+
+  /**
+   * Get a single alert zone by ID
+   */
+  @Get('me/alert-zones/:id')
+  @ApiOperation({
+    summary: 'Get a single alert zone',
+    description: 'Retrieves a single alert zone by ID. User must own the zone.',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'Alert zone ID',
+    type: Number,
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Alert zone retrieved successfully',
+    type: AlertZoneResponseDto,
+  })
+  @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: 'Alert zone not found',
+  })
+  @ApiResponse({
+    status: HttpStatus.FORBIDDEN,
+    description: 'Not the owner of this alert zone',
+  })
+  @ApiResponse({
+    status: HttpStatus.UNAUTHORIZED,
+    description: 'Not authenticated',
+  })
+  async getAlertZone(
+    @Param('id', ParseIntPipe) id: number,
+    @Session() session: any,
+  ): Promise<AlertZoneResponseDto> {
+    return this.alertZoneService.findOne(id, session.userId);
+  }
+
+  /**
+   * Update an alert zone
+   */
+  @Patch('me/alert-zones/:id')
+  @ApiOperation({
+    summary: 'Update an alert zone',
+    description:
+      'Updates an existing alert zone. User must own the zone. All fields are optional.',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'Alert zone ID',
+    type: Number,
+  })
+  @ApiBody({ type: UpdateAlertZoneDto })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Alert zone updated successfully',
+    type: AlertZoneResponseDto,
+  })
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    description: 'Invalid input data',
+  })
+  @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: 'Alert zone not found',
+  })
+  @ApiResponse({
+    status: HttpStatus.FORBIDDEN,
+    description: 'Not the owner of this alert zone',
+  })
+  @ApiResponse({
+    status: HttpStatus.UNAUTHORIZED,
+    description: 'Not authenticated',
+  })
+  async updateAlertZone(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() updateAlertZoneDto: UpdateAlertZoneDto,
+    @Session() session: any,
+  ): Promise<AlertZoneResponseDto> {
+    return this.alertZoneService.update(id, updateAlertZoneDto, session.userId);
+  }
+
+  /**
+   * Delete an alert zone
+   */
+  @Delete('me/alert-zones/:id')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({
+    summary: 'Delete an alert zone',
+    description: 'Deletes an alert zone. User must own the zone.',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'Alert zone ID',
+    type: Number,
+  })
+  @ApiResponse({
+    status: HttpStatus.NO_CONTENT,
+    description: 'Alert zone deleted successfully',
+  })
+  @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: 'Alert zone not found',
+  })
+  @ApiResponse({
+    status: HttpStatus.FORBIDDEN,
+    description: 'Not the owner of this alert zone',
+  })
+  @ApiResponse({
+    status: HttpStatus.UNAUTHORIZED,
+    description: 'Not authenticated',
+  })
+  async deleteAlertZone(
+    @Param('id', ParseIntPipe) id: number,
+    @Session() session: any,
+  ): Promise<void> {
+    return this.alertZoneService.delete(id, session.userId);
+  }
+}

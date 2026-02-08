@@ -11,6 +11,7 @@ import {
   NotFoundException,
   Logger,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -20,6 +21,7 @@ import {
   ApiBearerAuth,
 } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Session, type UserSession } from '@thallesp/nestjs-better-auth';
 import type { Request } from 'express';
 import { auth } from '../../auth';
@@ -29,6 +31,7 @@ import { AllowAnonymous } from '../decorators/allow-anonymous.decorator';
 import { CurrentUser } from '../decorators/current-user.decorator';
 import { BearerTokenGuard } from '../guards/bearer-token.guard';
 import type { ITokenUser } from '../services/token.service';
+import { SanitizeUserInterceptor } from '../../shared/interceptors/sanitize-user.interceptor';
 import {
   LoginDto,
   SignupDto,
@@ -38,6 +41,8 @@ import {
   AuthResponseDto,
   MeResponseDto,
 } from '../dto';
+import { AUDIT_EVENT_NAMES } from '../../audit/audit-event-names';
+import { IAuditEventPayload } from '../../audit/interfaces/audit-event-payload.interface';
 
 /**
  * Auth Controller
@@ -54,6 +59,7 @@ export class AuthController {
   constructor(
     private readonly userService: UserService,
     private readonly tokenService: TokenService,
+    private readonly eventEmitter: EventEmitter2,
   ) { }
 
   /**
@@ -130,7 +136,9 @@ export class AuthController {
 
       if (setCookie) {
         // Parse session token from cookie
-        const tokenMatch = setCookie.match(/better-auth\.session_token=([^;]+)/);
+        const tokenMatch = setCookie.match(
+          /better-auth\.session_token=([^;]+)/,
+        );
         if (tokenMatch) {
           sessionToken = tokenMatch[1];
         }
@@ -146,6 +154,27 @@ export class AuthController {
       }
 
       this.logger.log(`User logged in: ${result.user.email}`);
+
+      // Emit audit event for successful login
+      try {
+        const auditPayload: IAuditEventPayload = {
+          eventType: 'LOGIN',
+          entityType: 'SESSION',
+          userId: Number(result.user.id),
+          action: 'user_login',
+          description: `User logged in: ${result.user.email}`,
+          metadata: {
+            email: result.user.email,
+            ipAddress,
+            userAgent,
+            sessionToken: sessionToken ? '[REDACTED]' : undefined,
+          },
+          success: true,
+        };
+        this.eventEmitter.emit(AUDIT_EVENT_NAMES.USER.LOGIN, auditPayload);
+      } catch (error) {
+        this.logger.error('Failed to emit audit event for login:', error);
+      }
 
       return {
         message: 'Login successful',
@@ -166,6 +195,31 @@ export class AuthController {
       };
     } catch (error) {
       if (error instanceof UnauthorizedException) {
+        // Emit audit event for failed login
+        try {
+          const auditPayload: IAuditEventPayload = {
+            eventType: 'FAILURE',
+            entityType: 'SESSION',
+            action: 'user_login_failed',
+            description: `Failed login attempt for email: ${loginDto.email}`,
+            errorMessage: 'Invalid credentials',
+            metadata: {
+              email: loginDto.email,
+              ipAddress: req.ip || req.socket.remoteAddress,
+              userAgent: req.headers['user-agent'],
+            },
+            success: false,
+          };
+          this.eventEmitter.emit(
+            AUDIT_EVENT_NAMES.USER.LOGIN_FAILED,
+            auditPayload,
+          );
+        } catch (auditError) {
+          this.logger.error(
+            'Failed to emit audit event for login failure:',
+            auditError,
+          );
+        }
         throw error;
       }
       this.logger.error(`Login failed: ${error}`);
@@ -179,10 +233,12 @@ export class AuthController {
   @Get('me')
   @AllowAnonymous()
   @UseGuards(BearerTokenGuard)
+  @UseInterceptors(SanitizeUserInterceptor)
   @ApiBearerAuth()
   @ApiOperation({
     summary: 'Get current user',
-    description: 'Returns the authenticated user\'s details with all relationships including roles and gates.',
+    description:
+      "Returns the authenticated user's details with all relationships including roles and gates.",
   })
   @ApiResponse({
     status: HttpStatus.OK,
@@ -216,10 +272,10 @@ export class AuthController {
       throw new UnauthorizedException('Not authenticated');
     }
 
-    const user = await this.userService.findOne(
-      { id: userId },
-      ['roles', 'gates'],
-    );
+    const user = await this.userService.findOne({ id: userId }, [
+      'roles',
+      'gates',
+    ]);
 
     if (!user) {
       throw new NotFoundException('User not found');
@@ -236,7 +292,8 @@ export class AuthController {
   @ApiBearerAuth()
   @ApiOperation({
     summary: 'User logout',
-    description: 'Signs out the currently authenticated user and invalidates their session.',
+    description:
+      'Signs out the currently authenticated user and invalidates their session.',
   })
   @ApiResponse({
     status: HttpStatus.OK,
@@ -253,10 +310,10 @@ export class AuthController {
 
       // Copy relevant headers from the request
       if (req.headers.authorization) {
-        headers.set('Authorization', req.headers.authorization as string);
+        headers.set('Authorization', req.headers.authorization);
       }
       if (req.headers.cookie) {
-        headers.set('Cookie', req.headers.cookie as string);
+        headers.set('Cookie', req.headers.cookie);
       }
 
       await auth.api.signOut({
@@ -264,6 +321,37 @@ export class AuthController {
       });
 
       this.logger.log('User logged out successfully');
+
+      // Emit audit event for logout
+      try {
+        // Try to extract user info from bearer token if available
+        let userId: number | undefined;
+        if (req.headers.authorization) {
+          try {
+            const token = req.headers.authorization.replace('Bearer ', '');
+            const decoded = await this.tokenService.validateAccessToken(token);
+            userId = decoded.id; // Extract just the ID from the user object
+          } catch (e) {
+            // Token may be invalid, that's okay for logout
+          }
+        }
+
+        const auditPayload: IAuditEventPayload = {
+          eventType: 'LOGOUT',
+          entityType: 'SESSION',
+          userId,
+          action: 'user_logout',
+          description: 'User logged out',
+          metadata: {
+            ipAddress: req.ip || req.socket.remoteAddress,
+            userAgent: req.headers['user-agent'],
+          },
+          success: true,
+        };
+        this.eventEmitter.emit(AUDIT_EVENT_NAMES.USER.LOGOUT, auditPayload);
+      } catch (error) {
+        this.logger.error('Failed to emit audit event for logout:', error);
+      }
 
       return { message: 'Logout successful' };
     } catch (error) {
@@ -350,7 +438,9 @@ export class AuthController {
 
       if (setCookie) {
         // Parse session token from cookie
-        const tokenMatch = setCookie.match(/better-auth\.session_token=([^;]+)/);
+        const tokenMatch = setCookie.match(
+          /better-auth\.session_token=([^;]+)/,
+        );
         if (tokenMatch) {
           sessionToken = tokenMatch[1];
         }
@@ -365,8 +455,31 @@ export class AuthController {
         }
       }
 
-
       this.logger.log(`New user signed up: ${result.user.email}`);
+
+      // Emit audit event for signup and session creation
+      try {
+        const auditPayload: IAuditEventPayload = {
+          eventType: 'CREATE',
+          entityType: 'SESSION',
+          userId: Number(result.user.id),
+          action: 'session_created',
+          description: `New session created for user: ${result.user.email}`,
+          metadata: {
+            email: result.user.email,
+            ipAddress,
+            userAgent,
+            createdVia: 'signup',
+          },
+          success: true,
+        };
+        this.eventEmitter.emit(AUDIT_EVENT_NAMES.SESSION.CREATED, auditPayload);
+      } catch (error) {
+        this.logger.error(
+          'Failed to emit audit event for session creation:',
+          error,
+        );
+      }
 
       return {
         message: 'Signup successful',
@@ -392,7 +505,8 @@ export class AuthController {
       this.logger.error(`Signup failed: ${error}`);
 
       // Check if the error indicates user already exists
-      const errorMessage = error instanceof Error ? error.message : String(error);
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
       if (
         errorMessage.toLowerCase().includes('exist') ||
         errorMessage.toLowerCase().includes('duplicate')
@@ -412,7 +526,8 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Request password reset',
-    description: 'Initiates the password reset process by sending a reset link to the user\'s email.',
+    description:
+      "Initiates the password reset process by sending a reset link to the user's email.",
   })
   @ApiBody({ type: RequestPasswordResetDto })
   @ApiResponse({
@@ -438,13 +553,15 @@ export class AuthController {
 
       // Always return success to prevent email enumeration
       return {
-        message: 'If an account exists with this email, a password reset link has been sent.',
+        message:
+          'If an account exists with this email, a password reset link has been sent.',
       };
     } catch (error) {
       this.logger.error(`Password reset request failed: ${error}`);
       // Still return success to prevent email enumeration
       return {
-        message: 'If an account exists with this email, a password reset link has been sent.',
+        message:
+          'If an account exists with this email, a password reset link has been sent.',
       };
     }
   }
@@ -457,7 +574,8 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Reset password',
-    description: 'Resets the user\'s password using a valid token received via email.',
+    description:
+      "Resets the user's password using a valid token received via email.",
   })
   @ApiBody({ type: ResetPasswordDto })
   @ApiResponse({
@@ -520,10 +638,10 @@ export class AuthController {
       const headers = new Headers();
 
       if (req.headers.authorization) {
-        headers.set('Authorization', req.headers.authorization as string);
+        headers.set('Authorization', req.headers.authorization);
       }
       if (req.headers.cookie) {
-        headers.set('Cookie', req.headers.cookie as string);
+        headers.set('Cookie', req.headers.cookie);
       }
 
       await auth.api.changePassword({
@@ -541,8 +659,12 @@ export class AuthController {
     } catch (error) {
       this.logger.error(`Password update failed: ${error}`);
 
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      if (errorMessage.toLowerCase().includes('invalid') || errorMessage.toLowerCase().includes('incorrect')) {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      if (
+        errorMessage.toLowerCase().includes('invalid') ||
+        errorMessage.toLowerCase().includes('incorrect')
+      ) {
         throw new UnauthorizedException('Current password is incorrect');
       }
 
@@ -601,10 +723,10 @@ export class AuthController {
       const userId = await this.tokenService.validateRefreshToken(refreshToken);
 
       // Fetch user with roles and gates
-      const user = await this.userService.findOne(
-        { id: userId },
-        ['roles', 'gates'],
-      );
+      const user = await this.userService.findOne({ id: userId }, [
+        'roles',
+        'gates',
+      ]);
 
       if (!user) {
         throw new UnauthorizedException('User not found');

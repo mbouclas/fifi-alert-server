@@ -1,0 +1,96 @@
+{% extends "common/layout.nunj" %}
+
+{% block title %}New Sighting Reported for Your Alert - FiFi Alert{% endblock %}
+
+{% block header %}👁️ New Sighting Reported!{% endblock %}
+
+{% block content %}
+  <mj-text font-size="18px" font-weight="bold" color="#333333" padding-bottom="20px">
+    Hi {{ user.firstName|default('there') }},
+  </mj-text>
+  
+  <mj-text padding-bottom="20px" font-size="16px">
+    Great news! Someone has reported a potential sighting of <strong>{{ alert.petName }}</strong>.
+  </mj-text>
+  
+  <mj-divider border-width="2px" border-color="#28a745" padding="20px 0px" />
+  
+  <mj-text font-size="18px" font-weight="bold" color="#28a745" padding-bottom="20px" align="center">
+    Sighting Details
+  </mj-text>
+  
+  {% if sighting.photo %}
+  <mj-image src="{{ sighting.photo }}" alt="Sighting photo" padding-bottom="20px" border-radius="8px" />
+  {% endif %}
+  
+  <mj-text padding-bottom="20px">
+    <strong>Location:</strong> {{ sighting.location|default('Not specified') }}<br/>
+    {% if sighting.latitude and sighting.longitude %}
+    <strong>Coordinates:</strong> {{ sighting.latitude }}, {{ sighting.longitude }}<br/>
+    {% endif %}
+    <strong>Sighting Time:</strong> {{ sighting.sightingTime }}<br/>
+    <strong>Confidence Level:</strong> <span style="color: #007bff; font-weight: bold;">{{ sighting.confidence }}</span><br/>
+    {% if sighting.direction %}
+    <strong>Direction:</strong> {{ sighting.direction }}<br/>
+    {% endif %}
+  </mj-text>
+  
+  {% if sighting.notes %}
+  <mj-divider border-width="1px" border-color="#e0e0e0" padding="20px 0px" />
+  
+  <mj-text font-size="15px" font-weight="bold" padding-bottom="10px">
+    Reporter's Notes:
+  </mj-text>
+  
+  <mj-text padding-bottom="20px" font-style="italic" color="#666666">
+    "{{ sighting.notes }}"
+  </mj-text>
+  {% endif %}
+  
+  <mj-divider border-width="1px" border-color="#e0e0e0" padding="20px 0px" />
+  
+  <mj-text font-size="16px" font-weight="bold" padding-bottom="10px" color="#333333">
+    ⚡ Take Action Now
+  </mj-text>
+  
+  <mj-text padding-bottom="20px">
+    {% if sighting.confidence == 'HIGH' %}
+    🔴 <strong>High Confidence Sighting</strong> - This is a strong match! We recommend investigating immediately.<br/><br/>
+    {% elif sighting.confidence == 'MEDIUM' %}
+    🟡 <strong>Medium Confidence Sighting</strong> - This could be {{ alert.petName }}. Check it out when you can.<br/><br/>
+    {% else %}
+    🟢 <strong>Low Confidence Sighting</strong> - Someone noticed something. Worth a look if you're in the area.<br/><br/>
+    {% endif %}
+    
+    ✅ Review the sighting details and photo carefully<br/>
+    ✅ Visit the location as soon as possible<br/>
+    ✅ Bring familiar items (treats, toys, blanket)<br/>
+    ✅ Approach calmly - pets may be scared or disoriented<br/>
+    ✅ Contact the reporter through the app if you have questions
+  </mj-text>
+  
+  <mj-button background-color="#007bff" color="#ffffff" href="{{ appUrl }}/alerts/{{ alert.id }}/sightings/{{ sighting.id }}" padding="15px 0px">
+    View Sighting Details
+  </mj-button>
+  
+  <mj-divider border-width="1px" border-color="#e0e0e0" padding="20px 0px" />
+  
+  <mj-text font-size="14px" padding-bottom="10px">
+    <strong>Can't investigate right now?</strong>
+  </mj-text>
+  
+  <mj-text padding-bottom="20px" font-size="14px">
+    • Save the location for later<br/>
+    • Ask a friend or family member to check it out<br/>
+    • Contact local animal control or shelters in the area<br/>
+    • Post the sighting details to social media
+  </mj-text>
+  
+  <mj-text padding-bottom="10px" font-size="14px" color="#666666">
+    💙 <strong>The community is helping you find {{ alert.petName }}!</strong>
+  </mj-text>
+  
+  <mj-text padding-top="20px" font-size="12px" color="#999999">
+    You're receiving this email because someone reported a sighting for your active alert. You can manage sightings and mark false positives in the app.
+  </mj-text>
+{% endblock %}

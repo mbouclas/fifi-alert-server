@@ -1,0 +1,70 @@
+{% extends "common/layout.nunj" %}
+
+{% block title %}Activate Your Account{% endblock %}
+
+{% block header %}Activate Your FiFi Alert Account{% endblock %}
+
+{% block content %}
+  <mj-text font-size="20px" font-weight="bold" color="#333333" padding-bottom="20px">
+    Welcome {{ user.firstName|default('there') }}!
+  </mj-text>
+  
+  <mj-text padding-bottom="20px">
+    Your FiFi Alert account has been created and is ready to be activated. We're excited to have you join our community dedicated to helping lost pets find their way home!
+  </mj-text>
+
+  <mj-text padding-bottom="20px" font-weight="bold" color="#28a745">
+    Activate your account now to get started:
+  </mj-text>
+  
+  <mj-button background-color="#28a745" color="#ffffff" href="{{ activationUrl }}" padding="15px 0px">
+    Activate My Account
+  </mj-button>
+  
+  <mj-text padding-top="20px" font-size="12px" color="#666666">
+    If the button doesn't work, copy and paste this URL into your browser:<br/>
+    <a href="{{ activationUrl }}" style="color: #28a745;">{{ activationUrl }}</a>
+  </mj-text>
+
+  <mj-divider border-color="#E0E0E0" border-width="1px" padding="20px 0px"></mj-divider>
+
+  <mj-text padding-bottom="20px" font-size="16px" font-weight="bold">
+    What happens after activation?
+  </mj-text>
+
+  <mj-text padding-bottom="10px">
+    🐾 <strong>Full Access:</strong> Use all features including creating alerts and reporting sightings
+  </mj-text>
+  
+  <mj-text padding-bottom="10px">
+    📱 <strong>Push Notifications:</strong> Get instant alerts when pets go missing nearby
+  </mj-text>
+  
+  <mj-text padding-bottom="10px">
+    🌟 <strong>Community:</strong> Connect with other pet lovers in your area
+  </mj-text>
+  
+  <mj-text padding-bottom="20px">
+    💙 <strong>Make a Difference:</strong> Help reunite lost pets with their families
+  </mj-text>
+
+  <mj-divider border-color="#E0E0E0" border-width="1px" padding="20px 0px"></mj-divider>
+
+  <mj-text padding-bottom="10px" font-size="14px" color="#666666">
+    <strong>Important:</strong> This activation link will expire in {{ expirationHours }} hours.
+  </mj-text>
+
+  <mj-text padding-bottom="10px" font-size="14px" color="#666666">
+    If you didn't request this account activation, please ignore this email or contact our support team.
+  </mj-text>
+{% endblock %}
+
+{% block footer %}
+  <mj-text align="center" font-size="12px" color="#999999" padding="10px 0px">
+    Questions? Visit our <a href="{{ appUrl }}/support" style="color: #007bff;">Support Center</a> or reply to this email
+  </mj-text>
+  
+  <mj-text align="center" font-size="12px" color="#999999" padding="5px 0px">
+    FiFi Alert - Every pet deserves to come home
+  </mj-text>
+{% endblock %}

@@ -281,19 +281,31 @@ export class MeResponseDto {
   @ApiProperty({ description: 'User last name', example: 'Doe' })
   lastName: string;
 
-  @ApiProperty({ description: 'User email address', example: 'john.doe@example.com' })
+  @ApiProperty({
+    description: 'User email address',
+    example: 'john.doe@example.com',
+  })
   email: string;
 
   @ApiProperty({ description: 'Whether email is verified', example: true })
   emailVerified: boolean;
 
-  @ApiPropertyOptional({ description: 'Profile image URL', example: 'https://example.com/avatar.jpg' })
+  @ApiPropertyOptional({
+    description: 'Profile image URL',
+    example: 'https://example.com/avatar.jpg',
+  })
   image?: string;
 
-  @ApiProperty({ description: 'Account creation date', example: '2025-01-01T00:00:00.000Z' })
+  @ApiProperty({
+    description: 'Account creation date',
+    example: '2025-01-01T00:00:00.000Z',
+  })
   createdAt: Date;
 
-  @ApiProperty({ description: 'Last update date', example: '2025-01-01T00:00:00.000Z' })
+  @ApiProperty({
+    description: 'Last update date',
+    example: '2025-01-01T00:00:00.000Z',
+  })
   updatedAt: Date;
 
   @ApiPropertyOptional({ description: 'User settings', example: {} })
@@ -305,6 +317,9 @@ export class MeResponseDto {
   @ApiProperty({ description: 'User roles', type: [UserRoleDto] })
   roles: UserRoleDto[];
 
-  @ApiProperty({ description: 'User gates (feature flags)', type: [UserGateDto] })
+  @ApiProperty({
+    description: 'User gates (feature flags)',
+    type: [UserGateDto],
+  })
   gates: UserGateDto[];
 }

@@ -1,5 +1,14 @@
-import { SubCommand, CommandRunner, Option, InquirerService } from 'nest-commander';
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  SubCommand,
+  CommandRunner,
+  Option,
+  InquirerService,
+} from 'nest-commander';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { UserService } from '../../../user/user.service';
 
 /**
@@ -60,7 +69,9 @@ export class UpdatePasswordCommand extends CommandRunner {
 
       // Validate passwords match
       if (finalOptions.password !== finalOptions.confirmPassword) {
-        throw new BadRequestException('Passwords do not match. Please try again.');
+        throw new BadRequestException(
+          'Passwords do not match. Please try again.',
+        );
       }
 
       // Find the user by email
@@ -76,10 +87,9 @@ export class UpdatePasswordCommand extends CommandRunner {
       }
 
       // Update the user's password
-      await this.userService.update(
-        { id: user.id },
-        { password: finalOptions.password } as any,
-      );
+      await this.userService.update({ id: user.id }, {
+        password: finalOptions.password,
+      } as any);
 
       console.log(`
 ✅ Password updated successfully!

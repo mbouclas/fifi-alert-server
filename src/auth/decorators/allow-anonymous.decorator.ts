@@ -8,7 +8,7 @@ export const ALLOW_ANONYMOUS_KEY = 'allowAnonymous';
 /**
  * Decorator to mark routes as publicly accessible (no authentication required)
  * Bypasses BearerTokenGuard when applied to a route or controller
- * 
+ *
  * @example
  * ```typescript
  * @Post('login')

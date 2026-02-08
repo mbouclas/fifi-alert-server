@@ -1,5 +1,14 @@
-import { SubCommand, CommandRunner, Option, InquirerService } from 'nest-commander';
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  SubCommand,
+  CommandRunner,
+  Option,
+  InquirerService,
+} from 'nest-commander';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { UserService } from '../../../user/user.service';
 import { PrismaService } from '@services/prisma.service';
 import * as inquirer from 'inquirer';
@@ -80,15 +89,12 @@ export class ConvertToAdminCommand extends CommandRunner {
       const email = finalOptions.email?.toLowerCase();
 
       // Find the user by email
-      const user = await this.userService.findOne(
-        { email },
-        ['roles'],
-      ) as UserWithRoles | null;
+      const user = (await this.userService.findOne({ email }, [
+        'roles',
+      ])) as UserWithRoles | null;
 
       if (!user) {
-        throw new NotFoundException(
-          `User with email "${email}" not found.`,
-        );
+        throw new NotFoundException(`User with email "${email}" not found.`);
       }
 
       // Display user information for confirmation
@@ -128,9 +134,11 @@ export class ConvertToAdminCommand extends CommandRunner {
       );
 
       if (existingAdminRoles && existingAdminRoles.length > 0) {
-        const roleNames = existingAdminRoles.map((ur) => ur.role.name).join(', ');
+        const roleNames = existingAdminRoles
+          .map((ur) => ur.role.name)
+          .join(', ');
         console.log(`\n⚠️  This user already has admin role(s): ${roleNames}`);
-        
+
         const { continueAnyway } = await inquirer.prompt([
           {
             type: 'confirm',
@@ -203,16 +211,13 @@ export class ConvertToAdminCommand extends CommandRunner {
       }
 
       // Add the role to the user using Prisma's relation update
-      await this.userService.update(
-        { id: user.id },
-        {
-          roles: {
-            create: {
-              role_id: selectedRole.id,
-            },
+      await this.userService.update({ id: user.id }, {
+        roles: {
+          create: {
+            role_id: selectedRole.id,
           },
-        } as any,
-      );
+        },
+      } as any);
 
       console.log(`
 ✅ User converted to admin successfully!
@@ -240,7 +245,8 @@ export class ConvertToAdminCommand extends CommandRunner {
    * Displays user information for confirmation
    */
   private displayUserInfo(user: UserWithRoles): void {
-    const currentRoles = user.roles?.map((ur) => ur.role.name).join(', ') || 'None';
+    const currentRoles =
+      user.roles?.map((ur) => ur.role.name).join(', ') || 'None';
 
     console.log(`
 ┌───────────────────────────────────────────────────────────────┐

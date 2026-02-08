@@ -162,6 +162,36 @@ async adminOnly(@CurrentUser() user: ITokenUser) {
 }
 ```
 
+### Require Minimum Role Level (Hierarchical)
+
+```typescript
+import { BearerTokenGuard, MinUserLevelGuard, MinUserLevel } from './auth';
+
+@Get('admin/settings')
+@UseGuards(BearerTokenGuard, MinUserLevelGuard)
+@MinUserLevel(50)  // Lower = higher privilege (10 > 50 > 100)
+async adminSettings(@CurrentUser() user: ITokenUser) {
+  return { message: 'Admin settings (level <= 50)' };
+}
+
+// Controller-level protection
+@Controller('super-admin')
+@UseGuards(BearerTokenGuard, MinUserLevelGuard)
+@MinUserLevel(10)  // All routes require level <= 10
+export class SuperAdminController {
+  @Get('critical')
+  async criticalAction() {
+    return { message: 'Super admin only (level <= 10)' };
+  }
+  
+  @Get('stats')
+  @MinUserLevel(50)  // Override: relax to level <= 50
+  async getStats() {
+    return { message: 'Any admin can view stats' };
+  }
+}
+```
+
 ### Check Feature Gates
 
 ```typescript

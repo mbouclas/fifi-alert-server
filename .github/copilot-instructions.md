@@ -8,13 +8,7 @@ FiFi Alert is a geolocation-based notification system for missing pets. The back
 - Rate limiting and notification quality controls
 - Sighting reports and community coordination
 
-## Key Documentation
-Before implementing features, ALWAYS review:
-- [SYSTEM_BEHAVIOR_SPEC.md](./SYSTEM_BEHAVIOR_SPEC.md) - Notification targeting logic
-- [API_CONTRACT.md](./API_CONTRACT.md) - API endpoints and schemas
-- [NOTIFICATION_PLAYBOOK.md](./NOTIFICATION_PLAYBOOK.md) - Rate limits and quality rules
-- [OPERATIONAL_RUNBOOK.md](./OPERATIONAL_RUNBOOK.md) - Production debugging and monitoring
-- [IMPLEMENTATION_PLAN.md](./IMPLEMENTATION_PLAN.md) - Development roadmap
+
 
 ---
 
@@ -28,10 +22,11 @@ Before implementing features, ALWAYS review:
 - ALWAYS use the .env file for environment variables. DO NOT hardcode any values.
 - NEVER run any database write operations without consulting context7 mcp server for Prisma documentation first.
 - NEVER run any database operations that drop, delete or truncate tables without asking me first.
-- ALWAYS prefer using the nestjs CLI for generating new service, middleware controllers and decorators.
+- ALWAYS prefer using the nestjs CLI for generating new service, middleware controllers, modules and decorators.
 - ALWAYS prefer doing things the nestjs way. Especially when it comes to dependency injection.
 - Do not hardcode any values. Always use environment variables or props to pass values.
 - ALWAYS use environment variables for any URLs, keys, or other configuration values. Do not hardcode them.
+- NEVER execute a prisma command that drops or resets the database without explicit confirmation from me. Always ask first. If prisma shows a warning about destructive operations, do not proceed and ask for clarification.
 
 ## Database Operations
 - ALWAYS use Prisma for database access. DO NOT write raw SQL queries except for complex PostGIS queries.
@@ -80,6 +75,15 @@ Before implementing features, ALWAYS review:
 - Minimum 80% code coverage for new code.
 - ALWAYS sanitize and validate any user input. Use class-validator and class-transformer for validation and transformation.
 - ALWAYS follow best practices for security. Use NestJS's built-in security features.
+
+## Guards and Authorization
+- Use `@Roles()` decorator with `RolesGuard` for role-based access control (specific role names)
+- Use `@MinUserLevel()` decorator with `MinUserLevelGuard` for hierarchical permission checks (lower level = higher privilege)
+- ALWAYS place `BearerTokenGuard` before `RolesGuard` or `MinUserLevelGuard` in the guards array
+- Example: `@UseGuards(BearerTokenGuard, MinUserLevelGuard)`
+- Use `@AllowAnonymous()` decorator to make routes publicly accessible
+- For admin endpoints, prefer using `@MinUserLevel(50)` for flexibility over hardcoded role names
+- Document required permission level in endpoint JSDoc comments
 
 ## Error Handling
 - ALWAYS handle errors gracefully. Use NestJS's built-in exception filters.

@@ -4,7 +4,7 @@ import type { ITokenUser } from '../services/token.service';
 /**
  * Decorator to extract the current authenticated user from the request
  * User is attached to the request by BearerTokenGuard
- * 
+ *
  * @example
  * ```typescript
  * @Get('profile')
@@ -14,8 +14,8 @@ import type { ITokenUser } from '../services/token.service';
  * ```
  */
 export const CurrentUser = createParamDecorator(
-    (data: unknown, ctx: ExecutionContext): ITokenUser => {
-        const request = ctx.switchToHttp().getRequest();
-        return request.user;
-    },
+  (data: unknown, ctx: ExecutionContext): ITokenUser => {
+    const request = ctx.switchToHttp().getRequest();
+    return request.user;
+  },
 );
