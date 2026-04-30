@@ -11,6 +11,8 @@ import { ListAlertsScenario } from './scenarios/04-list-alerts.scenario.js';
 import { LogoutUserScenario } from './scenarios/05-logout-user.scenario.js';
 import { RegisterPetsScenario } from './scenarios/06-register-pets.scenario.js';
 import { ListPetsScenario } from './scenarios/07-list-pets.scenario.js';
+import { CreateAlertZonesScenario } from './scenarios/08-create-alert-zones.scenario.js';
+import { ListAlertZonesScenario } from './scenarios/09-list-alert-zones.scenario.js';
 
 /**
  * Simulation Module
@@ -35,7 +37,9 @@ import { ListPetsScenario } from './scenarios/07-list-pets.scenario.js';
     LogoutUserScenario,
     RegisterPetsScenario,
     ListPetsScenario,
+    CreateAlertZonesScenario,
+    ListAlertZonesScenario,
   ],
   exports: [SimulationService],
 })
-export class SimulationModule {}
+export class SimulationModule { }

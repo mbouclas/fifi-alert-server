@@ -44,7 +44,9 @@ async function main() {
         },
     });
 
-    console.log(`✓ Created roles: ${adminRole.name}, ${managerRole.name}, ${userRole.name}`);
+    console.log(
+        `✓ Created roles: ${adminRole.name}, ${managerRole.name}, ${userRole.name}`,
+    );
 
     // Create Gates (Feature Flags)
     console.log('Creating gates...');
@@ -88,24 +90,26 @@ async function main() {
         },
     });
 
-    console.log(`✓ Created gates: ${premiumGate.name}, ${betaGate.name}, ${analyticsGate.name}, ${exportGate.name}`);
+    console.log(
+        `✓ Created gates: ${premiumGate.name}, ${betaGate.name}, ${analyticsGate.name}, ${exportGate.name}`,
+    );
 
     // Create Pet Types
     console.log('Creating pet types...');
     await prisma.petType.createMany({
         data: [
-            { name: 'Dog', slug: 'dog' },
-            { name: 'Cat', slug: 'cat' },
-            { name: 'Bird', slug: 'bird' },
-            { name: 'Rabbit', slug: 'rabbit' },
-            { name: 'Hamster', slug: 'hamster' },
-            { name: 'Guinea Pig', slug: 'guinea-pig' },
-            { name: 'Ferret', slug: 'ferret' },
-            { name: 'Turtle', slug: 'turtle' },
-            { name: 'Lizard', slug: 'lizard' },
-            { name: 'Snake', slug: 'snake' },
-            { name: 'Fish', slug: 'fish' },
-            { name: 'Other', slug: 'other' },
+            { name: 'Dog', slug: 'dog', order: 10 },
+            { name: 'Cat', slug: 'cat', order: 20 },
+            { name: 'Bird', slug: 'bird', order: 30 },
+            { name: 'Rabbit', slug: 'rabbit', order: 40 },
+            { name: 'Hamster', slug: 'hamster', order: 50 },
+            { name: 'Guinea Pig', slug: 'guinea-pig', order: 60 },
+            { name: 'Ferret', slug: 'ferret', order: 70 },
+            { name: 'Turtle', slug: 'turtle', order: 80 },
+            { name: 'Lizard', slug: 'lizard', order: 90 },
+            { name: 'Snake', slug: 'snake', order: 100 },
+            { name: 'Fish', slug: 'fish', order: 110 },
+            { name: 'Other', slug: 'other', order: 120 },
         ],
         skipDuplicates: true,
     });
@@ -168,7 +172,9 @@ async function main() {
             },
         });
 
-        console.log(`✓ Assigned ${premiumGate.name} and ${betaGate.name} gates to ${testUser.email}`);
+        console.log(
+            `✓ Assigned ${premiumGate.name} and ${betaGate.name} gates to ${testUser.email}`,
+        );
     } else {
         console.log('⚠ No test user found. Create a user via signup first.');
     }

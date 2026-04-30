@@ -6,8 +6,56 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { join } from 'path';
 import helmet from 'helmet';
+import { createServer } from 'node:http';
+
+const DEFAULT_PORT = 3000;
+const DEFAULT_HOST = '0.0.0.0';
+
+function getHttpPort(): number {
+  const port = Number(process.env.PORT ?? DEFAULT_PORT);
+
+  if (!Number.isInteger(port) || port <= 0 || port > 65535) {
+    throw new Error(`Invalid PORT value: ${process.env.PORT}`);
+  }
+
+  return port;
+}
+
+function getHttpHost(): string {
+  return process.env.HOST ?? DEFAULT_HOST;
+}
+
+function assertPortAvailable(port: number, host: string): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const server = createServer();
+
+    server.once('error', (error: NodeJS.ErrnoException) => {
+      if (error.code === 'EADDRINUSE') {
+        reject(
+          new Error(
+            `Port ${port} is already in use on ${host}. Stop the process using it or set PORT to another value.`,
+          ),
+        );
+        return;
+      }
+
+      reject(error);
+    });
+
+    server.once('listening', () => {
+      server.close(() => resolve());
+    });
+
+    server.listen(port, host);
+  });
+}
 
 async function bootstrap() {
+  const port = getHttpPort();
+  const host = getHttpHost();
+
+  await assertPortAvailable(port, host);
+
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
     logger: WinstonModule.createLogger(loggerConfig),
     bodyParser: false,
@@ -104,7 +152,10 @@ async function bootstrap() {
 
   // @ts-ignore
   app.set('query parser', 'extended');
-  await app.listen(process.env.PORT ?? 3000, '0.0.0.0');
+  await app.listen(port, host);
   console.log(`Application is running on: ${await app.getUrl()}`);
 }
-bootstrap();
+bootstrap().catch((error) => {
+  console.error(error instanceof Error ? error.message : error);
+  process.exit(1);
+});

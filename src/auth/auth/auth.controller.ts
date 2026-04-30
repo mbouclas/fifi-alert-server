@@ -91,20 +91,25 @@ export class AuthController {
     @Body() loginDto: LoginDto,
     @Req() req: Request,
   ): Promise<AuthResponseDto> {
+    const normalizedEmail = loginDto.email.toLowerCase();
+    let failureStage = 'better-auth-sign-in';
+
     try {
       const { headers, response: result } = await auth.api.signInEmail({
         body: {
-          email: loginDto.email.toLowerCase(),
+          email: normalizedEmail,
           password: loginDto.password,
         },
         returnHeaders: true,
       });
 
       if (!result?.user) {
+        failureStage = 'better-auth-empty-result';
         throw new UnauthorizedException('Invalid credentials');
       }
 
       // Fetch user with roles and gates for JWT generation
+      failureStage = 'local-user-relations-lookup';
       const userWithRelations = await this.userService.findOne(
         { id: Number(result.user.id) },
         ['roles', 'gates'],
@@ -194,6 +199,13 @@ export class AuthController {
         expiresAt: accessTokenData.expiresAt.toISOString(),
       };
     } catch (error) {
+      await this.logFailedLoginAttempt(
+        loginDto.email,
+        normalizedEmail,
+        failureStage,
+        error,
+      );
+
       if (error instanceof UnauthorizedException) {
         // Emit audit event for failed login
         try {
@@ -224,6 +236,63 @@ export class AuthController {
       }
       this.logger.error(`Login failed: ${error}`);
       throw new UnauthorizedException('Invalid credentials');
+    }
+  }
+
+  private async logFailedLoginAttempt(
+    submittedEmail: string,
+    normalizedEmail: string,
+    stage: string,
+    error: unknown,
+  ): Promise<void> {
+    try {
+      const user = await this.userService.findOne({ email: normalizedEmail }, [
+        'accounts',
+      ]);
+      const accounts = ((user as any)?.accounts ?? []) as Array<{
+        id: number;
+        accountId: string;
+        providerId: string;
+        password?: string | null;
+      }>;
+      const credentialAccount = accounts.find(
+        (account) => account.providerId === 'credential',
+      );
+      const errorDetails =
+        error instanceof Error
+          ? {
+              name: error.name,
+              message: error.message,
+            }
+          : { message: String(error) };
+
+      this.logger.warn(
+        `Failed login diagnostic: ${JSON.stringify({
+          stage,
+          submittedEmail,
+          normalizedEmail,
+          emailWasNormalized: submittedEmail !== normalizedEmail,
+          userFound: Boolean(user),
+          userId: user?.id,
+          userEmail: user?.email,
+          emailVerified: user?.emailVerified,
+          banned: user?.banned,
+          accountCount: accounts.length,
+          accountProviderIds: accounts.map((account) => account.providerId),
+          credentialAccountFound: Boolean(credentialAccount),
+          credentialAccountId: credentialAccount?.id,
+          credentialAccountAccountId: credentialAccount?.accountId,
+          credentialAccountMatchesEmail:
+            credentialAccount?.accountId === normalizedEmail,
+          credentialAccountHasPassword: Boolean(credentialAccount?.password),
+          error: errorDetails,
+        })}`,
+      );
+    } catch (diagnosticError) {
+      this.logger.error(
+        'Failed to collect login failure diagnostics:',
+        diagnosticError,
+      );
     }
   }
 

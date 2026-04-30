@@ -250,6 +250,7 @@ exports.Prisma.PetTypeScalarFieldEnum = {
   id: 'id',
   name: 'name',
   slug: 'slug',
+  order: 'order',
   meta: 'meta',
   settings: 'settings',
   created_at: 'created_at',

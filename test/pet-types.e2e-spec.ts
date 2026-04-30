@@ -187,24 +187,59 @@ describe('Pet Types API (e2e)', () => {
     afterAll(async () => {
         // Clean up in correct order to avoid foreign key constraints
         await prisma.pet.deleteMany({
-            where: { petType: { slug: { in: ['dog', 'cat', 'bird', 'pet-type-test'] } } },
+            where: {
+                petType: {
+                    slug: { in: ['dog', 'cat', 'bird', 'pet-type-test'] },
+                },
+            },
         });
         await prisma.petType.deleteMany({
             where: { slug: { in: ['dog', 'cat', 'bird', 'pet-type-test'] } },
         });
         if (testUserId || superAdminUserId || regularUserUserId) {
             await prisma.userRole.deleteMany({
-                where: { user_id: { in: [testUserId, superAdminUserId, regularUserUserId].filter(Boolean) } },
+                where: {
+                    user_id: {
+                        in: [
+                            testUserId,
+                            superAdminUserId,
+                            regularUserUserId,
+                        ].filter(Boolean),
+                    },
+                },
             });
             await prisma.session.deleteMany({
-                where: { userId: { in: [testUserId, superAdminUserId, regularUserUserId].filter(Boolean) } },
+                where: {
+                    userId: {
+                        in: [
+                            testUserId,
+                            superAdminUserId,
+                            regularUserUserId,
+                        ].filter(Boolean),
+                    },
+                },
             });
             await prisma.user.deleteMany({
-                where: { id: { in: [testUserId, superAdminUserId, regularUserUserId].filter(Boolean) } },
+                where: {
+                    id: {
+                        in: [
+                            testUserId,
+                            superAdminUserId,
+                            regularUserUserId,
+                        ].filter(Boolean),
+                    },
+                },
             });
         }
         await prisma.role.deleteMany({
-            where: { slug: { in: ['super-admin-pet-type-test', 'regular-user-pet-type-test'] } },
+            where: {
+                slug: {
+                    in: [
+                        'super-admin-pet-type-test',
+                        'regular-user-pet-type-test',
+                    ],
+                },
+            },
         });
         await prisma.$disconnect();
         await app.close();
@@ -212,7 +247,11 @@ describe('Pet Types API (e2e)', () => {
 
     describe('POST /pet-types', () => {
         it('should create a pet type (201)', async () => {
-            const dto = { name: 'Pet Type Test', slug: 'pet-type-test' };
+            const dto = {
+                name: 'Pet Type Test',
+                slug: 'pet-type-test',
+                order: 50,
+            };
 
             const response = await request(app.getHttpServer())
                 .post('/pet-types')
@@ -223,18 +262,20 @@ describe('Pet Types API (e2e)', () => {
             createdPetTypeId = response.body.id;
             expect(response.body.name).toBe(dto.name);
             expect(response.body.slug).toBe(dto.slug);
+            expect(response.body.order).toBe(dto.order);
         });
     });
 
     describe('GET /pet-types', () => {
         it('should list pet types (200)', async () => {
             const response = await request(app.getHttpServer())
-                .get('/pet-types')
+                .get('/pet-types?orderBy=order&orderDir=asc')
                 .set('Authorization', `Bearer ${authToken}`)
                 .expect(200);
 
             expect(Array.isArray(response.body)).toBe(true);
             expect(response.body.length).toBeGreaterThan(0);
+            expect(response.body[0]).toHaveProperty('order');
         });
     });
 
@@ -265,11 +306,12 @@ describe('Pet Types API (e2e)', () => {
             const response = await request(app.getHttpServer())
                 .patch(`/pet-types/${createdPetTypeId}`)
                 .set('Authorization', `Bearer ${authToken}`)
-                .send({ name: 'Pet Type Updated' })
+                .send({ name: 'Pet Type Updated', order: 60 })
                 .expect(200);
 
             expect(response.body.id).toBe(createdPetTypeId);
             expect(response.body.name).toBe('Pet Type Updated');
+            expect(response.body.order).toBe(60);
         });
     });
 
@@ -297,20 +339,17 @@ describe('Pet Types API (e2e)', () => {
             expect(Array.isArray(response.body)).toBe(true);
         });
 
-        it('should block user with level below 5 (level 100) from accessing findAll', async () => {
+        it('should allow regular authenticated users to access findAll', async () => {
             const response = await request(app.getHttpServer())
                 .get('/pet-types')
                 .set('Authorization', `Bearer ${regularUserToken}`)
-                .expect(403);
+                .expect(200);
 
-            expect(response.body.message).toContain('Insufficient permissions');
-            expect(response.body.message).toContain('Minimum role level required: 5');
+            expect(Array.isArray(response.body)).toBe(true);
         });
 
         it('should block unauthenticated requests', async () => {
-            await request(app.getHttpServer())
-                .get('/pet-types')
-                .expect(401);
+            await request(app.getHttpServer()).get('/pet-types').expect(401);
         });
     });
 });

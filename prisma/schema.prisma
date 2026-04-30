@@ -255,6 +255,7 @@ model PetType {
   id         Int      @id @default(autoincrement())
   name       String   @unique @pg.VarChar(100)
   slug       String   @unique @pg.VarChar(100)
+  order      Int      @default(0) @map("sort_order")
   meta       Json?
   settings   Json?
   created_at DateTime @default(now()) @map("created_at")
@@ -265,6 +266,7 @@ model PetType {
 
   @@index([slug])
   @@index([name])
+  @@index([order])
   @@map("pet_type")
 }
 

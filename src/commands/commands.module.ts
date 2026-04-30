@@ -9,10 +9,12 @@ import { SendTestEmailCommand } from '@commands/send-test-email.command';
 import {
   AdminCommand,
   CreateAdminCommand,
+  CreateUserCommand,
   UpdatePasswordCommand,
   ConvertToAdminCommand,
   ListAdminsCommand,
   AdminCreateQuestions,
+  AdminCreateUserQuestions,
   AdminUpdatePasswordQuestions,
   AdminConvertQuestions,
 } from '@commands/admin';
@@ -26,13 +28,15 @@ import {
     // Admin commands
     AdminCommand,
     CreateAdminCommand,
+    CreateUserCommand,
     UpdatePasswordCommand,
     ConvertToAdminCommand,
     ListAdminsCommand,
     // Question sets
     AdminCreateQuestions,
+    AdminCreateUserQuestions,
     AdminUpdatePasswordQuestions,
     AdminConvertQuestions,
   ],
 })
-export class CommandsModule {}
+export class CommandsModule { }

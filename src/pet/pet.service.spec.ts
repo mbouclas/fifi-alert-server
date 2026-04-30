@@ -88,7 +88,7 @@ describe('PetService', () => {
           gender: petData.gender,
           size: petData.size,
           tagId: expect.any(String),
-          userId,
+          user: { connect: { id: userId } },
           petType: { connect: { id: petTypeDog.id } },
         },
         include: { petType: true },

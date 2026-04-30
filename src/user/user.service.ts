@@ -871,17 +871,40 @@ export class UserService {
   }
 
   /**
- * Check if user has a role with at least the specified level
- * @param user User object with roles included
- * @param minLevel Minimum role level required
- * @returns true if user has a role with level >= minLevel
- */
+   * Check if user has a role with at least the specified level.
+   * Lower role level values are more privileged, so a role satisfies the
+   * requirement when its level is less than or equal to the required level.
+   *
+   * @param user User object with roles included
+   * @param minLevel Minimum role level required
+   * @returns true if user has a role with level <= minLevel
+   */
   static userHasMinLevel(user: User, minLevel: number): boolean {
-    if (!user['roles'] || !Array.isArray(user['roles'])) {
+    const roles = user['roles'];
+
+    if (!Array.isArray(roles)) {
       return false;
     }
 
-    return user['roles'].some((r) => r.role.level >= minLevel);
+    return roles.some((roleAssignment) => {
+      const level = UserService.getRoleLevel(roleAssignment);
+
+      return level !== undefined && level <= minLevel;
+    });
+  }
+
+  private static getRoleLevel(roleAssignment: unknown): number | undefined {
+    if (!roleAssignment || typeof roleAssignment !== 'object') {
+      return undefined;
+    }
+
+    const assignment = roleAssignment as {
+      level?: unknown;
+      role?: { level?: unknown };
+    };
+    const level = assignment.role?.level ?? assignment.level;
+
+    return typeof level === 'number' ? level : undefined;
   }
 
   // ============================================================

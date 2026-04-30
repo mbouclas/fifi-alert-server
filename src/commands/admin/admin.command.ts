@@ -1,6 +1,7 @@
 import { Command, CommandRunner } from 'nest-commander';
 import { Injectable } from '@nestjs/common';
 import { CreateAdminCommand } from './subcommands/create-admin.command';
+import { CreateUserCommand } from './subcommands/create-user.command';
 import { UpdatePasswordCommand } from './subcommands/update-password.command';
 import { ConvertToAdminCommand } from './subcommands/convert-to-admin.command';
 import { ListAdminsCommand } from './subcommands/list-admins.command';
@@ -28,6 +29,7 @@ import { ListAdminsCommand } from './subcommands/list-admins.command';
   description: 'Administrative commands for user management',
   subCommands: [
     CreateAdminCommand,
+    CreateUserCommand,
     UpdatePasswordCommand,
     ConvertToAdminCommand,
     ListAdminsCommand,
@@ -42,6 +44,7 @@ export class AdminCommand extends CommandRunner {
 ╚═══════════════════════════════════════════════════════════════╝
 
 Available subcommands:
+  create-user      Create a new system user with a specific role
   create           Create a new admin user
   update-password  Update an admin user's password
   convert          Convert an existing user to admin

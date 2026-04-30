@@ -6,6 +6,7 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { AlertZoneService } from './alert-zone.service';
+import { AlertZoneCacheService } from './alert-zone-cache.service';
 import { PrismaService } from '../services/prisma.service';
 import { AUDIT_EVENT_NAMES } from '../audit/audit-event-names';
 
@@ -32,7 +33,13 @@ describe('AlertZoneService', () => {
     emit: jest.fn(),
   };
 
+  const mockCacheService = {
+    invalidateCache: jest.fn(),
+  };
+
   beforeEach(async () => {
+    jest.resetAllMocks();
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         AlertZoneService,
@@ -44,15 +51,16 @@ describe('AlertZoneService', () => {
           provide: EventEmitter2,
           useValue: mockEventEmitter,
         },
+        {
+          provide: AlertZoneCacheService,
+          useValue: mockCacheService,
+        },
       ],
     }).compile();
 
     service = module.get<AlertZoneService>(AlertZoneService);
     prisma = module.get<PrismaService>(PrismaService);
     eventEmitter = module.get<EventEmitter2>(EventEmitter2);
-
-    // Clear all mocks before each test
-    jest.clearAllMocks();
   });
 
   it('should be defined', () => {
@@ -85,6 +93,10 @@ describe('AlertZoneService', () => {
     it('should successfully create an alert zone', async () => {
       mockPrisma.user.findUnique.mockResolvedValue(mockUser);
       mockPrisma.alertZone.count.mockResolvedValue(5); // User has 5 zones
+      mockPrisma.alertZone.findUnique.mockResolvedValue({
+        id: 1,
+        user_id: 1,
+      });
       mockPrisma.$queryRaw.mockResolvedValueOnce([{ id: 1 }]); // Insert result
       mockPrisma.$queryRaw.mockResolvedValueOnce([mockZone]); // findOne result
 
@@ -111,6 +123,32 @@ describe('AlertZoneService', () => {
           entityId: 1,
           userId: 1,
         }),
+      );
+    });
+
+    it('should persist raw-insert managed columns when creating an alert zone', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue(mockUser);
+      mockPrisma.alertZone.count.mockResolvedValue(5);
+      mockPrisma.alertZone.findUnique.mockResolvedValue({
+        id: 1,
+        user_id: 1,
+      });
+      mockPrisma.$queryRaw.mockResolvedValueOnce([{ id: 1 }]);
+      mockPrisma.$queryRaw.mockResolvedValueOnce([mockZone]);
+
+      await service.create(createDto, 1);
+
+      const insertCall = mockPrisma.$queryRaw.mock.calls[0];
+      const sql = insertCall[0].join(' ');
+
+      expect(sql).toContain('lat, lon, location_point');
+      expect(sql).toContain('created_at, updated_at');
+      expect(sql).toContain('NOW()');
+      expect(insertCall).toEqual(
+        expect.arrayContaining([
+          createDto.latitude,
+          createDto.longitude,
+        ]),
       );
     });
 
@@ -159,6 +197,10 @@ describe('AlertZoneService', () => {
     it('should emit audit event with correct payload', async () => {
       mockPrisma.user.findUnique.mockResolvedValue(mockUser);
       mockPrisma.alertZone.count.mockResolvedValue(5);
+      mockPrisma.alertZone.findUnique.mockResolvedValue({
+        id: 1,
+        user_id: 1,
+      });
       mockPrisma.$queryRaw.mockResolvedValueOnce([{ id: 1 }]);
       mockPrisma.$queryRaw.mockResolvedValueOnce([mockZone]);
 
@@ -280,7 +322,9 @@ describe('AlertZoneService', () => {
     it('should throw NotFoundException when zone does not exist', async () => {
       mockPrisma.alertZone.findUnique.mockResolvedValue(null);
 
-      await expect(service.findOne(999, 1)).rejects.toThrow(NotFoundException);
+      await expect(service.findOne(999, 1)).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
     it('should throw ForbiddenException when user is not the owner', async () => {
@@ -289,7 +333,9 @@ describe('AlertZoneService', () => {
         user_id: 2, // Different user
       });
 
-      await expect(service.findOne(1, 1)).rejects.toThrow(ForbiddenException);
+      await expect(service.findOne(1, 1)).rejects.toThrow(
+        ForbiddenException,
+      );
     });
   });
 
@@ -401,9 +447,22 @@ describe('AlertZoneService', () => {
         },
       ]); // Updated zone
 
-      await service.update(1, { latitude: 37.7799, longitude: -122.4294 }, 1);
+      await service.update(
+        1,
+        { latitude: 37.7799, longitude: -122.4294 },
+        1,
+      );
 
       expect(mockPrisma.$executeRaw).toHaveBeenCalled();
+
+      const updateCall = mockPrisma.$executeRaw.mock.calls[0];
+      const sql = updateCall[0].join(' ');
+
+      expect(sql).toContain('lat =');
+      expect(sql).toContain('lon =');
+      expect(updateCall).toEqual(
+        expect.arrayContaining([37.7799, -122.4294]),
+      );
     });
 
     it('should throw ForbiddenException when user is not owner', async () => {
@@ -472,7 +531,9 @@ describe('AlertZoneService', () => {
     it('should throw NotFoundException when zone does not exist', async () => {
       mockPrisma.alertZone.findUnique.mockResolvedValue(null);
 
-      await expect(service.delete(999, 1)).rejects.toThrow(NotFoundException);
+      await expect(service.delete(999, 1)).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
     it('should throw ForbiddenException when user is not owner', async () => {
@@ -481,7 +542,9 @@ describe('AlertZoneService', () => {
         user_id: 2,
       });
 
-      await expect(service.delete(1, 1)).rejects.toThrow(ForbiddenException);
+      await expect(service.delete(1, 1)).rejects.toThrow(
+        ForbiddenException,
+      );
     });
   });
 });

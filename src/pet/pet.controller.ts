@@ -8,9 +8,11 @@ import {
   Body,
   Param,
   UseGuards,
+  UseInterceptors,
   HttpCode,
   HttpStatus,
   ParseIntPipe,
+  UploadedFiles,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -18,20 +20,33 @@ import {
   ApiResponse,
   ApiBearerAuth,
   ApiParam,
+  ApiConsumes,
+  ApiBody,
 } from '@nestjs/swagger';
+import { FilesInterceptor } from '@nestjs/platform-express';
 import { Throttle, SkipThrottle } from '@nestjs/throttler';
 import { PetService } from './pet.service';
-import { CreatePetDto, UpdatePetDto, PetResponseDto } from './dto';
+import {
+  CreatePetDto,
+  UpdatePetDto,
+  PetResponseDto,
+  UploadPetPhotosDto,
+  PetPhotoUploadResponseDto,
+} from './dto';
 import { BearerTokenGuard } from '../auth/guards/bearer-token.guard';
 import { Session } from '../decorators/session.decorator';
 import { AllowAnonymous } from '../auth/decorators/allow-anonymous.decorator';
+import { UploadService } from '../upload/upload.service';
 
 @ApiTags('Pets')
 @Controller('pets')
 @UseGuards(BearerTokenGuard)
 @ApiBearerAuth()
 export class PetController {
-  constructor(private readonly petService: PetService) {}
+  constructor(
+    private readonly petService: PetService,
+    private readonly uploadService: UploadService,
+  ) {}
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
@@ -140,6 +155,41 @@ export class PetController {
   ): Promise<PetResponseDto> {
     const userId = session.userId;
     return this.petService.updatePet(id, userId, dto);
+  }
+
+  @Post(':id/photos')
+  @UseInterceptors(FilesInterceptor('photos', 5))
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({ type: UploadPetPhotosDto })
+  @ApiParam({ name: 'id', description: 'Pet ID' })
+  @ApiOperation({
+    summary: 'Upload photos for a pet',
+    description:
+      'Upload image files for a pet owned by the authenticated user. Use the returned public URLs in the photos array when creating or updating pet details.',
+  })
+  @ApiResponse({
+    status: 201,
+    description: 'Photos uploaded successfully',
+    type: PetPhotoUploadResponseDto,
+  })
+  @ApiResponse({ status: 400, description: 'Invalid file type or size' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden - not your pet' })
+  @ApiResponse({ status: 404, description: 'Pet not found' })
+  async uploadPhotos(
+    @Param('id', ParseIntPipe) id: number,
+    @Session() session: any,
+    @UploadedFiles() files: Express.Multer.File[],
+  ): Promise<PetPhotoUploadResponseDto> {
+    const userId = session.userId;
+
+    await this.petService.findOne(id, userId);
+    const photoUrls = await this.uploadService.uploadImages(
+      files,
+      `pets/${id}`,
+    );
+
+    return { photoUrls };
   }
 
   @Delete(':id')

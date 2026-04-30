@@ -36,12 +36,12 @@ import {
 } from './dto';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
-import { CurrentUser } from '../decorators/session.decorator';
-import { ITokenUser } from '../auth/interfaces/token-user.interface';
 import { Session } from '@thallesp/nestjs-better-auth';
 import { PetService } from '../pet/pet.service';
 import { CreatePetDto, UpdatePetDto, PetResponseDto } from '../pet/dto';
 import { SanitizeUserInterceptor } from '../shared/interceptors/sanitize-user.interceptor';
+
+const CROSS_USER_UPDATE_ROLES = new Set(['admin', 'manager']);
 
 /**
  * User Controller
@@ -213,12 +213,10 @@ export class UserController {
    * Update a user
    */
   @Put(':id')
-  @UseGuards(RolesGuard)
-  @Roles('admin', 'manager')
   @ApiOperation({
     summary: 'Update a user',
     description:
-      'Updates an existing user with the provided data. Password will be hashed if provided. Admin or Manager only.',
+      'Updates an existing user with the provided data. Users can update themselves; admins and managers can update other users.',
   })
   @ApiParam({
     name: 'id',
@@ -239,11 +237,40 @@ export class UserController {
     status: HttpStatus.BAD_REQUEST,
     description: 'Invalid input data',
   })
+  @ApiResponse({
+    status: HttpStatus.FORBIDDEN,
+    description: 'User cannot update another user without admin or manager role',
+  })
   async update(
     @Param('id', ParseIntPipe) id: number,
     @Body() updateUserDto: UpdateUserDto,
+    @Session() session: any,
   ) {
+    const canManageUsers = this.hasCrossUserUpdateRole(session);
+
+    if (session?.userId !== id && !canManageUsers) {
+      throw new ForbiddenException(
+        'You do not have permission to update this user',
+      );
+    }
+
+    if (!canManageUsers && updateUserDto.emailVerified !== undefined) {
+      throw new ForbiddenException(
+        'You do not have permission to update email verification status',
+      );
+    }
+
     return this.userService.update({ id }, updateUserDto as any);
+  }
+
+  private hasCrossUserUpdateRole(
+    session: { userId?: number; roles?: Array<{ slug?: string }> },
+  ): boolean {
+    return Boolean(
+      session?.roles?.some((role) =>
+        role.slug ? CROSS_USER_UPDATE_ROLES.has(role.slug) : false,
+      ),
+    );
   }
 
   /**

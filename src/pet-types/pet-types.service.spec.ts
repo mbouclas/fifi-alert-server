@@ -3,6 +3,7 @@ import { PetTypesService } from './pet-types.service';
 import { PrismaService } from '../services/prisma.service';
 import { ConflictException, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma-lib/client';
+import { PetTypeOrderBy, SortDirection } from './dto';
 
 describe('PetTypesService', () => {
   let service: PetTypesService;
@@ -41,13 +42,20 @@ describe('PetTypesService', () => {
 
   describe('create', () => {
     it('should create a pet type', async () => {
-      const dto = { name: 'Dog', slug: 'dog' };
-      const created = { id: 1, ...dto, created_at: new Date(), updated_at: new Date() };
+      const dto = { name: 'Dog', slug: 'dog', order: 10 };
+      const created = {
+        id: 1,
+        ...dto,
+        created_at: new Date(),
+        updated_at: new Date(),
+      };
 
       mockPrismaService.petType.create.mockResolvedValue(created);
 
       await expect(service.create(dto)).resolves.toEqual(created);
-      expect(mockPrismaService.petType.create).toHaveBeenCalledWith({ data: dto });
+      expect(mockPrismaService.petType.create).toHaveBeenCalledWith({
+        data: dto,
+      });
     });
 
     it('should throw ConflictException on duplicate slug', async () => {
@@ -59,21 +67,34 @@ describe('PetTypesService', () => {
         }),
       );
 
-      await expect(service.create(dto)).rejects.toThrow(ConflictException);
+      await expect(service.create(dto)).rejects.toThrow(
+        ConflictException,
+      );
     });
   });
 
   describe('findAll', () => {
-    it('should return pet types ordered by name', async () => {
+    it('should return pet types ordered by manual order by default', async () => {
       const petTypes = [
-        { id: 1, name: 'Cat', slug: 'cat' },
-        { id: 2, name: 'Dog', slug: 'dog' },
+        { id: 1, name: 'Dog', slug: 'dog', order: 10 },
+        { id: 2, name: 'Cat', slug: 'cat', order: 20 },
       ];
       mockPrismaService.petType.findMany.mockResolvedValue(petTypes);
 
       await expect(service.findAll()).resolves.toEqual(petTypes);
       expect(mockPrismaService.petType.findMany).toHaveBeenCalledWith({
-        orderBy: { name: 'asc' },
+        orderBy: { order: 'asc' },
+      });
+    });
+
+    it('should apply custom ordering', async () => {
+      mockPrismaService.petType.findMany.mockResolvedValue([]);
+
+      await expect(
+        service.findAll(PetTypeOrderBy.NAME, SortDirection.DESC),
+      ).resolves.toEqual([]);
+      expect(mockPrismaService.petType.findMany).toHaveBeenCalledWith({
+        orderBy: { name: 'desc' },
       });
     });
   });
@@ -89,7 +110,9 @@ describe('PetTypesService', () => {
     it('should throw NotFoundException when missing', async () => {
       mockPrismaService.petType.findUnique.mockResolvedValue(null);
 
-      await expect(service.findOne(999)).rejects.toThrow(NotFoundException);
+      await expect(service.findOne(999)).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 
@@ -115,7 +138,9 @@ describe('PetTypesService', () => {
       const updated = { id: 1, name: 'Dog', slug: 'dog' };
       mockPrismaService.petType.update.mockResolvedValue(updated);
 
-      await expect(service.update(1, { name: 'Dog' })).resolves.toEqual(updated);
+      await expect(service.update(1, { name: 'Dog' })).resolves.toEqual(
+        updated,
+      );
     });
 
     it('should throw NotFoundException when missing', async () => {
@@ -126,9 +151,9 @@ describe('PetTypesService', () => {
         }),
       );
 
-      await expect(service.update(999, { name: 'Missing' })).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(
+        service.update(999, { name: 'Missing' }),
+      ).rejects.toThrow(NotFoundException);
     });
   });
 
@@ -147,7 +172,9 @@ describe('PetTypesService', () => {
         }),
       );
 
-      await expect(service.remove(999)).rejects.toThrow(NotFoundException);
+      await expect(service.remove(999)).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 });

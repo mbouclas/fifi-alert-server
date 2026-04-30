@@ -1,6 +1,6 @@
 import { Injectable, BadRequestException, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { LocalStorageStrategy } from './local-storage.strategy';
+import { CloudinaryService } from './cloudinary.service';
 
 /**
  * Upload service for handling file uploads
@@ -9,7 +9,6 @@ import { LocalStorageStrategy } from './local-storage.strategy';
 @Injectable()
 export class UploadService {
   private readonly logger = new Logger(UploadService.name);
-  private readonly storageStrategy: LocalStorageStrategy;
 
   // File upload limits
   private readonly maxFileSize: number;
@@ -17,10 +16,8 @@ export class UploadService {
 
   constructor(
     private readonly configService: ConfigService,
-    localStorageStrategy: LocalStorageStrategy,
+    private readonly cloudinaryService: CloudinaryService,
   ) {
-    this.storageStrategy = localStorageStrategy;
-
     // Max file size: 10MB (configurable via env)
     this.maxFileSize = this.configService.get(
       'MAX_FILE_SIZE',
@@ -40,8 +37,8 @@ export class UploadService {
   /**
    * Upload a single image file
    * @param file - Express.Multer.File object
-   * @param folder - Target folder ('alerts' or 'sightings')
-   * @returns Public URL of uploaded file
+   * @param folder - Target Cloudinary subfolder ('alerts', 'sightings', or 'pets/{id}')
+   * @returns Cloudinary secure URL of uploaded file
    */
   async uploadImage(
     file: Express.Multer.File,
@@ -67,25 +64,21 @@ export class UploadService {
       );
     }
 
-    // Upload file using storage strategy
-    const relativePath = await this.storageStrategy.upload(
+    const secureUrl = await this.cloudinaryService.uploadImage(
       file.buffer,
       folder,
       file.originalname,
     );
 
-    // Return public URL
-    const publicUrl = this.storageStrategy.getPublicUrl(relativePath);
-
-    this.logger.log(`Image uploaded successfully: ${publicUrl}`);
-    return publicUrl;
+    this.logger.log(`Image uploaded successfully: ${secureUrl}`);
+    return secureUrl;
   }
 
   /**
    * Upload multiple image files
    * @param files - Array of Express.Multer.File objects
-   * @param folder - Target folder ('alerts' or 'sightings')
-   * @returns Array of public URLs
+   * @param folder - Target Cloudinary subfolder ('alerts', 'sightings', or 'pets/{id}')
+   * @returns Array of Cloudinary secure URLs
    */
   async uploadImages(
     files: Express.Multer.File[],
@@ -106,20 +99,12 @@ export class UploadService {
   }
 
   /**
-   * Delete a file from storage
-   * @param url - Full public URL of file
+   * Delete a file from Cloudinary
+   * @param url - Full Cloudinary secure URL of file
    */
   async deleteFile(url: string): Promise<void> {
     try {
-      // Extract relative path from URL
-      // e.g., "http://localhost:3000/uploads/alerts/123-dog.jpg" -> "alerts/123-dog.jpg"
-      const urlParts = url.split('/uploads/');
-      if (urlParts.length !== 2) {
-        throw new Error('Invalid file URL format');
-      }
-
-      const relativePath = urlParts[1];
-      await this.storageStrategy.delete(relativePath);
+      await this.cloudinaryService.deleteImageByUrl(url);
 
       this.logger.log(`File deleted: ${url}`);
     } catch (error) {

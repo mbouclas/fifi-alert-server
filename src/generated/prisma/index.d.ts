@@ -13503,16 +13503,19 @@ export namespace Prisma {
 
   export type PetTypeAvgAggregateOutputType = {
     id: number | null
+    order: number | null
   }
 
   export type PetTypeSumAggregateOutputType = {
     id: number | null
+    order: number | null
   }
 
   export type PetTypeMinAggregateOutputType = {
     id: number | null
     name: string | null
     slug: string | null
+    order: number | null
     created_at: Date | null
     updated_at: Date | null
   }
@@ -13521,6 +13524,7 @@ export namespace Prisma {
     id: number | null
     name: string | null
     slug: string | null
+    order: number | null
     created_at: Date | null
     updated_at: Date | null
   }
@@ -13529,6 +13533,7 @@ export namespace Prisma {
     id: number
     name: number
     slug: number
+    order: number
     meta: number
     settings: number
     created_at: number
@@ -13539,16 +13544,19 @@ export namespace Prisma {
 
   export type PetTypeAvgAggregateInputType = {
     id?: true
+    order?: true
   }
 
   export type PetTypeSumAggregateInputType = {
     id?: true
+    order?: true
   }
 
   export type PetTypeMinAggregateInputType = {
     id?: true
     name?: true
     slug?: true
+    order?: true
     created_at?: true
     updated_at?: true
   }
@@ -13557,6 +13565,7 @@ export namespace Prisma {
     id?: true
     name?: true
     slug?: true
+    order?: true
     created_at?: true
     updated_at?: true
   }
@@ -13565,6 +13574,7 @@ export namespace Prisma {
     id?: true
     name?: true
     slug?: true
+    order?: true
     meta?: true
     settings?: true
     created_at?: true
@@ -13662,6 +13672,7 @@ export namespace Prisma {
     id: number
     name: string
     slug: string
+    order: number
     meta: JsonValue | null
     settings: JsonValue | null
     created_at: Date
@@ -13691,6 +13702,7 @@ export namespace Prisma {
     id?: boolean
     name?: boolean
     slug?: boolean
+    order?: boolean
     meta?: boolean
     settings?: boolean
     created_at?: boolean
@@ -13703,6 +13715,7 @@ export namespace Prisma {
     id?: boolean
     name?: boolean
     slug?: boolean
+    order?: boolean
     meta?: boolean
     settings?: boolean
     created_at?: boolean
@@ -13713,6 +13726,7 @@ export namespace Prisma {
     id?: boolean
     name?: boolean
     slug?: boolean
+    order?: boolean
     meta?: boolean
     settings?: boolean
     created_at?: boolean
@@ -13723,13 +13737,14 @@ export namespace Prisma {
     id?: boolean
     name?: boolean
     slug?: boolean
+    order?: boolean
     meta?: boolean
     settings?: boolean
     created_at?: boolean
     updated_at?: boolean
   }
 
-  export type PetTypeOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "name" | "slug" | "meta" | "settings" | "created_at" | "updated_at", ExtArgs["result"]["petType"]>
+  export type PetTypeOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "name" | "slug" | "order" | "meta" | "settings" | "created_at" | "updated_at", ExtArgs["result"]["petType"]>
   export type PetTypeInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     pets?: boolean | PetType$petsArgs<ExtArgs>
     _count?: boolean | PetTypeCountOutputTypeDefaultArgs<ExtArgs>
@@ -13746,6 +13761,7 @@ export namespace Prisma {
       id: number
       name: string
       slug: string
+      order: number
       meta: Prisma.JsonValue | null
       settings: Prisma.JsonValue | null
       created_at: Date
@@ -14177,6 +14193,7 @@ export namespace Prisma {
     readonly id: FieldRef<"PetType", 'Int'>
     readonly name: FieldRef<"PetType", 'String'>
     readonly slug: FieldRef<"PetType", 'String'>
+    readonly order: FieldRef<"PetType", 'Int'>
     readonly meta: FieldRef<"PetType", 'Json'>
     readonly settings: FieldRef<"PetType", 'Json'>
     readonly created_at: FieldRef<"PetType", 'DateTime'>
@@ -23144,6 +23161,7 @@ export namespace Prisma {
     id: 'id',
     name: 'name',
     slug: 'slug',
+    order: 'order',
     meta: 'meta',
     settings: 'settings',
     created_at: 'created_at',
@@ -24405,6 +24423,7 @@ export namespace Prisma {
     id?: IntFilter<"PetType"> | number
     name?: StringFilter<"PetType"> | string
     slug?: StringFilter<"PetType"> | string
+    order?: IntFilter<"PetType"> | number
     meta?: JsonNullableFilter<"PetType">
     settings?: JsonNullableFilter<"PetType">
     created_at?: DateTimeFilter<"PetType"> | Date | string
@@ -24416,6 +24435,7 @@ export namespace Prisma {
     id?: SortOrder
     name?: SortOrder
     slug?: SortOrder
+    order?: SortOrder
     meta?: SortOrderInput | SortOrder
     settings?: SortOrderInput | SortOrder
     created_at?: SortOrder
@@ -24430,6 +24450,7 @@ export namespace Prisma {
     AND?: PetTypeWhereInput | PetTypeWhereInput[]
     OR?: PetTypeWhereInput[]
     NOT?: PetTypeWhereInput | PetTypeWhereInput[]
+    order?: IntFilter<"PetType"> | number
     meta?: JsonNullableFilter<"PetType">
     settings?: JsonNullableFilter<"PetType">
     created_at?: DateTimeFilter<"PetType"> | Date | string
@@ -24441,6 +24462,7 @@ export namespace Prisma {
     id?: SortOrder
     name?: SortOrder
     slug?: SortOrder
+    order?: SortOrder
     meta?: SortOrderInput | SortOrder
     settings?: SortOrderInput | SortOrder
     created_at?: SortOrder
@@ -24459,6 +24481,7 @@ export namespace Prisma {
     id?: IntWithAggregatesFilter<"PetType"> | number
     name?: StringWithAggregatesFilter<"PetType"> | string
     slug?: StringWithAggregatesFilter<"PetType"> | string
+    order?: IntWithAggregatesFilter<"PetType"> | number
     meta?: JsonNullableWithAggregatesFilter<"PetType">
     settings?: JsonNullableWithAggregatesFilter<"PetType">
     created_at?: DateTimeWithAggregatesFilter<"PetType"> | Date | string
@@ -26238,6 +26261,7 @@ export namespace Prisma {
   export type PetTypeCreateInput = {
     name: string
     slug: string
+    order?: number
     meta?: NullableJsonNullValueInput | InputJsonValue
     settings?: NullableJsonNullValueInput | InputJsonValue
     created_at?: Date | string
@@ -26249,6 +26273,7 @@ export namespace Prisma {
     id?: number
     name: string
     slug: string
+    order?: number
     meta?: NullableJsonNullValueInput | InputJsonValue
     settings?: NullableJsonNullValueInput | InputJsonValue
     created_at?: Date | string
@@ -26259,6 +26284,7 @@ export namespace Prisma {
   export type PetTypeUpdateInput = {
     name?: StringFieldUpdateOperationsInput | string
     slug?: StringFieldUpdateOperationsInput | string
+    order?: IntFieldUpdateOperationsInput | number
     meta?: NullableJsonNullValueInput | InputJsonValue
     settings?: NullableJsonNullValueInput | InputJsonValue
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -26270,6 +26296,7 @@ export namespace Prisma {
     id?: IntFieldUpdateOperationsInput | number
     name?: StringFieldUpdateOperationsInput | string
     slug?: StringFieldUpdateOperationsInput | string
+    order?: IntFieldUpdateOperationsInput | number
     meta?: NullableJsonNullValueInput | InputJsonValue
     settings?: NullableJsonNullValueInput | InputJsonValue
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -26281,6 +26308,7 @@ export namespace Prisma {
     id?: number
     name: string
     slug: string
+    order?: number
     meta?: NullableJsonNullValueInput | InputJsonValue
     settings?: NullableJsonNullValueInput | InputJsonValue
     created_at?: Date | string
@@ -26290,6 +26318,7 @@ export namespace Prisma {
   export type PetTypeUpdateManyMutationInput = {
     name?: StringFieldUpdateOperationsInput | string
     slug?: StringFieldUpdateOperationsInput | string
+    order?: IntFieldUpdateOperationsInput | number
     meta?: NullableJsonNullValueInput | InputJsonValue
     settings?: NullableJsonNullValueInput | InputJsonValue
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -26300,6 +26329,7 @@ export namespace Prisma {
     id?: IntFieldUpdateOperationsInput | number
     name?: StringFieldUpdateOperationsInput | string
     slug?: StringFieldUpdateOperationsInput | string
+    order?: IntFieldUpdateOperationsInput | number
     meta?: NullableJsonNullValueInput | InputJsonValue
     settings?: NullableJsonNullValueInput | InputJsonValue
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -27914,6 +27944,7 @@ export namespace Prisma {
     id?: SortOrder
     name?: SortOrder
     slug?: SortOrder
+    order?: SortOrder
     meta?: SortOrder
     settings?: SortOrder
     created_at?: SortOrder
@@ -27922,12 +27953,14 @@ export namespace Prisma {
 
   export type PetTypeAvgOrderByAggregateInput = {
     id?: SortOrder
+    order?: SortOrder
   }
 
   export type PetTypeMaxOrderByAggregateInput = {
     id?: SortOrder
     name?: SortOrder
     slug?: SortOrder
+    order?: SortOrder
     created_at?: SortOrder
     updated_at?: SortOrder
   }
@@ -27936,12 +27969,14 @@ export namespace Prisma {
     id?: SortOrder
     name?: SortOrder
     slug?: SortOrder
+    order?: SortOrder
     created_at?: SortOrder
     updated_at?: SortOrder
   }
 
   export type PetTypeSumOrderByAggregateInput = {
     id?: SortOrder
+    order?: SortOrder
   }
 
   export type EnumGenderNullableFilter<$PrismaModel = never> = {
@@ -31703,6 +31738,7 @@ export namespace Prisma {
   export type PetTypeCreateWithoutPetsInput = {
     name: string
     slug: string
+    order?: number
     meta?: NullableJsonNullValueInput | InputJsonValue
     settings?: NullableJsonNullValueInput | InputJsonValue
     created_at?: Date | string
@@ -31713,6 +31749,7 @@ export namespace Prisma {
     id?: number
     name: string
     slug: string
+    order?: number
     meta?: NullableJsonNullValueInput | InputJsonValue
     settings?: NullableJsonNullValueInput | InputJsonValue
     created_at?: Date | string
@@ -31800,6 +31837,7 @@ export namespace Prisma {
   export type PetTypeUpdateWithoutPetsInput = {
     name?: StringFieldUpdateOperationsInput | string
     slug?: StringFieldUpdateOperationsInput | string
+    order?: IntFieldUpdateOperationsInput | number
     meta?: NullableJsonNullValueInput | InputJsonValue
     settings?: NullableJsonNullValueInput | InputJsonValue
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -31810,6 +31848,7 @@ export namespace Prisma {
     id?: IntFieldUpdateOperationsInput | number
     name?: StringFieldUpdateOperationsInput | string
     slug?: StringFieldUpdateOperationsInput | string
+    order?: IntFieldUpdateOperationsInput | number
     meta?: NullableJsonNullValueInput | InputJsonValue
     settings?: NullableJsonNullValueInput | InputJsonValue
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string

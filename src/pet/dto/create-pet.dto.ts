@@ -43,11 +43,12 @@ export class CreatePetDto {
   gender?: Gender;
 
   @ApiPropertyOptional({
-    description: 'Array of photo URLs',
+    description:
+      'Array of backend-hosted public photo URLs returned by POST /pets/{id}/photos',
     type: [String],
     example: [
-      'https://example.com/photo1.jpg',
-      'https://example.com/photo2.jpg',
+      'https://res.cloudinary.com/demo/image/upload/v1714074520/fifi-alert/pets/123/buddy.jpg',
+      'https://res.cloudinary.com/demo/image/upload/v1714074521/fifi-alert/pets/123/buddy-side.jpg',
     ],
   })
   @IsOptional()

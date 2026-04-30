@@ -127,6 +127,53 @@ describe('UserService', () => {
     expect(service).toBeDefined();
   });
 
+  describe('userHasMinLevel', () => {
+    it('should allow flattened JWT roles with sufficient level', () => {
+      const user = {
+        ...mockUser,
+        roles: [{ slug: 'admin', level: 50 }],
+      };
+
+      expect(UserService.userHasMinLevel(user as any, 50)).toBe(true);
+    });
+
+    it('should allow higher-privilege flattened JWT roles', () => {
+      const user = {
+        ...mockUser,
+        roles: [{ slug: 'super-admin', level: 10 }],
+      };
+
+      expect(UserService.userHasMinLevel(user as any, 50)).toBe(true);
+    });
+
+    it('should reject lower-privilege flattened JWT roles', () => {
+      const user = {
+        ...mockUser,
+        roles: [{ slug: 'user', level: 100 }],
+      };
+
+      expect(UserService.userHasMinLevel(user as any, 50)).toBe(false);
+    });
+
+    it('should allow nested Prisma role assignments with sufficient level', () => {
+      const user = {
+        ...mockUser,
+        roles: [{ role: { slug: 'admin', level: 50 } }],
+      };
+
+      expect(UserService.userHasMinLevel(user as any, 50)).toBe(true);
+    });
+
+    it('should fail closed for malformed role assignments', () => {
+      const user = {
+        ...mockUser,
+        roles: [{ slug: 'admin' }],
+      };
+
+      expect(UserService.userHasMinLevel(user as any, 50)).toBe(false);
+    });
+  });
+
   describe('store', () => {
     const validCreateUserDto: CreateUserDto = {
       firstName: 'John',
@@ -197,7 +244,7 @@ describe('UserService', () => {
       });
 
       it('should throw BadRequestException when password is too short', async () => {
-        const dto = { ...validCreateUserDto, password: 'short' };
+        const dto = { ...validCreateUserDto, password: 'abc' };
 
         await expect(service.store(dto)).rejects.toThrow(BadRequestException);
         await expect(service.store(dto)).rejects.toThrow(

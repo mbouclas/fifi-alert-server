@@ -23,6 +23,12 @@ export class PetTypeResponseDto {
   slug: string;
 
   @ApiProperty({
+    description: 'Manual display order for the pet type',
+    example: 10,
+  })
+  order: number;
+
+  @ApiProperty({
     description: 'Created timestamp',
     example: '2024-01-01T00:00:00.000Z',
   })

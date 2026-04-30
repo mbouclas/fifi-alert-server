@@ -19,6 +19,12 @@ export class PetTypeResponseDto {
     example: 'dog',
   })
   slug: string;
+
+  @ApiProperty({
+    description: 'Pet type display order',
+    example: 10,
+  })
+  order: number;
 }
 
 export class PetResponseDto {
@@ -66,9 +72,11 @@ export class PetResponseDto {
   gender?: Gender;
 
   @ApiPropertyOptional({
-    description: 'Array of photo URLs',
+    description: 'Backend-hosted public photo URLs for the pet',
     type: [String],
-    example: ['https://example.com/photo1.jpg'],
+    example: [
+      'https://res.cloudinary.com/demo/image/upload/v1714074520/fifi-alert/pets/123/buddy.jpg',
+    ],
   })
   photos?: string[];
 

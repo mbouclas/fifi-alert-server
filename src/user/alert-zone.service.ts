@@ -83,19 +83,23 @@ export class AlertZoneService {
             );
         }
 
-        // Insert with PostGIS geometry
+        // Insert with scalar coordinates and PostGIS geometry
         const result = await this.prisma.$queryRaw<{ id: number }[]>`
-      INSERT INTO alert_zone (user_id, name, location_point, radius_meters, priority, is_active)
-      VALUES (
-        ${userId},
-        ${dto.name},
-        ST_SetSRID(ST_MakePoint(${dto.longitude}, ${dto.latitude}), 4326),
-        ${dto.radius_meters},
-        ${dto.priority ?? 1},
-        ${dto.is_active ?? true}
-      )
-      RETURNING id
-    `;
+            INSERT INTO alert_zone (user_id, name, lat, lon, location_point, radius_meters, priority, is_active, created_at, updated_at)
+            VALUES (
+                ${userId},
+                ${dto.name},
+                ${dto.latitude},
+                ${dto.longitude},
+                ST_SetSRID(ST_MakePoint(${dto.longitude}, ${dto.latitude}), 4326),
+                ${dto.radius_meters},
+                ${dto.priority ?? 1},
+                ${dto.is_active ?? true},
+                NOW(),
+                NOW()
+            )
+            RETURNING id
+        `;
 
         const zoneId = result[0].id;
 
@@ -124,7 +128,9 @@ export class AlertZoneService {
 
         this.eventEmitter.emit(AUDIT_EVENT_NAMES.ENTITY.CREATED, auditPayload);
 
-        this.logger.log(`User ${userId} created alert zone ${zoneId}: ${dto.name}`);
+        this.logger.log(
+            `User ${userId} created alert zone ${zoneId}: ${dto.name}`,
+        );
 
         // Invalidate cache after zone creation
         await this.cacheService.invalidateCache();
@@ -181,13 +187,18 @@ export class AlertZoneService {
      * @throws NotFoundException if zone doesn't exist
      * @throws ForbiddenException if user is not the owner
      */
-    async findOne(zoneId: number, userId: number): Promise<AlertZoneResponseDto> {
+    async findOne(
+        zoneId: number,
+        userId: number,
+    ): Promise<AlertZoneResponseDto> {
         const zone = await this.prisma.alertZone.findUnique({
             where: { id: zoneId },
         });
 
         if (!zone) {
-            throw new NotFoundException(`Alert zone with ID ${zoneId} not found`);
+            throw new NotFoundException(
+                `Alert zone with ID ${zoneId} not found`,
+            );
         }
 
         if (zone.user_id !== userId) {
@@ -227,7 +238,9 @@ export class AlertZoneService {
     `;
 
         if (!zoneWithCoords[0]) {
-            throw new NotFoundException(`Alert zone with ID ${zoneId} not found`);
+            throw new NotFoundException(
+                `Alert zone with ID ${zoneId} not found`,
+            );
         }
 
         return this.mapToResponseDto(zoneWithCoords[0]);
@@ -255,7 +268,9 @@ export class AlertZoneService {
         });
 
         if (!existingZone) {
-            throw new NotFoundException(`Alert zone with ID ${zoneId} not found`);
+            throw new NotFoundException(
+                `Alert zone with ID ${zoneId} not found`,
+            );
         }
 
         if (existingZone.user_id !== userId) {
@@ -291,6 +306,8 @@ export class AlertZoneService {
         UPDATE alert_zone
         SET 
           location_point = ST_SetSRID(ST_MakePoint(${lon}, ${lat}), 4326),
+                    lat = ${lat},
+                    lon = ${lon},
           name = ${dto.name ?? existingZone.name},
           radius_meters = ${dto.radius_meters ?? existingZone.radius_meters},
           priority = ${dto.priority ?? existingZone.priority},
@@ -366,7 +383,9 @@ export class AlertZoneService {
         });
 
         if (!zone) {
-            throw new NotFoundException(`Alert zone with ID ${zoneId} not found`);
+            throw new NotFoundException(
+                `Alert zone with ID ${zoneId} not found`,
+            );
         }
 
         if (zone.user_id !== userId) {

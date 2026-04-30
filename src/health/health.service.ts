@@ -11,7 +11,7 @@ import { ConfigService } from '@nestjs/config';
 import { EmailService } from '../shared/email/email.service';
 import { SmtpService } from '../shared/smtp/smtp.service';
 import { MailgunService } from '../shared/mailgun/mailgun.service';
-import type { IEmailProvider } from '../shared/email/email-provider.interface';
+import type { IEmailProvider } from '../shared/email/interfaces/email-provider.interface';
 import * as fs from 'fs';
 import * as path from 'path';
 import Redis from 'ioredis';
@@ -57,7 +57,7 @@ export class HealthService {
     private readonly prisma: PrismaService,
     private readonly configService: ConfigService,
     @Optional()
-    @Inject('EMAIL_PROVIDER')
+    @Inject('IEmailProvider')
     private readonly emailProvider?: IEmailProvider,
     @Optional() private readonly smtpService?: SmtpService,
     @Optional() private readonly mailgunService?: MailgunService,
@@ -104,9 +104,9 @@ export class HealthService {
         databaseCheck.status === 'fulfilled'
           ? databaseCheck.value
           : {
-              status: 'unhealthy' as const,
-              error: String(databaseCheck.reason),
-            },
+            status: 'unhealthy' as const,
+            error: String(databaseCheck.reason),
+          },
       redis:
         redisCheck.status === 'fulfilled'
           ? redisCheck.value
@@ -312,15 +312,20 @@ export class HealthService {
       }
 
       // Provider-specific health checks
-      if (mailSystem.toLowerCase() === 'smtp' && this.smtpService) {
-        // SMTP: Verify connection
+      // The emailProvider is actually an instance of SmtpService or MailgunService
+      const normalizedSystem = mailSystem.toLowerCase();
+
+      if (normalizedSystem === 'smtp') {
+        // SMTP: Verify connection by accessing the transporter
         try {
-          const transporter = (this.smtpService as any).transporter;
-          if (!transporter) {
+          // Cast to SmtpService to access the transporter
+          const smtpInstance = this.emailProvider as any;
+
+          if (!smtpInstance.transporter) {
             throw new Error('SMTP transporter not initialized');
           }
 
-          await transporter.verify();
+          await smtpInstance.transporter.verify();
 
           const latency_ms = Date.now() - startTime;
 
@@ -343,10 +348,7 @@ export class HealthService {
             error: error.message || 'SMTP connection failed',
           };
         }
-      } else if (
-        mailSystem.toLowerCase() === 'mailgun' &&
-        this.mailgunService
-      ) {
+      } else if (normalizedSystem === 'mailgun') {
         // Mailgun: Check configuration
         const apiKey = this.configService.get<string>('MAILGUN_API_KEY');
         const domain = this.configService.get<string>('MAILGUN_DOMAIN');

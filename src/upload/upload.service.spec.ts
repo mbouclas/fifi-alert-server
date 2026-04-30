@@ -2,27 +2,24 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
 import { BadRequestException } from '@nestjs/common';
 import { UploadService } from './upload.service';
-import { LocalStorageStrategy } from './local-storage.strategy';
+import { CloudinaryService } from './cloudinary.service';
 
 describe('UploadService', () => {
   let service: UploadService;
-  let storageStrategy: LocalStorageStrategy;
+  let cloudinaryService: CloudinaryService;
 
   const mockConfigService = {
     get: jest.fn((key: string, defaultValue?: any) => {
       const config: Record<string, any> = {
         MAX_FILE_SIZE: 10 * 1024 * 1024, // 10MB
-        UPLOAD_DIR: './uploads',
-        API_BASE_URL: 'http://localhost:3000',
       };
       return config[key] ?? defaultValue;
     }),
   };
 
-  const mockStorageStrategy = {
-    upload: jest.fn(),
-    delete: jest.fn(),
-    getPublicUrl: jest.fn(),
+  const mockCloudinaryService = {
+    uploadImage: jest.fn(),
+    deleteImageByUrl: jest.fn(),
   };
 
   beforeEach(async () => {
@@ -36,14 +33,14 @@ describe('UploadService', () => {
           useValue: mockConfigService,
         },
         {
-          provide: LocalStorageStrategy,
-          useValue: mockStorageStrategy,
+          provide: CloudinaryService,
+          useValue: mockCloudinaryService,
         },
       ],
     }).compile();
 
     service = module.get<UploadService>(UploadService);
-    storageStrategy = module.get<LocalStorageStrategy>(LocalStorageStrategy);
+    cloudinaryService = module.get<CloudinaryService>(CloudinaryService);
   });
 
   afterEach(() => {
@@ -70,36 +67,32 @@ describe('UploadService', () => {
 
     it('should upload a valid JPEG image', async () => {
       const file = createMockFile(5 * 1024 * 1024, 'image/jpeg', 'dog.jpg');
-      const expectedUrl = 'http://localhost:3000/uploads/alerts/123456-dog.jpg';
+      const expectedUrl =
+        'https://res.cloudinary.com/demo/image/upload/v1714074520/fifi-alert/alerts/123456-dog.jpg';
 
-      mockStorageStrategy.upload.mockResolvedValue('alerts/123456-dog.jpg');
-      mockStorageStrategy.getPublicUrl.mockReturnValue(expectedUrl);
+      mockCloudinaryService.uploadImage.mockResolvedValue(expectedUrl);
 
       const result = await service.uploadImage(file, 'alerts');
 
       expect(result).toBe(expectedUrl);
-      expect(mockStorageStrategy.upload).toHaveBeenCalledWith(
+      expect(mockCloudinaryService.uploadImage).toHaveBeenCalledWith(
         file.buffer,
         'alerts',
         'dog.jpg',
-      );
-      expect(mockStorageStrategy.getPublicUrl).toHaveBeenCalledWith(
-        'alerts/123456-dog.jpg',
       );
     });
 
     it('should upload a valid PNG image', async () => {
       const file = createMockFile(3 * 1024 * 1024, 'image/png', 'cat.png');
       const expectedUrl =
-        'http://localhost:3000/uploads/sightings/123456-cat.png';
+        'https://res.cloudinary.com/demo/image/upload/v1714074520/fifi-alert/sightings/123456-cat.png';
 
-      mockStorageStrategy.upload.mockResolvedValue('sightings/123456-cat.png');
-      mockStorageStrategy.getPublicUrl.mockReturnValue(expectedUrl);
+      mockCloudinaryService.uploadImage.mockResolvedValue(expectedUrl);
 
       const result = await service.uploadImage(file, 'sightings');
 
       expect(result).toBe(expectedUrl);
-      expect(mockStorageStrategy.upload).toHaveBeenCalledWith(
+      expect(mockCloudinaryService.uploadImage).toHaveBeenCalledWith(
         file.buffer,
         'sightings',
         'cat.png',
@@ -108,28 +101,26 @@ describe('UploadService', () => {
 
     it('should upload a valid WEBP image', async () => {
       const file = createMockFile(2 * 1024 * 1024, 'image/webp', 'pet.webp');
-      mockStorageStrategy.upload.mockResolvedValue('alerts/123456-pet.webp');
-      mockStorageStrategy.getPublicUrl.mockReturnValue(
-        'http://localhost:3000/uploads/alerts/123456-pet.webp',
+      mockCloudinaryService.uploadImage.mockResolvedValue(
+        'https://res.cloudinary.com/demo/image/upload/v1714074520/fifi-alert/alerts/123456-pet.webp',
       );
 
       const result = await service.uploadImage(file, 'alerts');
 
       expect(result).toBeDefined();
-      expect(mockStorageStrategy.upload).toHaveBeenCalled();
+      expect(mockCloudinaryService.uploadImage).toHaveBeenCalled();
     });
 
     it('should upload a valid HEIC image', async () => {
       const file = createMockFile(4 * 1024 * 1024, 'image/heic', 'iphone.heic');
-      mockStorageStrategy.upload.mockResolvedValue('alerts/123456-iphone.heic');
-      mockStorageStrategy.getPublicUrl.mockReturnValue(
-        'http://localhost:3000/uploads/alerts/123456-iphone.heic',
+      mockCloudinaryService.uploadImage.mockResolvedValue(
+        'https://res.cloudinary.com/demo/image/upload/v1714074520/fifi-alert/alerts/123456-iphone.heic',
       );
 
       const result = await service.uploadImage(file, 'alerts');
 
       expect(result).toBeDefined();
-      expect(mockStorageStrategy.upload).toHaveBeenCalled();
+      expect(mockCloudinaryService.uploadImage).toHaveBeenCalled();
     });
 
     it('should throw BadRequestException if no file provided', async () => {
@@ -140,7 +131,7 @@ describe('UploadService', () => {
         'No file provided',
       );
 
-      expect(mockStorageStrategy.upload).not.toHaveBeenCalled();
+      expect(mockCloudinaryService.uploadImage).not.toHaveBeenCalled();
     });
 
     it('should throw BadRequestException if file size exceeds limit', async () => {
@@ -153,7 +144,7 @@ describe('UploadService', () => {
         'File size exceeds maximum allowed size of 10MB',
       );
 
-      expect(mockStorageStrategy.upload).not.toHaveBeenCalled();
+      expect(mockCloudinaryService.uploadImage).not.toHaveBeenCalled();
     });
 
     it('should throw BadRequestException for invalid file type', async () => {
@@ -170,7 +161,7 @@ describe('UploadService', () => {
         'Invalid file type',
       );
 
-      expect(mockStorageStrategy.upload).not.toHaveBeenCalled();
+      expect(mockCloudinaryService.uploadImage).not.toHaveBeenCalled();
     });
 
     it('should throw BadRequestException for executable files', async () => {
@@ -184,7 +175,7 @@ describe('UploadService', () => {
         BadRequestException,
       );
 
-      expect(mockStorageStrategy.upload).not.toHaveBeenCalled();
+      expect(mockCloudinaryService.uploadImage).not.toHaveBeenCalled();
     });
 
     it('should reject file at exactly max size + 1 byte', async () => {
@@ -205,17 +196,14 @@ describe('UploadService', () => {
         'image/jpeg',
         'exactly-max.jpg',
       );
-      mockStorageStrategy.upload.mockResolvedValue(
-        'alerts/123456-exactly-max.jpg',
-      );
-      mockStorageStrategy.getPublicUrl.mockReturnValue(
-        'http://localhost:3000/uploads/alerts/123456-exactly-max.jpg',
+      mockCloudinaryService.uploadImage.mockResolvedValue(
+        'https://res.cloudinary.com/demo/image/upload/v1714074520/fifi-alert/alerts/123456-exactly-max.jpg',
       );
 
       const result = await service.uploadImage(file, 'alerts');
 
       expect(result).toBeDefined();
-      expect(mockStorageStrategy.upload).toHaveBeenCalled();
+      expect(mockCloudinaryService.uploadImage).toHaveBeenCalled();
     });
   });
 
@@ -237,19 +225,15 @@ describe('UploadService', () => {
 
     it('should upload multiple valid images', async () => {
       const files = createMockFiles(3);
-      mockStorageStrategy.upload
-        .mockResolvedValueOnce('alerts/123456-photo1.jpg')
-        .mockResolvedValueOnce('alerts/123457-photo2.jpg')
-        .mockResolvedValueOnce('alerts/123458-photo3.jpg');
-      mockStorageStrategy.getPublicUrl
+      mockCloudinaryService.uploadImage
         .mockReturnValueOnce(
-          'http://localhost:3000/uploads/alerts/123456-photo1.jpg',
+          'https://res.cloudinary.com/demo/image/upload/v1714074520/fifi-alert/alerts/123456-photo1.jpg',
         )
         .mockReturnValueOnce(
-          'http://localhost:3000/uploads/alerts/123457-photo2.jpg',
+          'https://res.cloudinary.com/demo/image/upload/v1714074520/fifi-alert/alerts/123457-photo2.jpg',
         )
         .mockReturnValueOnce(
-          'http://localhost:3000/uploads/alerts/123458-photo3.jpg',
+          'https://res.cloudinary.com/demo/image/upload/v1714074520/fifi-alert/alerts/123458-photo3.jpg',
         );
 
       const results = await service.uploadImages(files, 'alerts');
@@ -258,20 +242,19 @@ describe('UploadService', () => {
       expect(results[0]).toContain('photo1.jpg');
       expect(results[1]).toContain('photo2.jpg');
       expect(results[2]).toContain('photo3.jpg');
-      expect(mockStorageStrategy.upload).toHaveBeenCalledTimes(3);
+      expect(mockCloudinaryService.uploadImage).toHaveBeenCalledTimes(3);
     });
 
     it('should upload exactly 5 files (max limit)', async () => {
       const files = createMockFiles(5);
-      mockStorageStrategy.upload.mockResolvedValue('alerts/123456-photo.jpg');
-      mockStorageStrategy.getPublicUrl.mockReturnValue(
-        'http://localhost:3000/uploads/alerts/123456-photo.jpg',
+      mockCloudinaryService.uploadImage.mockResolvedValue(
+        'https://res.cloudinary.com/demo/image/upload/v1714074520/fifi-alert/alerts/123456-photo.jpg',
       );
 
       const results = await service.uploadImages(files, 'alerts');
 
       expect(results).toHaveLength(5);
-      expect(mockStorageStrategy.upload).toHaveBeenCalledTimes(5);
+      expect(mockCloudinaryService.uploadImage).toHaveBeenCalledTimes(5);
     });
 
     it('should return empty array if no files provided', async () => {
@@ -292,7 +275,7 @@ describe('UploadService', () => {
         'Maximum 5 images allowed per upload',
       );
 
-      expect(mockStorageStrategy.upload).not.toHaveBeenCalled();
+      expect(mockCloudinaryService.uploadImage).not.toHaveBeenCalled();
     });
 
     it('should reject batch if any file is invalid type', async () => {
@@ -345,13 +328,10 @@ describe('UploadService', () => {
 
     it('should upload files in parallel (Promise.all)', async () => {
       const files = createMockFiles(3);
-      const uploadSpy = jest.spyOn(mockStorageStrategy, 'upload');
+      const uploadSpy = jest.spyOn(mockCloudinaryService, 'uploadImage');
 
-      mockStorageStrategy.upload.mockImplementation(
+      mockCloudinaryService.uploadImage.mockImplementation(
         () => new Promise((resolve) => setTimeout(() => resolve('path'), 10)),
-      );
-      mockStorageStrategy.getPublicUrl.mockReturnValue(
-        'http://localhost:3000/uploads/alerts/photo.jpg',
       );
 
       await service.uploadImages(files, 'alerts');
@@ -362,53 +342,35 @@ describe('UploadService', () => {
   });
 
   describe('deleteFile', () => {
-    it('should delete file by full URL', async () => {
-      const url = 'http://localhost:3000/uploads/alerts/123456-dog.jpg';
-      mockStorageStrategy.delete.mockResolvedValue(undefined);
+    it('should delete file by Cloudinary URL', async () => {
+      const url =
+        'https://res.cloudinary.com/demo/image/upload/v1714074520/fifi-alert/alerts/123456-dog.jpg';
+      mockCloudinaryService.deleteImageByUrl.mockResolvedValue(undefined);
 
       await service.deleteFile(url);
 
-      expect(mockStorageStrategy.delete).toHaveBeenCalledWith(
-        'alerts/123456-dog.jpg',
-      );
-    });
-
-    it('should delete file by relative path', async () => {
-      const url = '/uploads/sightings/123456-cat.jpg';
-      mockStorageStrategy.delete.mockResolvedValue(undefined);
-
-      await service.deleteFile(url);
-
-      expect(mockStorageStrategy.delete).toHaveBeenCalledWith(
-        'sightings/123456-cat.jpg',
-      );
-    });
-
-    it('should handle URL with query parameters (strips them)', async () => {
-      const url = 'http://localhost:3000/uploads/alerts/photo.jpg?v=123';
-      mockStorageStrategy.delete.mockResolvedValue(undefined);
-
-      await service.deleteFile(url);
-
-      // Implementation keeps query params - this is OK since delete catches errors
-      expect(mockStorageStrategy.delete).toHaveBeenCalledWith(
-        'alerts/photo.jpg?v=123',
-      );
+      expect(mockCloudinaryService.deleteImageByUrl).toHaveBeenCalledWith(url);
     });
 
     it('should not throw error for invalid URL format (logs only)', async () => {
       const url = 'http://localhost:3000/other/path/file.jpg';
+      mockCloudinaryService.deleteImageByUrl.mockRejectedValue(
+        new Error('Invalid Cloudinary URL format'),
+      );
 
       // deleteFile catches errors and logs them instead of throwing
-      await expect(service.deleteFile(url)).resolves.not.toThrow();
+      await expect(service.deleteFile(url)).resolves.toBeUndefined();
     });
 
-    it('should not throw error when storage strategy fails (logs only)', async () => {
-      const url = 'http://localhost:3000/uploads/alerts/123456-dog.jpg';
-      mockStorageStrategy.delete.mockRejectedValue(new Error('File not found'));
+    it('should not throw error when Cloudinary delete fails (logs only)', async () => {
+      const url =
+        'https://res.cloudinary.com/demo/image/upload/v1714074520/fifi-alert/alerts/123456-dog.jpg';
+      mockCloudinaryService.deleteImageByUrl.mockRejectedValue(
+        new Error('File not found'),
+      );
 
       // deleteFile catches errors and logs them instead of throwing
-      await expect(service.deleteFile(url)).resolves.not.toThrow();
+      await expect(service.deleteFile(url)).resolves.toBeUndefined();
     });
   });
 });

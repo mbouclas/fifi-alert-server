@@ -22,7 +22,7 @@ export class PetService {
     9,
   );
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) { }
 
   /**
    * Ensure a pet type exists before creating/updating a pet.
@@ -87,7 +87,7 @@ export class PetService {
         data: {
           ...petData,
           tagId,
-          userId,
+          user: { connect: { id: userId } },
           petType: { connect: { id: petTypeId } },
         },
         include: { petType: true },

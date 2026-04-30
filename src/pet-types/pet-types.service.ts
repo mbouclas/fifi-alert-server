@@ -6,13 +6,18 @@ import {
 } from '@nestjs/common';
 import { Prisma, PetType as PetTypeModel } from '@prisma-lib/client';
 import { PrismaService } from '../services/prisma.service';
-import { CreatePetTypeDto, UpdatePetTypeDto } from './dto';
+import {
+	CreatePetTypeDto,
+	PetTypeOrderBy,
+	SortDirection,
+	UpdatePetTypeDto,
+} from './dto';
 
 @Injectable()
 export class PetTypesService {
 	private readonly logger = new Logger(PetTypesService.name);
 
-	constructor(private readonly prisma: PrismaService) {}
+	constructor(private readonly prisma: PrismaService) { }
 
 	/**
 	 * Create a new pet type.
@@ -36,9 +41,12 @@ export class PetTypesService {
 	/**
 	 * List all pet types.
 	 */
-	async findAll(): Promise<PetTypeModel[]> {
+	async findAll(
+		orderBy: PetTypeOrderBy = PetTypeOrderBy.ORDER,
+		orderDir: SortDirection = SortDirection.ASC,
+	): Promise<PetTypeModel[]> {
 		return this.prisma.petType.findMany({
-			orderBy: { name: Prisma.SortOrder.asc },
+			orderBy: { [orderBy]: orderDir },
 		});
 	}
 

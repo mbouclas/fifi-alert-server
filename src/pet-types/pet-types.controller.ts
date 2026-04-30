@@ -9,12 +9,14 @@ import {
     ParseIntPipe,
     Patch,
     Post,
+    Query,
     UseGuards,
 } from '@nestjs/common';
 import {
     ApiBearerAuth,
     ApiOperation,
     ApiParam,
+    ApiQuery,
     ApiResponse,
     ApiTags,
 } from '@nestjs/swagger';
@@ -24,14 +26,18 @@ import { MinUserLevel } from '../auth/decorators/min-user-level.decorator';
 import { PetTypesService } from './pet-types.service';
 import {
     CreatePetTypeDto,
+    ListPetTypesQueryDto,
     PetTypeResponseDto,
+    PetTypeOrderBy,
+    SortDirection,
     UpdatePetTypeDto,
 } from './dto';
 
 /**
  * REST endpoints for managing pet types.
- * 
- * Requires super admin privileges (level <= 5) for all operations.
+ *
+ * Read operations are available to authenticated users. Mutating operations
+ * require super admin privileges (level <= 5).
  */
 @Controller('pet-types')
 @ApiTags('Pet Types')
@@ -52,7 +58,10 @@ export class PetTypesController {
         description: 'Pet type created successfully',
         type: PetTypeResponseDto,
     })
-    @ApiResponse({ status: 409, description: 'Duplicate pet type name or slug' })
+    @ApiResponse({
+        status: 409,
+        description: 'Duplicate pet type name or slug',
+    })
     async create(@Body() dto: CreatePetTypeDto): Promise<PetTypeResponseDto> {
         return this.petTypesService.create(dto);
     }
@@ -67,8 +76,28 @@ export class PetTypesController {
         description: 'List of pet types',
         type: [PetTypeResponseDto],
     })
-    async findAll(): Promise<PetTypeResponseDto[]> {
-        return this.petTypesService.findAll();
+    @ApiQuery({
+        name: 'orderBy',
+        required: false,
+        enum: PetTypeOrderBy,
+        enumName: 'PetTypeOrderBy',
+        example: PetTypeOrderBy.ORDER,
+        description:
+            'Sort field. Options: id, name, slug, order, created_at, updated_at.',
+    })
+    @ApiQuery({
+        name: 'orderDir',
+        required: false,
+        enum: SortDirection,
+        enumName: 'SortDirection',
+        example: SortDirection.ASC,
+        description: 'Sort direction. Options: asc, desc.',
+    })
+    @MinUserLevel(100)
+    async findAll(
+        @Query() query: ListPetTypesQueryDto,
+    ): Promise<PetTypeResponseDto[]> {
+        return this.petTypesService.findAll(query.orderBy, query.orderDir);
     }
 
     /**
@@ -83,6 +112,7 @@ export class PetTypesController {
         type: PetTypeResponseDto,
     })
     @ApiResponse({ status: 404, description: 'Pet type not found' })
+    @MinUserLevel(100)
     async findBySlug(@Param('slug') slug: string): Promise<PetTypeResponseDto> {
         return this.petTypesService.findBySlug(slug);
     }
@@ -99,6 +129,7 @@ export class PetTypesController {
         type: PetTypeResponseDto,
     })
     @ApiResponse({ status: 404, description: 'Pet type not found' })
+    @MinUserLevel(100)
     async findOne(
         @Param('id', ParseIntPipe) id: number,
     ): Promise<PetTypeResponseDto> {
@@ -117,7 +148,10 @@ export class PetTypesController {
         type: PetTypeResponseDto,
     })
     @ApiResponse({ status: 404, description: 'Pet type not found' })
-    @ApiResponse({ status: 409, description: 'Duplicate pet type name or slug' })
+    @ApiResponse({
+        status: 409,
+        description: 'Duplicate pet type name or slug',
+    })
     async update(
         @Param('id', ParseIntPipe) id: number,
         @Body() dto: UpdatePetTypeDto,
