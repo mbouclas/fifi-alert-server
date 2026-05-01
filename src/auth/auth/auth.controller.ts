@@ -8,6 +8,7 @@ import {
   Req,
   UnauthorizedException,
   BadRequestException,
+  ForbiddenException,
   NotFoundException,
   Logger,
   UseGuards,
@@ -23,8 +24,9 @@ import {
 import { Throttle } from '@nestjs/throttler';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Session, type UserSession } from '@thallesp/nestjs-better-auth';
+import { verifyPassword } from 'better-auth/crypto';
 import type { Request } from 'express';
-import { auth } from '../../auth';
+import { auth, getEmailVerificationCallbackURL } from '../../auth';
 import { UserService } from '../../user/user.service';
 import { TokenService } from '../services/token.service';
 import { AllowAnonymous } from '../decorators/allow-anonymous.decorator';
@@ -60,7 +62,7 @@ export class AuthController {
     private readonly userService: UserService,
     private readonly tokenService: TokenService,
     private readonly eventEmitter: EventEmitter2,
-  ) { }
+  ) {}
 
   /**
    * User login with email and password
@@ -95,6 +97,33 @@ export class AuthController {
     let failureStage = 'better-auth-sign-in';
 
     try {
+      failureStage = 'pre-email-verification-check';
+      const existingUser = await this.userService.findOne(
+        { email: normalizedEmail },
+        ['accounts'],
+      );
+      const credentialAccount = ((existingUser as any)?.accounts ?? []).find(
+        (account: { providerId?: string }) =>
+          account.providerId === 'credential',
+      ) as { password?: string | null } | undefined;
+
+      if (
+        existingUser &&
+        !existingUser.emailVerified &&
+        credentialAccount?.password &&
+        (await verifyPassword({
+          hash: credentialAccount.password,
+          password: loginDto.password,
+        }))
+      ) {
+        failureStage = 'email-verification-required';
+        await this.requestVerificationEmail(normalizedEmail);
+        throw new ForbiddenException(
+          'Please verify your email address before logging in. We sent a new verification link to your email.',
+        );
+      }
+
+      failureStage = 'better-auth-sign-in';
       const { headers, response: result } = await auth.api.signInEmail({
         body: {
           email: normalizedEmail,
@@ -117,6 +146,14 @@ export class AuthController {
 
       if (!userWithRelations) {
         throw new UnauthorizedException('User not found');
+      }
+
+      if (!userWithRelations.emailVerified) {
+        failureStage = 'email-verification-required';
+        await this.requestVerificationEmail(normalizedEmail);
+        throw new ForbiddenException(
+          'Please verify your email address before logging in. We sent a new verification link to your email.',
+        );
       }
 
       // Generate JWT tokens
@@ -190,9 +227,9 @@ export class AuthController {
         },
         session: sessionToken
           ? {
-            token: sessionToken,
-            expiresAt,
-          }
+              token: sessionToken,
+              expiresAt,
+            }
           : undefined,
         accessToken: accessTokenData.token,
         refreshToken: refreshTokenData.token,
@@ -206,15 +243,23 @@ export class AuthController {
         error,
       );
 
-      if (error instanceof UnauthorizedException) {
+      if (
+        error instanceof UnauthorizedException ||
+        error instanceof ForbiddenException
+      ) {
         // Emit audit event for failed login
         try {
+          const isForbidden = error instanceof ForbiddenException;
           const auditPayload: IAuditEventPayload = {
             eventType: 'FAILURE',
             entityType: 'SESSION',
-            action: 'user_login_failed',
-            description: `Failed login attempt for email: ${loginDto.email}`,
-            errorMessage: 'Invalid credentials',
+            action: isForbidden
+              ? 'user_login_email_not_verified'
+              : 'user_login_failed',
+            description: isForbidden
+              ? `Login blocked until email verification: ${loginDto.email}`
+              : `Failed login attempt for email: ${loginDto.email}`,
+            errorMessage: error.message,
             metadata: {
               email: loginDto.email,
               ipAddress: req.ip || req.socket.remoteAddress,
@@ -236,6 +281,24 @@ export class AuthController {
       }
       this.logger.error(`Login failed: ${error}`);
       throw new UnauthorizedException('Invalid credentials');
+    }
+  }
+
+  private async requestVerificationEmail(
+    email: string,
+    callbackURL?: string,
+  ): Promise<void> {
+    try {
+      await auth.api.sendVerificationEmail({
+        body: {
+          email,
+          callbackURL: callbackURL || getEmailVerificationCallbackURL(),
+        },
+      });
+    } catch (error) {
+      this.logger.error(
+        `Failed to request verification email for ${email}: ${error}`,
+      );
     }
   }
 
@@ -461,111 +524,67 @@ export class AuthController {
     try {
       const fullName = `${signupDto.firstName} ${signupDto.lastName}`.trim();
 
-      const { headers, response: result } = await auth.api.signUpEmail({
+      const result = await auth.api.signUpEmail({
         body: {
           email: signupDto.email.toLowerCase(),
           password: signupDto.password,
           name: fullName,
           image: signupDto.image,
+          callbackURL: signupDto.callbackURL,
         },
-        returnHeaders: true,
       });
 
       if (!result?.user) {
         throw new BadRequestException('Failed to create user');
       }
 
-      // Fetch user with roles and gates for JWT generation
-      const userWithRelations = await this.userService.findOne(
+      await this.userService.update(
         { id: Number(result.user.id) },
-        ['roles', 'gates'],
+        {
+          firstName: signupDto.firstName,
+          lastName: signupDto.lastName,
+          meta: { firstTime: true },
+        },
       );
 
-      if (!userWithRelations) {
-        throw new BadRequestException('User creation failed');
-      }
+      await this.requestVerificationEmail(
+        signupDto.email.toLowerCase(),
+        signupDto.callbackURL,
+      );
 
-      // Generate JWT tokens
       const ipAddress = req.ip || req.socket.remoteAddress;
       const userAgent = req.headers['user-agent'];
 
-      const accessTokenData = await this.tokenService.generateAccessToken(
-        userWithRelations as any,
-        ipAddress,
-        userAgent,
-      );
-      const refreshTokenData = await this.tokenService.generateRefreshToken(
-        userWithRelations as any,
-        ipAddress,
-        userAgent,
-      );
-
-      // Extract session token from set-cookie header
-      const setCookie = headers.get('set-cookie');
-      let sessionToken: string | undefined;
-      let expiresAt: string | undefined;
-
-      if (setCookie) {
-        // Parse session token from cookie
-        const tokenMatch = setCookie.match(
-          /better-auth\.session_token=([^;]+)/,
-        );
-        if (tokenMatch) {
-          sessionToken = tokenMatch[1];
-        }
-
-        // Parse expiry from cookie (format: Expires=Fri, 05 Dec 2025 10:53:01 GMT)
-        const expiresMatch = setCookie.match(/Expires=([^;,]+(?:,[^;]+)?)/i);
-        if (expiresMatch) {
-          const expDate = new Date(expiresMatch[1].trim());
-          if (!isNaN(expDate.getTime())) {
-            expiresAt = expDate.toISOString();
-          }
-        }
-      }
-
       this.logger.log(`New user signed up: ${result.user.email}`);
 
-      // Emit audit event for signup and session creation
+      // Emit audit event for signup pending email verification
       try {
         const auditPayload: IAuditEventPayload = {
           eventType: 'CREATE',
-          entityType: 'SESSION',
+          entityType: 'USER',
           userId: Number(result.user.id),
-          action: 'session_created',
-          description: `New session created for user: ${result.user.email}`,
+          action: 'user_signup_verification_required',
+          description: `New user signed up pending email verification: ${result.user.email}`,
           metadata: {
             email: result.user.email,
             ipAddress,
             userAgent,
-            createdVia: 'signup',
           },
           success: true,
         };
-        this.eventEmitter.emit(AUDIT_EVENT_NAMES.SESSION.CREATED, auditPayload);
+        this.eventEmitter.emit(AUDIT_EVENT_NAMES.ENTITY.CREATED, auditPayload);
       } catch (error) {
-        this.logger.error(
-          'Failed to emit audit event for session creation:',
-          error,
-        );
+        this.logger.error('Failed to emit audit event for signup:', error);
       }
 
       return {
-        message: 'Signup successful',
+        message:
+          'Signup successful. Please verify your email address before logging in.',
         user: {
           id: String(result.user.id),
           email: result.user.email,
           name: result.user.name,
         },
-        session: sessionToken
-          ? {
-            token: sessionToken,
-            expiresAt,
-          }
-          : undefined,
-        accessToken: accessTokenData.token,
-        refreshToken: refreshTokenData.token,
-        expiresAt: accessTokenData.expiresAt.toISOString(),
       };
     } catch (error) {
       if (error instanceof BadRequestException) {

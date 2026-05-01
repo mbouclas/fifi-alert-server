@@ -6,16 +6,22 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { UserService, CreateUserDto } from './user.service';
+import {
+  UserService,
+  CreateUserDto,
+  UserServiceEventNames,
+} from './user.service';
 import { PrismaService } from '@services/prisma.service';
 import type { IEmailProvider } from '@shared/email/interfaces/email-provider.interface';
 
 // Mock the auth module
 const mockSignUpEmail = jest.fn();
+const mockSendVerificationEmail = jest.fn();
 jest.mock('../auth', () => ({
   auth: {
     api: {
       signUpEmail: mockSignUpEmail,
+      sendVerificationEmail: mockSendVerificationEmail,
     },
   },
 }));
@@ -34,6 +40,7 @@ const mockConfigService = {
 describe('UserService', () => {
   let service: UserService;
   let prismaService: jest.Mocked<PrismaService>;
+  let mockEventEmitter: { emit: jest.Mock };
 
   const mockPrismaService = {
     user: {
@@ -86,7 +93,7 @@ describe('UserService', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
 
-    const mockEventEmitter = {
+    mockEventEmitter = {
       emit: jest.fn(),
     };
 
@@ -195,6 +202,7 @@ describe('UserService', () => {
         user: { id: 1, email: 'john.doe@example.com', name: 'John Doe' },
         session: { id: 'session-123' },
       });
+      mockSendVerificationEmail.mockResolvedValue({ status: true });
 
       // Mock final user fetch with roles
       mockPrismaService.user.findUnique.mockImplementation(
@@ -402,8 +410,18 @@ describe('UserService', () => {
             firstName: 'John',
             lastName: 'Doe',
             emailVerified: false,
+            meta: { firstTime: true },
           },
         });
+      });
+
+      it('should emit user created event after audit event', async () => {
+        await service.store(validCreateUserDto);
+
+        expect(mockEventEmitter.emit).toHaveBeenCalledWith(
+          UserServiceEventNames.CREATED,
+          { user: mockUser },
+        );
       });
 
       it('should set emailVerified to true when specified', async () => {
@@ -417,6 +435,7 @@ describe('UserService', () => {
             firstName: 'John',
             lastName: 'Doe',
             emailVerified: true,
+            meta: { firstTime: true },
           },
         });
       });
@@ -886,6 +905,27 @@ describe('UserService', () => {
       process.env.APP_URL = 'https://fifi-alert.com';
     });
 
+    describe('handleUserCreatedEvent', () => {
+      it('should request Better Auth verification email for unverified users', async () => {
+        await service.handleUserCreatedEvent({ user: mockUser });
+
+        expect(mockSendVerificationEmail).toHaveBeenCalledWith({
+          body: {
+            email: mockUser.email,
+            callbackURL: 'fifi-alert://verify-email',
+          },
+        });
+      });
+
+      it('should not request verification email for verified users', async () => {
+        await service.handleUserCreatedEvent({
+          user: { ...mockUser, emailVerified: true },
+        });
+
+        expect(mockSendVerificationEmail).not.toHaveBeenCalled();
+      });
+    });
+
     describe('sendWelcomeEmail', () => {
       it('should send welcome email with correct template data', async () => {
         const result = await service.sendWelcomeEmail(mockUser);
@@ -912,6 +952,39 @@ describe('UserService', () => {
         // but we verify the method was invoked)
         const emailProvider = (service as any).emailProvider;
         expect(emailProvider.send).toHaveBeenCalled();
+      });
+    });
+
+    describe('sendAccountVerificationEmail', () => {
+      const verificationUrl =
+        'https://api.fifi-alert.com/api/auth/verify-email?token=test-token&callbackURL=%2F';
+
+      it('should send account verification email with verification link', async () => {
+        const result = await service.sendAccountVerificationEmail(
+          mockUser,
+          verificationUrl,
+        );
+
+        expect(result.success).toBe(true);
+        expect(result.message).toContain('Account verification email sent');
+        expect(result.message).toContain(mockUser.email);
+
+        const emailProvider = (service as any).emailProvider;
+        expect(emailProvider.send).toHaveBeenCalledWith(
+          expect.objectContaining({
+            to: mockUser.email,
+            html: expect.stringContaining(verificationUrl),
+          }),
+        );
+      });
+
+      it('should throw error when account verification email send fails', async () => {
+        const emailProvider = (service as any).emailProvider;
+        emailProvider.send.mockRejectedValueOnce(new Error('Send failed'));
+
+        await expect(
+          service.sendAccountVerificationEmail(mockUser, verificationUrl),
+        ).rejects.toThrow('FAILED_TO_SEND_ACCOUNT_VERIFICATION_EMAIL');
       });
     });
 

@@ -1,6 +1,7 @@
 import { betterAuth } from 'better-auth';
 import { prismaAdapter } from 'better-auth/adapters/prisma';
 import { PrismaSingleton } from '@services/prisma-singleton.service';
+import { SharedModule } from '@shared/shared.module';
 
 const prisma = PrismaSingleton.getInstance();
 
@@ -8,8 +9,45 @@ const prisma = PrismaSingleton.getInstance();
 const AUTH_PASSWORD_MIN_LENGTH =
   parseInt(String(process.env.AUTH_PASSWORD_MIN_LENGTH), 10) || 4;
 
+function stripTrailingSlash(value: string): string {
+  return value.replace(/\/+$/, '');
+}
+
+export function getEmailVerificationCallbackURL(): string {
+  return (
+    process.env.EMAIL_VERIFICATION_CALLBACK_URL ||
+    process.env.MOBILE_EMAIL_VERIFICATION_URL ||
+    'fifi-alert://verify-email'
+  );
+}
+
+function getBetterAuthURL(): string | undefined {
+  if (process.env.BETTER_AUTH_URL) {
+    return stripTrailingSlash(process.env.BETTER_AUTH_URL);
+  }
+
+  const apiBaseUrl = process.env.API_BASE_URL || process.env.APP_URL;
+  return apiBaseUrl ? `${stripTrailingSlash(apiBaseUrl)}/api/auth` : undefined;
+}
+
+function getTrustedOrigins(): string[] {
+  const configuredOrigins = [
+    process.env.ALLOWED_ORIGIN,
+    process.env.ALLOWED_ORIGINS,
+    process.env.EMAIL_VERIFICATION_CALLBACK_URL,
+    process.env.MOBILE_EMAIL_VERIFICATION_URL,
+  ]
+    .filter(Boolean)
+    .flatMap((value) => String(value).split(','))
+    .map((value) => value.trim())
+    .filter(Boolean);
+
+  return configuredOrigins.length > 0 ? configuredOrigins : ['*'];
+}
+
 export const auth = betterAuth({
   basePath: '/api/auth',
+  baseURL: getBetterAuthURL(),
   database: prismaAdapter(prisma, {
     provider: 'postgresql',
   }),
@@ -17,6 +55,16 @@ export const auth = betterAuth({
   emailAndPassword: {
     enabled: true,
     minPasswordLength: AUTH_PASSWORD_MIN_LENGTH,
+  },
+  emailVerification: {
+    expiresIn: 60 * 60 * 24,
+    sendVerificationEmail: async ({ user, url, token }) => {
+      SharedModule.eventEmitter?.emit('ACCOUNT_VERIFICATION_EMAIL_REQUESTED', {
+        user,
+        verificationUrl: url,
+        token,
+      });
+    },
   },
   advanced: {
     database: {
@@ -41,8 +89,6 @@ export const auth = betterAuth({
       },
     },
   },
-  trustedOrigins: process.env.ALLOWED_ORIGIN
-    ? process.env.ALLOWED_ORIGIN.split(',')
-    : ['*'],
+  trustedOrigins: getTrustedOrigins(),
   hooks: {}, // Minimum required to use hooks
 });

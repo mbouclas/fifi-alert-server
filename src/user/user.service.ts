@@ -7,7 +7,7 @@ import {
   Inject,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { EventEmitter2 } from '@nestjs/event-emitter';
+import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
 import { PrismaService } from '@services/prisma.service';
 import {
   formatResultToPaginatedResponse,
@@ -20,7 +20,7 @@ import {
   sanitizeUpdateData,
 } from '@shared/helpers/prisma-model-fields.helper';
 import { hashPassword } from 'better-auth/crypto';
-import { auth } from '../auth';
+import { auth, getEmailVerificationCallbackURL } from '../auth';
 import { SharedModule } from '@shared/shared.module';
 import { AUDIT_EVENT_NAMES } from '../audit/audit-event-names';
 import { IAuditEventPayload } from '../audit/interfaces/audit-event-payload.interface';
@@ -52,6 +52,7 @@ export enum UserServiceEventNames {
   UPDATED = 'UPDATED',
   DELETED = 'DELETED',
   CREATED = 'CREATED',
+  ACCOUNT_VERIFICATION_EMAIL_REQUESTED = 'ACCOUNT_VERIFICATION_EMAIL_REQUESTED',
   IMPORTED_VIA_EXELSYS = 'IMPORTED_VIA_EXELSYS',
   PASSWORD_UPDATED = 'PASSWORD_UPDATED',
 }
@@ -73,6 +74,10 @@ const userServiceEmailTemplateNames: Record<string, IEmailTemplate> = {
     subject: 'Forgot Your Password?',
     file: `notifications/email/user/forgotPassword.njk`,
   },
+  accountVerification: {
+    subject: 'Verify Your FiFi Alert Account',
+    file: `notifications/email/user/emailVerification.njk`,
+  },
 };
 
 /**
@@ -88,7 +93,7 @@ export class UserService {
     private readonly configService: ConfigService,
     private readonly eventEmitter: EventEmitter2,
     @Inject('IEmailProvider') private readonly emailProvider: IEmailProvider,
-  ) { }
+  ) {}
 
   /**
    * Creates a new user with the provided details and assigns roles.
@@ -144,6 +149,7 @@ export class UserService {
           firstName: data.firstName,
           lastName: data.lastName,
           emailVerified: data.emailVerified ?? false,
+          meta: { firstTime: true },
         },
       });
 
@@ -185,6 +191,9 @@ export class UserService {
           success: true,
         };
         this.eventEmitter.emit(AUDIT_EVENT_NAMES.ENTITY.CREATED, auditPayload);
+        this.eventEmitter.emit(UserServiceEventNames.CREATED, {
+          user: updatedUser,
+        });
       } catch (error) {
         this.logger.error(
           'Failed to emit audit event for user creation:',
@@ -359,7 +368,7 @@ export class UserService {
     if (!credentialAccount) {
       throw new BadRequestException(
         'Cannot update password: User does not have a credential account. ' +
-        'This user may have signed up using a social provider.',
+          'This user may have signed up using a social provider.',
       );
     }
 
@@ -911,12 +920,104 @@ export class UserService {
   // Email Methods
   // ============================================================
 
+  @OnEvent(UserServiceEventNames.CREATED, { async: true })
+  async handleUserCreatedEvent(payload: { user: User }): Promise<void> {
+    if (payload.user.emailVerified) {
+      return;
+    }
+
+    try {
+      await auth.api.sendVerificationEmail({
+        body: {
+          email: payload.user.email,
+          callbackURL: getEmailVerificationCallbackURL(),
+        },
+      });
+    } catch (error) {
+      this.logger.error(
+        `Failed to request account verification email for user ${payload.user.id}:`,
+        error,
+      );
+    }
+  }
+
+  @OnEvent(UserServiceEventNames.ACCOUNT_VERIFICATION_EMAIL_REQUESTED, {
+    async: true,
+  })
+  async handleAccountVerificationEmailRequested(payload: {
+    user: User;
+    verificationUrl: string;
+  }): Promise<void> {
+    try {
+      await this.sendAccountVerificationEmail(
+        payload.user,
+        payload.verificationUrl,
+      );
+    } catch (error) {
+      this.logger.error(
+        `Account verification email send failed for user ${payload.user.id}:`,
+        error,
+      );
+    }
+  }
+
+  async sendAccountVerificationEmail(
+    user: Pick<User, 'id' | 'email' | 'firstName' | 'lastName' | 'name'>,
+    verificationUrl: string,
+  ): Promise<{ success: boolean; message: string }> {
+    this.logger.log(
+      `Sending account verification email to user ${user.id}: ${user.email}`,
+    );
+
+    const emailService = new EmailService(
+      this.emailProvider,
+      this.eventEmitter,
+      userServiceEmailTemplateNames,
+    );
+
+    try {
+      await emailService.sendHtml('accountVerification', {
+        from: String(process.env.MAIL_NOTIFICATIONS_FROM),
+        to: user.email,
+        templateData: {
+          user: {
+            id: user.id,
+            email: user.email,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            name: user.name,
+          },
+          verificationUrl,
+          expirationHours: 24,
+          appUrl: process.env.APP_URL || 'https://fifi-alert.com',
+        },
+      });
+
+      this.logger.log(
+        `Account verification email sent successfully to user ${user.id}`,
+      );
+
+      return {
+        success: true,
+        message: `Account verification email sent to ${user.email}`,
+      };
+    } catch (error) {
+      this.logger.error(
+        `Failed to send account verification email to user ${user.id}:`,
+        error,
+      );
+      throw new Error('FAILED_TO_SEND_ACCOUNT_VERIFICATION_EMAIL');
+    }
+  }
+
   /**
    * Send welcome email to a newly registered user
    * @param user User to send welcome email to
    * @returns Success message
    */
-  async sendWelcomeEmail(user: User): Promise<{ success: boolean; message: string }> {
+  async sendWelcomeEmail(
+    user: User,
+  ): Promise<{ success: boolean; message: string }> {
     this.logger.log(`Sending welcome email to user ${user.id}: ${user.email}`);
 
     // Instantiate EmailService with local templates
@@ -949,7 +1050,10 @@ export class UserService {
         message: `Welcome email sent to ${user.email}`,
       };
     } catch (error) {
-      this.logger.error(`Failed to send welcome email to user ${user.id}:`, error);
+      this.logger.error(
+        `Failed to send welcome email to user ${user.id}:`,
+        error,
+      );
       throw new Error('FAILED_TO_SEND_WELCOME_EMAIL');
     }
   }
@@ -966,7 +1070,9 @@ export class UserService {
     resetToken: string,
     expiresIn: string = '24 hours',
   ): Promise<{ success: boolean; message: string }> {
-    this.logger.log(`Sending forgot password email to user ${user.id}: ${user.email}`);
+    this.logger.log(
+      `Sending forgot password email to user ${user.id}: ${user.email}`,
+    );
 
     const appUrl = process.env.APP_URL || 'https://fifi-alert.com';
     const resetLink = `${appUrl}/reset-password?token=${resetToken}`;
@@ -995,14 +1101,19 @@ export class UserService {
         },
       });
 
-      this.logger.log(`Forgot password email sent successfully to user ${user.id}`);
+      this.logger.log(
+        `Forgot password email sent successfully to user ${user.id}`,
+      );
 
       return {
         success: true,
         message: `Password reset email sent to ${user.email}`,
       };
     } catch (error) {
-      this.logger.error(`Failed to send forgot password email to user ${user.id}:`, error);
+      this.logger.error(
+        `Failed to send forgot password email to user ${user.id}:`,
+        error,
+      );
       throw new Error('FAILED_TO_SEND_FORGOT_PASSWORD_EMAIL');
     }
   }
@@ -1019,7 +1130,9 @@ export class UserService {
     resetToken: string,
     expiresIn: string = '24 hours',
   ): Promise<{ success: boolean; message: string }> {
-    this.logger.log(`Sending password reset email to user ${user.id}: ${user.email}`);
+    this.logger.log(
+      `Sending password reset email to user ${user.id}: ${user.email}`,
+    );
 
     const appUrl = process.env.APP_URL || 'https://fifi-alert.com';
     const resetLink = `${appUrl}/reset-password?token=${resetToken}`;
@@ -1048,14 +1161,19 @@ export class UserService {
         },
       });
 
-      this.logger.log(`Password reset email sent successfully to user ${user.id}`);
+      this.logger.log(
+        `Password reset email sent successfully to user ${user.id}`,
+      );
 
       return {
         success: true,
         message: `Password reset email sent to ${user.email}`,
       };
     } catch (error) {
-      this.logger.error(`Failed to send password reset email to user ${user.id}:`, error);
+      this.logger.error(
+        `Failed to send password reset email to user ${user.id}:`,
+        error,
+      );
       throw new Error('FAILED_TO_SEND_PASSWORD_RESET_EMAIL');
     }
   }
@@ -1100,12 +1218,14 @@ export class UserService {
           },
           inviteLink,
           expiresIn,
-          invitedBy: invitedBy ? {
-            firstName: invitedBy.firstName,
-            lastName: invitedBy.lastName,
-            name: invitedBy.name,
-            email: invitedBy.email,
-          } : undefined,
+          invitedBy: invitedBy
+            ? {
+                firstName: invitedBy.firstName,
+                lastName: invitedBy.lastName,
+                name: invitedBy.name,
+                email: invitedBy.email,
+              }
+            : undefined,
         },
       });
 
@@ -1116,10 +1236,11 @@ export class UserService {
         message: `Invitation email sent to ${user.email}`,
       };
     } catch (error) {
-      this.logger.error(`Failed to send invite email to user ${user.id}:`, error);
+      this.logger.error(
+        `Failed to send invite email to user ${user.id}:`,
+        error,
+      );
       throw new Error('FAILED_TO_SEND_INVITE_EMAIL');
     }
   }
-
-
 }
