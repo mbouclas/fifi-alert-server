@@ -331,7 +331,7 @@ export class SightingService {
         id,
         ST_Y(location_point) as latitude,
         ST_X(location_point) as longitude
-      FROM sightings
+      FROM sighting
       WHERE id = ANY(${ids}::text[])
     `;
 

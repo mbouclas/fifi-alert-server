@@ -4,6 +4,13 @@
 
 FiFi Alert uses **Firebase Cloud Messaging (FCM)** for Android notifications and **Apple Push Notification service (APNs)** for iOS notifications. This guide covers the complete setup process for both platforms, including credential management, testing, and troubleshooting.
 
+### Pipeline overview
+
+1. `POST /alerts` creates the alert row and calls `NotificationService.queueAlertNotifications(alertId)`, which enqueues a `send-alert-notifications` job on the BullMQ `notification-queue` (Redis). Queue failures are logged and never fail alert creation.
+2. `NotificationQueueProcessor.processAlertNotifications` loads the alert and calls `LocationService.findDevicesForAlert`, which runs the PostGIS matching strategies in priority order: saved zones, alert zones, fresh GPS (<2h), stale GPS (<24h), postal codes, IP geolocation. Postal-code and IP-geo strategies currently have no data feeding them and match nothing.
+3. One `notification` row is created per matched device and a per-device push job is enqueued. Devices without a push token are recorded as excluded.
+4. `processPushNotification` sends via FCM (Android) or APNs (iOS). If the FCM/APNs environment variables below are not set, the services log a warning and skip delivery; the rest of the pipeline still runs.
+
 ---
 
 ## Table of Contents

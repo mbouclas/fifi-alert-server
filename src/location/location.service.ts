@@ -1,7 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../services/prisma.service';
-import { GeospatialService } from './geospatial.service';
-import { AlertZoneCacheService } from '../user/alert-zone-cache.service';
 import {
     NotificationConfidence,
     LocationSource,
@@ -56,11 +54,7 @@ export class LocationService {
     private readonly STALE_GPS_EXPANSION_KM = 5; // Add 5km to radius for stale GPS
     private readonly IP_GEO_EXPANSION_KM = 15; // Add 15km to radius for IP geolocation
 
-    constructor(
-        private readonly prisma: PrismaService,
-        private readonly geospatialService: GeospatialService,
-        private readonly alertZoneCacheService: AlertZoneCacheService,
-    ) { }
+    constructor(private readonly prisma: PrismaService) { }
 
     /**
      * Finds all devices that should be notified about an alert
@@ -197,8 +191,8 @@ export class LocationService {
           sz.location_point::geography,
           ST_SetSRID(ST_MakePoint(${alertLon}, ${alertLat}), 4326)::geography
         ) / 1000 as distance_km
-      FROM saved_zones sz
-      INNER JOIN devices d ON sz.device_id = d.id
+      FROM saved_zone sz
+      INNER JOIN device d ON sz.device_id = d.id
       WHERE sz.is_active = true
         AND d.push_token IS NOT NULL
         AND ST_DWithin(
@@ -227,101 +221,72 @@ export class LocationService {
      */
     /**
      * Step 1: Find alert zone matches (HIGH confidence)
-     * 
-     * Performance-optimized version using Redis cache:
-     * 1. Fetch all active zones from cache (5min TTL)
-     * 2. Filter by distance in-memory (fast haversine calculation)
-     * 3. Fetch devices for matched users (single query)
-     * 
-     * Before optimization: 364ms (5000 zones, DB query)
-     * After optimization: <5ms (cache hit + in-memory filtering)
+     *
+     * Single PostGIS query: ST_DWithin on the GIST-indexed alert_zone.location_point,
+     * joined to the zone owner's push-enabled devices. One row per (zone, device);
+     * the highest-priority (then nearest) zone is kept per device.
+     *
+     * Rejected: iterating cached zones and calling GeospatialService.calculateDistance
+     * per zone — that issued one DB round trip per active zone.
      */
     private async findAlertZoneMatches(
         alertLat: number,
         alertLon: number,
         alertRadiusKm: number,
     ): Promise<MatchResult[]> {
-        // Fetch all active zones from cache
-        const allZones = await this.alertZoneCacheService.getActiveAlertZones();
+        const rows = await this.prisma.$queryRaw<
+            Array<{
+                device_id: number;
+                user_id: number;
+                push_token: string | null;
+                zone_name: string;
+                distance_km: number;
+            }>
+        >`
+      SELECT
+        d.id as device_id,
+        d.user_id,
+        d.push_token,
+        az.name as zone_name,
+        ST_Distance(
+          az.location_point::geography,
+          ST_SetSRID(ST_MakePoint(${alertLon}, ${alertLat}), 4326)::geography
+        ) / 1000 as distance_km
+      FROM alert_zone az
+      INNER JOIN "user" u ON az.user_id = u.id
+      INNER JOIN device d ON d.user_id = u.id
+      WHERE az.is_active = true
+        AND d.push_token IS NOT NULL
+        AND d.push_enabled = true
+        AND u.banned = false
+        AND ST_DWithin(
+          az.location_point::geography,
+          ST_SetSRID(ST_MakePoint(${alertLon}, ${alertLat}), 4326)::geography,
+          az.radius_meters + (${alertRadiusKm} * 1000)
+        )
+      ORDER BY az.priority DESC, distance_km ASC
+    `;
 
-        if (allZones.length === 0) {
-            return [];
-        }
-
-        // Filter zones by distance in-memory (much faster than PostGIS for cached data)
-        // Calculate distances for all zones asynchronously
-        const zoneDistances = await Promise.all(
-            allZones.map(async (zone) => {
-                const distance = await this.geospatialService.calculateDistance(
-                    { latitude: alertLat, longitude: alertLon },
-                    { latitude: zone.lat, longitude: zone.lon },
-                );
-                const maxDistanceKm = (zone.radius_meters / 1000) + alertRadiusKm;
-                return {
-                    zone,
-                    distance,
-                    isMatch: distance <= maxDistanceKm,
-                };
-            }),
-        );
-
-        // Filter to only matched zones
-        const matchedZones = zoneDistances
-            .filter((result) => result.isMatch)
-            .map((result) => ({ ...result.zone, distance: result.distance }));
-
-        if (matchedZones.length === 0) {
-            return [];
-        }
-
-        // Get unique user IDs from matched zones
-        const userIds = [...new Set(matchedZones.map(zone => zone.user_id))];
-
-        // Fetch all devices for matched users in one query
-        const devices = await this.prisma.device.findMany({
-            where: {
-                user_id: { in: userIds },
-                push_token: { not: null },
-                push_enabled: true,
-                user: {
-                    banned: false,
-                },
-            },
-            select: {
-                id: true,
-                user_id: true,
-                push_token: true,
-            },
-        });
-
-        // Map devices to match results with zone info
-        const results: MatchResult[] = [];
-
-        for (const device of devices) {
-            // Find all zones for this user (sorted by priority)
-            const userZones = matchedZones
-                .filter(zone => zone.user_id === device.user_id)
-                .sort((a, b) => b.priority - a.priority);
-
-            if (userZones.length === 0) continue;
-
-            // Use highest priority zone
-            const zone = userZones[0];
-
-            results.push({
-                deviceId: device.id.toString(),
-                userId: device.user_id.toString(),
-                pushToken: device.push_token,
+        // Rows are ordered by priority then distance, so the first row per device wins.
+        const byDevice = new Map<number, MatchResult>();
+        for (const row of rows) {
+            const deviceId = Number(row.device_id);
+            if (byDevice.has(deviceId)) continue;
+            byDevice.set(deviceId, {
+                deviceId: deviceId.toString(),
+                userId: Number(row.user_id).toString(),
+                pushToken: row.push_token,
                 confidence: NotificationConfidence.HIGH,
                 matchReason: LocationSource.MANUAL, // Alert zones are manually defined
-                distanceKm: zone.distance,
-                matchedVia: `Alert zone: ${zone.name}`,
+                distanceKm: Number(row.distance_km),
+                matchedVia: `Alert zone: ${row.zone_name}`,
                 priority: 1, // Same priority as saved zones
             });
         }
 
+        const results = [...byDevice.values()];
         this.logger.debug(
-            `Alert zone matches: ${matchedZones.length} zones, ${results.length} devices`,
+            `Alert zone matches: ${rows.length} zone/device rows, ${results.length} devices`,
         );
 
         return results;
@@ -357,7 +322,7 @@ export class LocationService {
           ST_SetSRID(ST_MakePoint(${alertLon}, ${alertLat}), 4326)::geography
         ) / 1000 as distance_km,
         EXTRACT(EPOCH FROM (NOW() - d.gps_updated_at)) / 3600 as gps_age_hours
-      FROM devices d
+      FROM device d
       WHERE d.gps_point IS NOT NULL
         AND d.gps_updated_at >= ${freshGpsThreshold}
         AND d.push_token IS NOT NULL
@@ -416,7 +381,7 @@ export class LocationService {
           ST_SetSRID(ST_MakePoint(${alertLon}, ${alertLat}), 4326)::geography
         ) / 1000 as distance_km,
         EXTRACT(EPOCH FROM (NOW() - d.gps_updated_at)) / 3600 as gps_age_hours
-      FROM devices d
+      FROM device d
       WHERE d.gps_point IS NOT NULL
         AND d.gps_updated_at < ${freshGpsThreshold}
         AND d.gps_updated_at >= ${staleGpsThreshold}
@@ -464,7 +429,7 @@ export class LocationService {
         d.user_id,
         d.push_token,
         d.postal_codes
-      FROM devices d
+      FROM device d
       WHERE d.push_token IS NOT NULL
         AND d.postal_codes && ${affectedPostalCodes}::text[]
     `;
@@ -512,7 +477,7 @@ export class LocationService {
           d.ip_point::geography,
           ST_SetSRID(ST_MakePoint(${alertLon}, ${alertLat}), 4326)::geography
         ) / 1000 as distance_km
-      FROM devices d
+      FROM device d
       WHERE d.ip_point IS NOT NULL
         AND d.push_token IS NOT NULL
         AND ST_DWithin(
@@ -623,7 +588,7 @@ export class LocationService {
           sz.location_point::geography,
           ST_SetSRID(ST_MakePoint(${alertLon}, ${alertLat}), 4326)::geography
         ) / 1000 as distance_km
-      FROM saved_zones sz
+      FROM saved_zone sz
       WHERE sz.device_id = ${deviceId}
         AND sz.is_active = true
         AND ST_DWithin(

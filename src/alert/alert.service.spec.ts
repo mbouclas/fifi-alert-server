@@ -7,6 +7,7 @@ import { RateLimitService } from './rate-limit.service';
 import { AlertStatus, PetSpecies } from '../generated/prisma';
 import { CreateAlertDto, UpdateAlertDto, ResolveAlertDto, AlertOutcome } from './dto';
 import type { IEmailProvider } from '@shared/email/interfaces/email-provider.interface';
+import { NotificationService } from '../notification/notification.service';
 
 describe('AlertService', () => {
     let service: AlertService;
@@ -44,6 +45,10 @@ describe('AlertService', () => {
         }),
     };
 
+    const mockNotificationService = {
+        queueAlertNotifications: jest.fn().mockResolvedValue(undefined),
+    };
+
     beforeEach(async () => {
         const module: TestingModule = await Test.createTestingModule({
             providers: [
@@ -63,6 +68,10 @@ describe('AlertService', () => {
                 {
                     provide: 'IEmailProvider',
                     useValue: mockEmailProvider,
+                },
+                {
+                    provide: NotificationService,
+                    useValue: mockNotificationService,
                 },
             ],
         }).compile();
@@ -131,6 +140,31 @@ describe('AlertService', () => {
             expect(result).toBeDefined();
             expect(result.id).toBe(alertId);
             expect(mockPrismaService.$queryRaw).toHaveBeenCalledTimes(1);
+            expect(mockNotificationService.queueAlertNotifications).toHaveBeenCalledTimes(1);
+            expect(mockNotificationService.queueAlertNotifications).toHaveBeenCalledWith(alertId);
+        });
+
+        it('should still create the alert when queuing notifications fails', async () => {
+            const userId = 1;
+            const alertId = 43;
+
+            mockPrismaService.$queryRaw.mockResolvedValueOnce([{ id: alertId }]);
+            mockPrismaService.alert.findUnique.mockResolvedValueOnce({
+                id: alertId,
+                creator_id: userId,
+                pet_name: 'Max',
+                pet_species: PetSpecies.DOG,
+                status: AlertStatus.ACTIVE,
+                sightings: [],
+            });
+            mockNotificationService.queueAlertNotifications.mockRejectedValueOnce(
+                new Error('Redis unavailable'),
+            );
+
+            const result = await service.create(userId, mockCreateDto);
+
+            expect(result.id).toBe(alertId);
+            expect(mockNotificationService.queueAlertNotifications).toHaveBeenCalledWith(alertId);
         });
     });
 

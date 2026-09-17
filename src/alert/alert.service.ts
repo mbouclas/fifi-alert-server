@@ -24,6 +24,7 @@ import { AUDIT_EVENT_NAMES } from '../audit/audit-event-names';
 import { IAuditEventPayload } from '../audit/interfaces/audit-event-payload.interface';
 import { EmailService, IEmailTemplate } from '@shared/email/email.service';
 import type { IEmailProvider } from '@shared/email/interfaces/email-provider.interface';
+import { NotificationService } from '../notification/notification.service';
 
 /**
  * Email template registry for alert-related emails
@@ -56,6 +57,7 @@ export class AlertService {
     private readonly rateLimitService: RateLimitService,
     private readonly eventEmitter: EventEmitter2,
     @Inject('IEmailProvider') private readonly emailProvider: IEmailProvider,
+    private readonly notificationService: NotificationService,
   ) { }
 
   /**
@@ -169,8 +171,19 @@ export class AlertService {
       );
     }
 
-    // TODO: Queue background job to pre-compute affected postal codes
-    // TODO: Queue notification targeting job (BullMQ)
+    // NOTE: affected_postal_codes is not pre-computed yet; the postal-code
+    // matching strategy in LocationService stays dormant until a job populates it.
+
+    // Queue device targeting + push notifications (BullMQ). Never fail alert
+    // creation because the queue is unavailable.
+    try {
+      await this.notificationService.queueAlertNotifications(alertId);
+    } catch (error) {
+      this.logger.error(
+        `Failed to queue notifications for alert ${alertId}; alert was created:`,
+        error,
+      );
+    }
 
     // Fetch and return the created alert
     const createdAlert = await this.findById(alertId, userId);

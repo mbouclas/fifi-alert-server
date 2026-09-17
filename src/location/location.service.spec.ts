@@ -118,6 +118,7 @@ describe('LocationService', () => {
             distance_km: 1.5,
           },
         ])
+        .mockResolvedValueOnce([]) // alert zones
         // Mock other match types returning empty
         .mockResolvedValueOnce([]) // fresh GPS
         .mockResolvedValueOnce([]) // stale GPS
@@ -143,6 +144,7 @@ describe('LocationService', () => {
 
       mockPrismaService.$queryRaw
         .mockResolvedValueOnce([]) // saved zones
+        .mockResolvedValueOnce([]) // alert zones
         .mockResolvedValueOnce([
           {
             device_id: 'device-2',
@@ -173,6 +175,7 @@ describe('LocationService', () => {
 
       mockPrismaService.$queryRaw
         .mockResolvedValueOnce([]) // saved zones
+        .mockResolvedValueOnce([]) // alert zones
         .mockResolvedValueOnce([]) // fresh GPS
         .mockResolvedValueOnce([
           {
@@ -203,6 +206,7 @@ describe('LocationService', () => {
 
       mockPrismaService.$queryRaw
         .mockResolvedValueOnce([]) // saved zones
+        .mockResolvedValueOnce([]) // alert zones
         .mockResolvedValueOnce([]) // fresh GPS
         .mockResolvedValueOnce([]) // stale GPS
         .mockResolvedValueOnce([
@@ -232,6 +236,7 @@ describe('LocationService', () => {
 
       mockPrismaService.$queryRaw
         .mockResolvedValueOnce([]) // saved zones
+        .mockResolvedValueOnce([]) // alert zones
         .mockResolvedValueOnce([]) // fresh GPS
         .mockResolvedValueOnce([]) // stale GPS
         .mockResolvedValueOnce([]) // postal codes
@@ -272,6 +277,7 @@ describe('LocationService', () => {
             distance_km: 1.0,
           },
         ])
+        .mockResolvedValueOnce([]) // alert zones
         .mockResolvedValueOnce([
           {
             device_id: 'device-1', // Same device
@@ -312,6 +318,7 @@ describe('LocationService', () => {
             distance_km: 1.5,
           },
         ])
+        .mockResolvedValueOnce([]) // alert zones
         .mockResolvedValueOnce([
           {
             device_id: 'device-2',
@@ -347,6 +354,7 @@ describe('LocationService', () => {
       // All match types return empty
       mockPrismaService.$queryRaw
         .mockResolvedValueOnce([])
+        .mockResolvedValueOnce([]) // alert zones
         .mockResolvedValueOnce([])
         .mockResolvedValueOnce([])
         .mockResolvedValueOnce([])
@@ -365,14 +373,15 @@ describe('LocationService', () => {
 
       mockPrismaService.$queryRaw
         .mockResolvedValueOnce([]) // saved zones
+        .mockResolvedValueOnce([]) // alert zones
         .mockResolvedValueOnce([]) // fresh GPS
         .mockResolvedValueOnce([]) // stale GPS
         .mockResolvedValueOnce([]); // IP geo (postal code step skipped)
 
       const result = await service.findDevicesForAlert(1);
 
-      // Should call $queryRaw 4 times (not 5, since postal code is skipped)
-      expect(mockPrismaService.$queryRaw).toHaveBeenCalledTimes(4);
+      // Should call $queryRaw 5 times (saved zones, alert zones, fresh GPS, stale GPS, IP geo; postal code skipped)
+      expect(mockPrismaService.$queryRaw).toHaveBeenCalledTimes(5);
       expect(result).toEqual([]);
     });
   });
@@ -478,9 +487,9 @@ describe('LocationService', () => {
 
       await service.matchSavedZones('device-1', 37.7749, -122.4194, 5.0);
 
-      expect(mockPrismaService.$queryRaw).toHaveBeenCalledWith(
-        expect.anything(),
-      );
+      const sql = mockPrismaService.$queryRaw.mock.calls[0][0].join("?");
+      expect(sql).toContain("FROM saved_zone sz");
+      expect(sql).toContain("ST_DWithin");
     });
   });
 });
