@@ -1,25 +1,21 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import {
-  IsInt,
-  IsOptional,
-  IsString,
-  Length,
-  Matches,
-  Min,
-} from 'class-validator';
+import { IsInt, IsOptional, IsString, Length, Matches, Min } from 'class-validator';
+import { IsTranslations } from '../../i18n/validators/is-translations.validator';
 
 /**
  * DTO for creating a pet type.
  */
 export class CreatePetTypeDto {
   @ApiProperty({
-    description: 'Display name for the pet type',
-    example: 'Dog',
+    description:
+      'Display names keyed by language code. Must include the default language; keys must be active languages.',
+    example: { el: 'Σκύλος', en: 'Dog' },
+    type: 'object',
+    additionalProperties: { type: 'string' },
   })
-  @IsString({ message: 'Name must be a string' })
-  @Length(1, 100, { message: 'Name must be between 1 and 100 characters' })
-  name: string;
+  @IsTranslations({ maxLength: 100 })
+  translations: Record<string, string>;
 
   @ApiProperty({
     description: 'URL-friendly slug for the pet type',

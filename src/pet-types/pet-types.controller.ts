@@ -14,6 +14,7 @@ import {
 } from '@nestjs/common';
 import {
     ApiBearerAuth,
+    ApiHeader,
     ApiOperation,
     ApiParam,
     ApiQuery,
@@ -23,6 +24,9 @@ import {
 import { BearerTokenGuard } from '../auth/guards/bearer-token.guard';
 import { MinUserLevelGuard } from '../auth/guards/min-user-level.guard';
 import { MinUserLevel } from '../auth/decorators/min-user-level.decorator';
+import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import type { ITokenUser } from '../auth/services/token.service';
+import { Lang } from '../i18n/decorators/lang.decorator';
 import { PetTypesService } from './pet-types.service';
 import {
     CreatePetTypeDto,
@@ -33,17 +37,24 @@ import {
     UpdatePetTypeDto,
 } from './dto';
 
+/** Role level at or below which callers see the full translations map. */
+const ADMIN_LEVEL = 5;
+
 /**
  * REST endpoints for managing pet types.
  *
  * Read operations are available to authenticated users. Mutating operations
  * require super admin privileges (level <= 5).
+ *
+ * `name` is returned in the language resolved from `?lang=`, then the
+ * `Accept-Language` header, then the default language (see GET /languages).
+ * Administrators additionally receive the full `translations` map.
  */
 @Controller('pet-types')
 @ApiTags('Pet Types')
 @ApiBearerAuth()
 @UseGuards(BearerTokenGuard, MinUserLevelGuard)
-@MinUserLevel(5)
+@MinUserLevel(ADMIN_LEVEL)
 export class PetTypesController {
     constructor(private readonly petTypesService: PetTypesService) { }
 
@@ -59,11 +70,18 @@ export class PetTypesController {
         type: PetTypeResponseDto,
     })
     @ApiResponse({
-        status: 409,
-        description: 'Duplicate pet type name or slug',
+        status: 400,
+        description: 'Unknown language code or missing default-language translation',
     })
-    async create(@Body() dto: CreatePetTypeDto): Promise<PetTypeResponseDto> {
-        return this.petTypesService.create(dto);
+    @ApiResponse({
+        status: 409,
+        description: 'Duplicate pet type slug',
+    })
+    async create(
+        @Body() dto: CreatePetTypeDto,
+        @Lang() lang: string,
+    ): Promise<PetTypeResponseDto> {
+        return this.petTypesService.create(dto, { lang });
     }
 
     /**
@@ -83,7 +101,7 @@ export class PetTypesController {
         enumName: 'PetTypeOrderBy',
         example: PetTypeOrderBy.ORDER,
         description:
-            'Sort field. Options: id, name, slug, order, created_at, updated_at.',
+            'Sort field. Options: id, name, slug, order, created_at, updated_at. `name` sorts by the resolved translation.',
     })
     @ApiQuery({
         name: 'orderDir',
@@ -93,11 +111,28 @@ export class PetTypesController {
         example: SortDirection.ASC,
         description: 'Sort direction. Options: asc, desc.',
     })
+    @ApiQuery({
+        name: 'lang',
+        required: false,
+        example: 'el',
+        description:
+            'Language for `name`. Falls back to Accept-Language, then the default language.',
+    })
+    @ApiHeader({
+        name: 'Accept-Language',
+        required: false,
+        description: 'Used when `lang` is omitted.',
+    })
     @MinUserLevel(100)
     async findAll(
         @Query() query: ListPetTypesQueryDto,
+        @Lang() lang: string,
+        @CurrentUser() user: ITokenUser,
     ): Promise<PetTypeResponseDto[]> {
-        return this.petTypesService.findAll(query.orderBy, query.orderDir);
+        return this.petTypesService.findAll(query.orderBy, query.orderDir, {
+            lang,
+            includeTranslations: this.isAdmin(user),
+        });
     }
 
     /**
@@ -112,9 +147,28 @@ export class PetTypesController {
         type: PetTypeResponseDto,
     })
     @ApiResponse({ status: 404, description: 'Pet type not found' })
+    @ApiQuery({
+        name: 'lang',
+        required: false,
+        example: 'el',
+        description:
+            'Language for `name`. Falls back to Accept-Language, then the default language.',
+    })
+    @ApiHeader({
+        name: 'Accept-Language',
+        required: false,
+        description: 'Used when `lang` is omitted.',
+    })
     @MinUserLevel(100)
-    async findBySlug(@Param('slug') slug: string): Promise<PetTypeResponseDto> {
-        return this.petTypesService.findBySlug(slug);
+    async findBySlug(
+        @Param('slug') slug: string,
+        @Lang() lang: string,
+        @CurrentUser() user: ITokenUser,
+    ): Promise<PetTypeResponseDto> {
+        return this.petTypesService.findBySlug(slug, {
+            lang,
+            includeTranslations: this.isAdmin(user),
+        });
     }
 
     /**
@@ -129,11 +183,28 @@ export class PetTypesController {
         type: PetTypeResponseDto,
     })
     @ApiResponse({ status: 404, description: 'Pet type not found' })
+    @ApiQuery({
+        name: 'lang',
+        required: false,
+        example: 'el',
+        description:
+            'Language for `name`. Falls back to Accept-Language, then the default language.',
+    })
+    @ApiHeader({
+        name: 'Accept-Language',
+        required: false,
+        description: 'Used when `lang` is omitted.',
+    })
     @MinUserLevel(100)
     async findOne(
         @Param('id', ParseIntPipe) id: number,
+        @Lang() lang: string,
+        @CurrentUser() user: ITokenUser,
     ): Promise<PetTypeResponseDto> {
-        return this.petTypesService.findOne(id);
+        return this.petTypesService.findOne(id, {
+            lang,
+            includeTranslations: this.isAdmin(user),
+        });
     }
 
     /**
@@ -141,22 +212,28 @@ export class PetTypesController {
      */
     @Patch(':id')
     @ApiParam({ name: 'id', description: 'Pet type ID' })
-    @ApiOperation({ summary: 'Update a pet type' })
+    @ApiOperation({
+        summary: 'Update a pet type',
+        description:
+            'Provided `translations` keys are upserted; languages not mentioned are left unchanged.',
+    })
     @ApiResponse({
         status: 200,
         description: 'Pet type updated successfully',
         type: PetTypeResponseDto,
     })
+    @ApiResponse({ status: 400, description: 'Unknown language code' })
     @ApiResponse({ status: 404, description: 'Pet type not found' })
     @ApiResponse({
         status: 409,
-        description: 'Duplicate pet type name or slug',
+        description: 'Duplicate pet type slug',
     })
     async update(
         @Param('id', ParseIntPipe) id: number,
         @Body() dto: UpdatePetTypeDto,
+        @Lang() lang: string,
     ): Promise<PetTypeResponseDto> {
-        return this.petTypesService.update(id, dto);
+        return this.petTypesService.update(id, dto, { lang });
     }
 
     /**
@@ -170,5 +247,10 @@ export class PetTypesController {
     @ApiResponse({ status: 404, description: 'Pet type not found' })
     async remove(@Param('id', ParseIntPipe) id: number): Promise<void> {
         return this.petTypesService.remove(id);
+    }
+
+    /** Lower level = higher privilege; the token already carries the user's roles. */
+    private isAdmin(user: ITokenUser | undefined): boolean {
+        return !!user?.roles?.some((r) => r.level <= ADMIN_LEVEL);
     }
 }

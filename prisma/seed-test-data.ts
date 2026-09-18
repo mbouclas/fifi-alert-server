@@ -94,25 +94,53 @@ async function main() {
         `✓ Created gates: ${premiumGate.name}, ${betaGate.name}, ${analyticsGate.name}, ${exportGate.name}`,
     );
 
-    // Create Pet Types
+    // Create Languages (el is the default)
+    console.log('Creating languages...');
+    for (const lang of [
+        { code: 'el', name: 'Greek', nativeName: 'Ελληνικά', isDefault: true, sortOrder: 10 },
+        { code: 'en', name: 'English', nativeName: 'English', isDefault: false, sortOrder: 20 },
+    ]) {
+        await prisma.language.upsert({
+            where: { code: lang.code },
+            update: lang,
+            create: lang,
+        });
+    }
+    console.log('✓ Languages created');
+
+    // Create Pet Types with translations
     console.log('Creating pet types...');
-    await prisma.petType.createMany({
-        data: [
-            { name: 'Dog', slug: 'dog', order: 10 },
-            { name: 'Cat', slug: 'cat', order: 20 },
-            { name: 'Bird', slug: 'bird', order: 30 },
-            { name: 'Rabbit', slug: 'rabbit', order: 40 },
-            { name: 'Hamster', slug: 'hamster', order: 50 },
-            { name: 'Guinea Pig', slug: 'guinea-pig', order: 60 },
-            { name: 'Ferret', slug: 'ferret', order: 70 },
-            { name: 'Turtle', slug: 'turtle', order: 80 },
-            { name: 'Lizard', slug: 'lizard', order: 90 },
-            { name: 'Snake', slug: 'snake', order: 100 },
-            { name: 'Fish', slug: 'fish', order: 110 },
-            { name: 'Other', slug: 'other', order: 120 },
-        ],
-        skipDuplicates: true,
-    });
+    const petTypes: { slug: string; order: number; en: string; el: string }[] = [
+        { slug: 'dog', order: 10, en: 'Dog', el: 'Σκύλος' },
+        { slug: 'cat', order: 20, en: 'Cat', el: 'Γάτα' },
+        { slug: 'bird', order: 30, en: 'Bird', el: 'Πουλί' },
+        { slug: 'rabbit', order: 40, en: 'Rabbit', el: 'Κουνέλι' },
+        { slug: 'hamster', order: 50, en: 'Hamster', el: 'Χάμστερ' },
+        { slug: 'guinea-pig', order: 60, en: 'Guinea Pig', el: 'Ινδικό Χοιρίδιο' },
+        { slug: 'ferret', order: 70, en: 'Ferret', el: 'Κουνάβι' },
+        { slug: 'turtle', order: 80, en: 'Turtle', el: 'Χελώνα' },
+        { slug: 'lizard', order: 90, en: 'Lizard', el: 'Σαύρα' },
+        { slug: 'snake', order: 100, en: 'Snake', el: 'Φίδι' },
+        { slug: 'fish', order: 110, en: 'Fish', el: 'Ψάρι' },
+        { slug: 'other', order: 120, en: 'Other', el: 'Άλλο' },
+    ];
+    for (const { slug, order, en, el } of petTypes) {
+        const petType = await prisma.petType.upsert({
+            where: { slug },
+            update: { order },
+            create: { slug, order },
+        });
+        for (const t of [
+            { langCode: 'el', name: el },
+            { langCode: 'en', name: en },
+        ]) {
+            await prisma.petTypeTranslation.upsert({
+                where: { petTypeId_langCode: { petTypeId: petType.id, langCode: t.langCode } },
+                update: { name: t.name },
+                create: { petTypeId: petType.id, ...t },
+            });
+        }
+    }
     console.log('✓ Pet types created');
 
     // Find test user and assign role + gates

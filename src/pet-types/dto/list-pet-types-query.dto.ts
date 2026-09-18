@@ -1,5 +1,5 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsEnum, IsOptional } from 'class-validator';
+import { IsEnum, IsOptional, IsString } from 'class-validator';
 
 export enum PetTypeOrderBy {
     ID = 'id',
@@ -38,4 +38,13 @@ export class ListPetTypesQueryDto {
     @IsOptional()
     @IsEnum(SortDirection, { message: 'Order direction must be asc or desc' })
     orderDir?: SortDirection = SortDirection.ASC;
+
+    @ApiPropertyOptional({
+        description:
+            'Language code for `name`. Falls back to Accept-Language, then the default language. See GET /languages.',
+        example: 'el',
+    })
+    @IsOptional()
+    @IsString()
+    lang?: string;
 }

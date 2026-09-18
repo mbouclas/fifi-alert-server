@@ -251,9 +251,28 @@ model AuditLog {
 // ============================================================================
 
 // Pet Type Model
+// Language Model — the set of UI languages the API can serve.
+// Exactly one row has is_default = true (enforced by a partial unique index in SQL).
+model Language {
+  code       String   @id @pg.VarChar(8) // ISO 639-1 code, e.g. 'el', 'en'
+  name       String   @pg.VarChar(100) // English name, e.g. "Greek"
+  nativeName String   @map("native_name") @pg.VarChar(100) // e.g. "Ελληνικά"
+  isDefault  Boolean  @default(false) @map("is_default")
+  isActive   Boolean  @default(true) @map("is_active")
+  sortOrder  Int      @default(0) @map("sort_order")
+  created_at DateTime @default(now()) @map("created_at")
+  updated_at DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  petTypeTranslations PetTypeTranslation[]
+
+  @@index([isActive, sortOrder])
+  @@map("language")
+}
+
+// Pet Type Model — display name lives in PetTypeTranslation (one row per language).
 model PetType {
   id         Int      @id @default(autoincrement())
-  name       String   @unique @pg.VarChar(100)
   slug       String   @unique @pg.VarChar(100)
   order      Int      @default(0) @map("sort_order")
   meta       Json?
@@ -262,12 +281,26 @@ model PetType {
   updated_at DateTime @updatedAt @map("updated_at")
 
   // Relations
-  pets Pet[]
+  pets         Pet[]
+  translations PetTypeTranslation[]
 
   @@index([slug])
-  @@index([name])
   @@index([order])
   @@map("pet_type")
+}
+
+// Pet Type Translation — localized display name for a pet type.
+model PetTypeTranslation {
+  id        Int      @id @default(autoincrement())
+  petTypeId Int      @map("pet_type_id")
+  langCode  String   @map("lang_code") @pg.VarChar(8)
+  name      String   @pg.VarChar(100)
+  petType   PetType  @relation(fields: [petTypeId], references: [id], onDelete: Cascade)
+  language  Language @relation(fields: [langCode], references: [code], onDelete: Restrict)
+
+  @@unique([petTypeId, langCode])
+  @@index([langCode, name])
+  @@map("pet_type_translation")
 }
 
 // Pet Model

@@ -1,7 +1,11 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 /**
  * DTO for pet type responses.
+ *
+ * `name` is returned in the resolved request language (`?lang=` ->
+ * `Accept-Language` -> default). `lang` reports which language was actually
+ * used, which may differ from the request when a translation is missing.
  */
 export class PetTypeResponseDto {
   @ApiProperty({
@@ -11,13 +15,19 @@ export class PetTypeResponseDto {
   id: number;
 
   @ApiProperty({
-    description: 'Display name for the pet type',
-    example: 'Dog',
+    description: 'Display name for the pet type in the resolved language',
+    example: 'Σκύλος',
   })
   name: string;
 
   @ApiProperty({
-    description: 'URL-friendly slug for the pet type',
+    description: 'Language code the `name` is in',
+    example: 'el',
+  })
+  lang: string;
+
+  @ApiProperty({
+    description: 'URL-friendly slug for the pet type (language independent)',
     example: 'dog',
   })
   slug: string;
@@ -27,6 +37,15 @@ export class PetTypeResponseDto {
     example: 10,
   })
   order: number;
+
+  @ApiPropertyOptional({
+    description:
+      'All translations keyed by language code. Only present for administrators.',
+    example: { el: 'Σκύλος', en: 'Dog' },
+    type: 'object',
+    additionalProperties: { type: 'string' },
+  })
+  translations?: Record<string, string>;
 
   @ApiProperty({
     description: 'Created timestamp',

@@ -36,6 +36,7 @@ import { AuditModule } from './audit/audit.module';
 import { PetModule } from './pet/pet.module';
 import { AlertZoneCacheService } from './user/alert-zone-cache.service';
 import { PetTypesModule } from './pet-types/pet-types.module';
+import { I18nModule } from './i18n/i18n.module';
 
 @Module({
   imports: [
@@ -76,6 +77,7 @@ import { PetTypesModule } from './pet-types/pet-types.module';
       }),
     }),
     SharedModule,
+    I18nModule,
     AuthModule.forRoot({
       auth,
       disableTrustedOriginsCors: false,

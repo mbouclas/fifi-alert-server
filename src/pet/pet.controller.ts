@@ -22,6 +22,8 @@ import {
   ApiParam,
   ApiConsumes,
   ApiBody,
+  ApiHeader,
+  ApiQuery,
 } from '@nestjs/swagger';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { Throttle, SkipThrottle } from '@nestjs/throttler';
@@ -37,16 +39,51 @@ import { BearerTokenGuard } from '../auth/guards/bearer-token.guard';
 import { Session } from '../decorators/session.decorator';
 import { AllowAnonymous } from '../auth/decorators/allow-anonymous.decorator';
 import { UploadService } from '../upload/upload.service';
+import { Lang } from '../i18n/decorators/lang.decorator';
+import { LanguageService } from '../i18n/language.service';
+import { PetWithType, toPetResponse } from './pet.mapper';
 
+/**
+ * Pet endpoints.
+ *
+ * Embedded `petType.name` is localised: `?lang=` -> `Accept-Language` -> default
+ * language (see GET /languages).
+ */
 @ApiTags('Pets')
 @Controller('pets')
 @UseGuards(BearerTokenGuard)
 @ApiBearerAuth()
+@ApiQuery({
+  name: 'lang',
+  required: false,
+  example: 'el',
+  description:
+    'Language for `petType.name`. Falls back to Accept-Language, then the default language.',
+})
+@ApiHeader({
+  name: 'Accept-Language',
+  required: false,
+  description: 'Used when `lang` is omitted.',
+})
 export class PetController {
   constructor(
     private readonly petService: PetService,
     private readonly uploadService: UploadService,
+    private readonly languageService: LanguageService,
   ) {}
+
+  /** Localise a pet (or list of pets) for the response. */
+  private async localize(pet: PetWithType, lang: string): Promise<PetResponseDto>;
+  private async localize(pets: PetWithType[], lang: string): Promise<PetResponseDto[]>;
+  private async localize(
+    input: PetWithType | PetWithType[],
+    lang: string,
+  ): Promise<PetResponseDto | PetResponseDto[]> {
+    const defaultLang = await this.languageService.getDefaultCode();
+    return Array.isArray(input)
+      ? input.map((p) => toPetResponse(p, lang, defaultLang))
+      : toPetResponse(input, lang, defaultLang);
+  }
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
@@ -66,9 +103,10 @@ export class PetController {
   async create(
     @Body() dto: CreatePetDto,
     @Session() session: any,
+    @Lang() lang: string,
   ): Promise<PetResponseDto> {
     const userId = session.userId;
-    return this.petService.createPet(userId, dto);
+    return this.localize(await this.petService.createPet(userId, dto), lang);
   }
 
   @Get()
@@ -82,9 +120,12 @@ export class PetController {
     type: [PetResponseDto],
   })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async findAll(@Session() session: any): Promise<PetResponseDto[]> {
+  async findAll(
+    @Session() session: any,
+    @Lang() lang: string,
+  ): Promise<PetResponseDto[]> {
     const userId = session.userId;
-    return this.petService.findAllByUser(userId);
+    return this.localize(await this.petService.findAllByUser(userId), lang);
   }
 
   @Get(':id')
@@ -104,9 +145,10 @@ export class PetController {
   async findOne(
     @Param('id', ParseIntPipe) id: number,
     @Session() session: any,
+    @Lang() lang: string,
   ): Promise<PetResponseDto> {
     const userId = session.userId;
-    return this.petService.findOne(id, userId);
+    return this.localize(await this.petService.findOne(id, userId), lang);
   }
 
   @Get('tag/:tagId')
@@ -128,8 +170,11 @@ export class PetController {
     status: 429,
     description: 'Too many requests - rate limit exceeded',
   })
-  async findByTagId(@Param('tagId') tagId: string): Promise<PetResponseDto> {
-    return this.petService.findByTagId(tagId);
+  async findByTagId(
+    @Param('tagId') tagId: string,
+    @Lang() lang: string,
+  ): Promise<PetResponseDto> {
+    return this.localize(await this.petService.findByTagId(tagId), lang);
   }
 
   @Put(':id')
@@ -152,9 +197,10 @@ export class PetController {
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdatePetDto,
     @Session() session: any,
+    @Lang() lang: string,
   ): Promise<PetResponseDto> {
     const userId = session.userId;
-    return this.petService.updatePet(id, userId, dto);
+    return this.localize(await this.petService.updatePet(id, userId, dto), lang);
   }
 
   @Post(':id/photos')
@@ -233,9 +279,10 @@ export class PetController {
   async markAsMissing(
     @Param('id', ParseIntPipe) id: number,
     @Session() session: any,
+    @Lang() lang: string,
   ): Promise<PetResponseDto> {
     const userId = session.userId;
-    return this.petService.markAsMissing(id, userId);
+    return this.localize(await this.petService.markAsMissing(id, userId), lang);
   }
 
   @Patch(':id/found')
@@ -257,8 +304,9 @@ export class PetController {
   async markAsFound(
     @Param('id', ParseIntPipe) id: number,
     @Session() session: any,
+    @Lang() lang: string,
   ): Promise<PetResponseDto> {
     const userId = session.userId;
-    return this.petService.markAsFound(id, userId);
+    return this.localize(await this.petService.markAsFound(id, userId), lang);
   }
 }

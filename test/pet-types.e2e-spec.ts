@@ -189,12 +189,12 @@ describe('Pet Types API (e2e)', () => {
         await prisma.pet.deleteMany({
             where: {
                 petType: {
-                    slug: { in: ['dog', 'cat', 'bird', 'pet-type-test'] },
+                    slug: { in: ['dog', 'cat', 'bird', 'pet-type-test', 'english-only', 'unknown-lang', 'malformed'] },
                 },
             },
         });
         await prisma.petType.deleteMany({
-            where: { slug: { in: ['dog', 'cat', 'bird', 'pet-type-test'] } },
+            where: { slug: { in: ['dog', 'cat', 'bird', 'pet-type-test', 'english-only', 'unknown-lang', 'malformed'] } },
         });
         if (testUserId || superAdminUserId || regularUserUserId) {
             await prisma.userRole.deleteMany({
@@ -248,7 +248,7 @@ describe('Pet Types API (e2e)', () => {
     describe('POST /pet-types', () => {
         it('should create a pet type (201)', async () => {
             const dto = {
-                name: 'Pet Type Test',
+                translations: { el: 'Δοκιμαστικός Τύπος', en: 'Pet Type Test' },
                 slug: 'pet-type-test',
                 order: 50,
             };
@@ -260,9 +260,36 @@ describe('Pet Types API (e2e)', () => {
                 .expect(201);
 
             createdPetTypeId = response.body.id;
-            expect(response.body.name).toBe(dto.name);
+            // Default language is Greek
+            expect(response.body.name).toBe(dto.translations.el);
+            expect(response.body.lang).toBe('el');
+            expect(response.body.translations).toEqual(dto.translations);
             expect(response.body.slug).toBe(dto.slug);
             expect(response.body.order).toBe(dto.order);
+        });
+
+        it('should reject a pet type without the default-language translation (400)', async () => {
+            await request(app.getHttpServer())
+                .post('/pet-types')
+                .set('Authorization', `Bearer ${authToken}`)
+                .send({ translations: { en: 'English only' }, slug: 'english-only' })
+                .expect(400);
+        });
+
+        it('should reject unknown language codes (400)', async () => {
+            await request(app.getHttpServer())
+                .post('/pet-types')
+                .set('Authorization', `Bearer ${authToken}`)
+                .send({ translations: { el: 'Άγνωστο', xx: 'Unknown' }, slug: 'unknown-lang' })
+                .expect(400);
+        });
+
+        it('should reject a malformed translations map (422)', async () => {
+            await request(app.getHttpServer())
+                .post('/pet-types')
+                .set('Authorization', `Bearer ${authToken}`)
+                .send({ translations: 'Dog', slug: 'malformed' })
+                .expect(422);
         });
     });
 
@@ -276,6 +303,70 @@ describe('Pet Types API (e2e)', () => {
             expect(Array.isArray(response.body)).toBe(true);
             expect(response.body.length).toBeGreaterThan(0);
             expect(response.body[0]).toHaveProperty('order');
+            expect(response.body[0]).toHaveProperty('lang', 'el');
+        });
+
+        it('should return names in the requested language (200)', async () => {
+            const response = await request(app.getHttpServer())
+                .get('/pet-types?lang=en')
+                .set('Authorization', `Bearer ${authToken}`)
+                .expect(200);
+
+            const created = response.body.find((p: any) => p.id === createdPetTypeId);
+            expect(created.name).toBe('Pet Type Test');
+            expect(created.lang).toBe('en');
+        });
+
+        it('should honour Accept-Language when lang is omitted (200)', async () => {
+            const response = await request(app.getHttpServer())
+                .get('/pet-types')
+                .set('Authorization', `Bearer ${authToken}`)
+                .set('Accept-Language', 'en-US,en;q=0.9')
+                .expect(200);
+
+            const created = response.body.find((p: any) => p.id === createdPetTypeId);
+            expect(created.name).toBe('Pet Type Test');
+            expect(created.lang).toBe('en');
+        });
+
+        it('should fall back to the default language for unknown lang (200)', async () => {
+            const response = await request(app.getHttpServer())
+                .get('/pet-types?lang=xx')
+                .set('Authorization', `Bearer ${authToken}`)
+                .expect(200);
+
+            const created = response.body.find((p: any) => p.id === createdPetTypeId);
+            expect(created.name).toBe('Δοκιμαστικός Τύπος');
+            expect(created.lang).toBe('el');
+        });
+
+        it('should sort by the localised name when orderBy=name (200)', async () => {
+            const response = await request(app.getHttpServer())
+                .get('/pet-types?orderBy=name&orderDir=asc&lang=en')
+                .set('Authorization', `Bearer ${authToken}`)
+                .expect(200);
+
+            const names = response.body.map((p: any) => p.name);
+            expect(names).toEqual([...names].sort((a, b) => a.localeCompare(b, 'en')));
+        });
+
+        it('should include the translations map for super admins (200)', async () => {
+            const response = await request(app.getHttpServer())
+                .get('/pet-types')
+                .set('Authorization', `Bearer ${superAdminToken}`)
+                .expect(200);
+
+            const created = response.body.find((p: any) => p.id === createdPetTypeId);
+            expect(created.translations).toEqual({ el: 'Δοκιμαστικός Τύπος', en: 'Pet Type Test' });
+        });
+
+        it('should omit the translations map for regular users (200)', async () => {
+            const response = await request(app.getHttpServer())
+                .get('/pet-types')
+                .set('Authorization', `Bearer ${regularUserToken}`)
+                .expect(200);
+
+            expect(response.body[0]).not.toHaveProperty('translations');
         });
     });
 
@@ -306,12 +397,25 @@ describe('Pet Types API (e2e)', () => {
             const response = await request(app.getHttpServer())
                 .patch(`/pet-types/${createdPetTypeId}`)
                 .set('Authorization', `Bearer ${authToken}`)
-                .send({ name: 'Pet Type Updated', order: 60 })
+                .send({ translations: { en: 'Pet Type Updated' }, order: 60 })
                 .expect(200);
 
             expect(response.body.id).toBe(createdPetTypeId);
-            expect(response.body.name).toBe('Pet Type Updated');
+            // Greek untouched, English upserted
+            expect(response.body.translations).toEqual({
+                el: 'Δοκιμαστικός Τύπος',
+                en: 'Pet Type Updated',
+            });
+            expect(response.body.name).toBe('Δοκιμαστικός Τύπος');
             expect(response.body.order).toBe(60);
+        });
+
+        it('should reject unknown language codes on update (400)', async () => {
+            await request(app.getHttpServer())
+                .patch(`/pet-types/${createdPetTypeId}`)
+                .set('Authorization', `Bearer ${authToken}`)
+                .send({ translations: { xx: 'Nope' } })
+                .expect(400);
         });
     });
 

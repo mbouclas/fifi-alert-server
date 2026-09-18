@@ -59,10 +59,20 @@ export type Verification = $Result.DefaultSelection<Prisma.$VerificationPayload>
  */
 export type AuditLog = $Result.DefaultSelection<Prisma.$AuditLogPayload>
 /**
+ * Model Language
+ * 
+ */
+export type Language = $Result.DefaultSelection<Prisma.$LanguagePayload>
+/**
  * Model PetType
  * 
  */
 export type PetType = $Result.DefaultSelection<Prisma.$PetTypePayload>
+/**
+ * Model PetTypeTranslation
+ * 
+ */
+export type PetTypeTranslation = $Result.DefaultSelection<Prisma.$PetTypeTranslationPayload>
 /**
  * Model Pet
  * 
@@ -475,6 +485,16 @@ export class PrismaClient<
   get auditLog(): Prisma.AuditLogDelegate<ExtArgs, ClientOptions>;
 
   /**
+   * `prisma.language`: Exposes CRUD operations for the **Language** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more Languages
+    * const languages = await prisma.language.findMany()
+    * ```
+    */
+  get language(): Prisma.LanguageDelegate<ExtArgs, ClientOptions>;
+
+  /**
    * `prisma.petType`: Exposes CRUD operations for the **PetType** model.
     * Example usage:
     * ```ts
@@ -483,6 +503,16 @@ export class PrismaClient<
     * ```
     */
   get petType(): Prisma.PetTypeDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.petTypeTranslation`: Exposes CRUD operations for the **PetTypeTranslation** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more PetTypeTranslations
+    * const petTypeTranslations = await prisma.petTypeTranslation.findMany()
+    * ```
+    */
+  get petTypeTranslation(): Prisma.PetTypeTranslationDelegate<ExtArgs, ClientOptions>;
 
   /**
    * `prisma.pet`: Exposes CRUD operations for the **Pet** model.
@@ -996,7 +1026,9 @@ export namespace Prisma {
     Gate: 'Gate',
     Verification: 'Verification',
     AuditLog: 'AuditLog',
+    Language: 'Language',
     PetType: 'PetType',
+    PetTypeTranslation: 'PetTypeTranslation',
     Pet: 'Pet',
     Alert: 'Alert',
     Device: 'Device',
@@ -1019,7 +1051,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "user" | "userRole" | "userGate" | "role" | "session" | "account" | "gate" | "verification" | "auditLog" | "petType" | "pet" | "alert" | "device" | "savedZone" | "alertZone" | "sighting" | "notification"
+      modelProps: "user" | "userRole" | "userGate" | "role" | "session" | "account" | "gate" | "verification" | "auditLog" | "language" | "petType" | "petTypeTranslation" | "pet" | "alert" | "device" | "savedZone" | "alertZone" | "sighting" | "notification"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -1689,6 +1721,80 @@ export namespace Prisma {
           }
         }
       }
+      Language: {
+        payload: Prisma.$LanguagePayload<ExtArgs>
+        fields: Prisma.LanguageFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.LanguageFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LanguagePayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.LanguageFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LanguagePayload>
+          }
+          findFirst: {
+            args: Prisma.LanguageFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LanguagePayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.LanguageFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LanguagePayload>
+          }
+          findMany: {
+            args: Prisma.LanguageFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LanguagePayload>[]
+          }
+          create: {
+            args: Prisma.LanguageCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LanguagePayload>
+          }
+          createMany: {
+            args: Prisma.LanguageCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.LanguageCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LanguagePayload>[]
+          }
+          delete: {
+            args: Prisma.LanguageDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LanguagePayload>
+          }
+          update: {
+            args: Prisma.LanguageUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LanguagePayload>
+          }
+          deleteMany: {
+            args: Prisma.LanguageDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.LanguageUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.LanguageUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LanguagePayload>[]
+          }
+          upsert: {
+            args: Prisma.LanguageUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LanguagePayload>
+          }
+          aggregate: {
+            args: Prisma.LanguageAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateLanguage>
+          }
+          groupBy: {
+            args: Prisma.LanguageGroupByArgs<ExtArgs>
+            result: $Utils.Optional<LanguageGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.LanguageCountArgs<ExtArgs>
+            result: $Utils.Optional<LanguageCountAggregateOutputType> | number
+          }
+        }
+      }
       PetType: {
         payload: Prisma.$PetTypePayload<ExtArgs>
         fields: Prisma.PetTypeFieldRefs
@@ -1760,6 +1866,80 @@ export namespace Prisma {
           count: {
             args: Prisma.PetTypeCountArgs<ExtArgs>
             result: $Utils.Optional<PetTypeCountAggregateOutputType> | number
+          }
+        }
+      }
+      PetTypeTranslation: {
+        payload: Prisma.$PetTypeTranslationPayload<ExtArgs>
+        fields: Prisma.PetTypeTranslationFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.PetTypeTranslationFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PetTypeTranslationPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.PetTypeTranslationFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PetTypeTranslationPayload>
+          }
+          findFirst: {
+            args: Prisma.PetTypeTranslationFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PetTypeTranslationPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.PetTypeTranslationFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PetTypeTranslationPayload>
+          }
+          findMany: {
+            args: Prisma.PetTypeTranslationFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PetTypeTranslationPayload>[]
+          }
+          create: {
+            args: Prisma.PetTypeTranslationCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PetTypeTranslationPayload>
+          }
+          createMany: {
+            args: Prisma.PetTypeTranslationCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.PetTypeTranslationCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PetTypeTranslationPayload>[]
+          }
+          delete: {
+            args: Prisma.PetTypeTranslationDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PetTypeTranslationPayload>
+          }
+          update: {
+            args: Prisma.PetTypeTranslationUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PetTypeTranslationPayload>
+          }
+          deleteMany: {
+            args: Prisma.PetTypeTranslationDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.PetTypeTranslationUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.PetTypeTranslationUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PetTypeTranslationPayload>[]
+          }
+          upsert: {
+            args: Prisma.PetTypeTranslationUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PetTypeTranslationPayload>
+          }
+          aggregate: {
+            args: Prisma.PetTypeTranslationAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregatePetTypeTranslation>
+          }
+          groupBy: {
+            args: Prisma.PetTypeTranslationGroupByArgs<ExtArgs>
+            result: $Utils.Optional<PetTypeTranslationGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.PetTypeTranslationCountArgs<ExtArgs>
+            result: $Utils.Optional<PetTypeTranslationCountAggregateOutputType> | number
           }
         }
       }
@@ -2334,7 +2514,9 @@ export namespace Prisma {
     gate?: GateOmit
     verification?: VerificationOmit
     auditLog?: AuditLogOmit
+    language?: LanguageOmit
     petType?: PetTypeOmit
+    petTypeTranslation?: PetTypeTranslationOmit
     pet?: PetOmit
     alert?: AlertOmit
     device?: DeviceOmit
@@ -2592,15 +2774,48 @@ export namespace Prisma {
 
 
   /**
+   * Count Type LanguageCountOutputType
+   */
+
+  export type LanguageCountOutputType = {
+    petTypeTranslations: number
+  }
+
+  export type LanguageCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    petTypeTranslations?: boolean | LanguageCountOutputTypeCountPetTypeTranslationsArgs
+  }
+
+  // Custom InputTypes
+  /**
+   * LanguageCountOutputType without action
+   */
+  export type LanguageCountOutputTypeDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LanguageCountOutputType
+     */
+    select?: LanguageCountOutputTypeSelect<ExtArgs> | null
+  }
+
+  /**
+   * LanguageCountOutputType without action
+   */
+  export type LanguageCountOutputTypeCountPetTypeTranslationsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: PetTypeTranslationWhereInput
+  }
+
+
+  /**
    * Count Type PetTypeCountOutputType
    */
 
   export type PetTypeCountOutputType = {
     pets: number
+    translations: number
   }
 
   export type PetTypeCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     pets?: boolean | PetTypeCountOutputTypeCountPetsArgs
+    translations?: boolean | PetTypeCountOutputTypeCountTranslationsArgs
   }
 
   // Custom InputTypes
@@ -2619,6 +2834,13 @@ export namespace Prisma {
    */
   export type PetTypeCountOutputTypeCountPetsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: PetWhereInput
+  }
+
+  /**
+   * PetTypeCountOutputType without action
+   */
+  export type PetTypeCountOutputTypeCountTranslationsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: PetTypeTranslationWhereInput
   }
 
 
@@ -13490,6 +13712,1149 @@ export namespace Prisma {
 
 
   /**
+   * Model Language
+   */
+
+  export type AggregateLanguage = {
+    _count: LanguageCountAggregateOutputType | null
+    _avg: LanguageAvgAggregateOutputType | null
+    _sum: LanguageSumAggregateOutputType | null
+    _min: LanguageMinAggregateOutputType | null
+    _max: LanguageMaxAggregateOutputType | null
+  }
+
+  export type LanguageAvgAggregateOutputType = {
+    sortOrder: number | null
+  }
+
+  export type LanguageSumAggregateOutputType = {
+    sortOrder: number | null
+  }
+
+  export type LanguageMinAggregateOutputType = {
+    code: string | null
+    name: string | null
+    nativeName: string | null
+    isDefault: boolean | null
+    isActive: boolean | null
+    sortOrder: number | null
+    created_at: Date | null
+    updated_at: Date | null
+  }
+
+  export type LanguageMaxAggregateOutputType = {
+    code: string | null
+    name: string | null
+    nativeName: string | null
+    isDefault: boolean | null
+    isActive: boolean | null
+    sortOrder: number | null
+    created_at: Date | null
+    updated_at: Date | null
+  }
+
+  export type LanguageCountAggregateOutputType = {
+    code: number
+    name: number
+    nativeName: number
+    isDefault: number
+    isActive: number
+    sortOrder: number
+    created_at: number
+    updated_at: number
+    _all: number
+  }
+
+
+  export type LanguageAvgAggregateInputType = {
+    sortOrder?: true
+  }
+
+  export type LanguageSumAggregateInputType = {
+    sortOrder?: true
+  }
+
+  export type LanguageMinAggregateInputType = {
+    code?: true
+    name?: true
+    nativeName?: true
+    isDefault?: true
+    isActive?: true
+    sortOrder?: true
+    created_at?: true
+    updated_at?: true
+  }
+
+  export type LanguageMaxAggregateInputType = {
+    code?: true
+    name?: true
+    nativeName?: true
+    isDefault?: true
+    isActive?: true
+    sortOrder?: true
+    created_at?: true
+    updated_at?: true
+  }
+
+  export type LanguageCountAggregateInputType = {
+    code?: true
+    name?: true
+    nativeName?: true
+    isDefault?: true
+    isActive?: true
+    sortOrder?: true
+    created_at?: true
+    updated_at?: true
+    _all?: true
+  }
+
+  export type LanguageAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which Language to aggregate.
+     */
+    where?: LanguageWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Languages to fetch.
+     */
+    orderBy?: LanguageOrderByWithRelationInput | LanguageOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: LanguageWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Languages from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Languages.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned Languages
+    **/
+    _count?: true | LanguageCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: LanguageAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: LanguageSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: LanguageMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: LanguageMaxAggregateInputType
+  }
+
+  export type GetLanguageAggregateType<T extends LanguageAggregateArgs> = {
+        [P in keyof T & keyof AggregateLanguage]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateLanguage[P]>
+      : GetScalarType<T[P], AggregateLanguage[P]>
+  }
+
+
+
+
+  export type LanguageGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: LanguageWhereInput
+    orderBy?: LanguageOrderByWithAggregationInput | LanguageOrderByWithAggregationInput[]
+    by: LanguageScalarFieldEnum[] | LanguageScalarFieldEnum
+    having?: LanguageScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: LanguageCountAggregateInputType | true
+    _avg?: LanguageAvgAggregateInputType
+    _sum?: LanguageSumAggregateInputType
+    _min?: LanguageMinAggregateInputType
+    _max?: LanguageMaxAggregateInputType
+  }
+
+  export type LanguageGroupByOutputType = {
+    code: string
+    name: string
+    nativeName: string
+    isDefault: boolean
+    isActive: boolean
+    sortOrder: number
+    created_at: Date
+    updated_at: Date
+    _count: LanguageCountAggregateOutputType | null
+    _avg: LanguageAvgAggregateOutputType | null
+    _sum: LanguageSumAggregateOutputType | null
+    _min: LanguageMinAggregateOutputType | null
+    _max: LanguageMaxAggregateOutputType | null
+  }
+
+  type GetLanguageGroupByPayload<T extends LanguageGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<LanguageGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof LanguageGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], LanguageGroupByOutputType[P]>
+            : GetScalarType<T[P], LanguageGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type LanguageSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    code?: boolean
+    name?: boolean
+    nativeName?: boolean
+    isDefault?: boolean
+    isActive?: boolean
+    sortOrder?: boolean
+    created_at?: boolean
+    updated_at?: boolean
+    petTypeTranslations?: boolean | Language$petTypeTranslationsArgs<ExtArgs>
+    _count?: boolean | LanguageCountOutputTypeDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["language"]>
+
+  export type LanguageSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    code?: boolean
+    name?: boolean
+    nativeName?: boolean
+    isDefault?: boolean
+    isActive?: boolean
+    sortOrder?: boolean
+    created_at?: boolean
+    updated_at?: boolean
+  }, ExtArgs["result"]["language"]>
+
+  export type LanguageSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    code?: boolean
+    name?: boolean
+    nativeName?: boolean
+    isDefault?: boolean
+    isActive?: boolean
+    sortOrder?: boolean
+    created_at?: boolean
+    updated_at?: boolean
+  }, ExtArgs["result"]["language"]>
+
+  export type LanguageSelectScalar = {
+    code?: boolean
+    name?: boolean
+    nativeName?: boolean
+    isDefault?: boolean
+    isActive?: boolean
+    sortOrder?: boolean
+    created_at?: boolean
+    updated_at?: boolean
+  }
+
+  export type LanguageOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"code" | "name" | "nativeName" | "isDefault" | "isActive" | "sortOrder" | "created_at" | "updated_at", ExtArgs["result"]["language"]>
+  export type LanguageInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    petTypeTranslations?: boolean | Language$petTypeTranslationsArgs<ExtArgs>
+    _count?: boolean | LanguageCountOutputTypeDefaultArgs<ExtArgs>
+  }
+  export type LanguageIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
+  export type LanguageIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
+
+  export type $LanguagePayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "Language"
+    objects: {
+      petTypeTranslations: Prisma.$PetTypeTranslationPayload<ExtArgs>[]
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      code: string
+      name: string
+      nativeName: string
+      isDefault: boolean
+      isActive: boolean
+      sortOrder: number
+      created_at: Date
+      updated_at: Date
+    }, ExtArgs["result"]["language"]>
+    composites: {}
+  }
+
+  type LanguageGetPayload<S extends boolean | null | undefined | LanguageDefaultArgs> = $Result.GetResult<Prisma.$LanguagePayload, S>
+
+  type LanguageCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<LanguageFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: LanguageCountAggregateInputType | true
+    }
+
+  export interface LanguageDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['Language'], meta: { name: 'Language' } }
+    /**
+     * Find zero or one Language that matches the filter.
+     * @param {LanguageFindUniqueArgs} args - Arguments to find a Language
+     * @example
+     * // Get one Language
+     * const language = await prisma.language.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends LanguageFindUniqueArgs>(args: SelectSubset<T, LanguageFindUniqueArgs<ExtArgs>>): Prisma__LanguageClient<$Result.GetResult<Prisma.$LanguagePayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one Language that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {LanguageFindUniqueOrThrowArgs} args - Arguments to find a Language
+     * @example
+     * // Get one Language
+     * const language = await prisma.language.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends LanguageFindUniqueOrThrowArgs>(args: SelectSubset<T, LanguageFindUniqueOrThrowArgs<ExtArgs>>): Prisma__LanguageClient<$Result.GetResult<Prisma.$LanguagePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first Language that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {LanguageFindFirstArgs} args - Arguments to find a Language
+     * @example
+     * // Get one Language
+     * const language = await prisma.language.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends LanguageFindFirstArgs>(args?: SelectSubset<T, LanguageFindFirstArgs<ExtArgs>>): Prisma__LanguageClient<$Result.GetResult<Prisma.$LanguagePayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first Language that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {LanguageFindFirstOrThrowArgs} args - Arguments to find a Language
+     * @example
+     * // Get one Language
+     * const language = await prisma.language.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends LanguageFindFirstOrThrowArgs>(args?: SelectSubset<T, LanguageFindFirstOrThrowArgs<ExtArgs>>): Prisma__LanguageClient<$Result.GetResult<Prisma.$LanguagePayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more Languages that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {LanguageFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all Languages
+     * const languages = await prisma.language.findMany()
+     * 
+     * // Get first 10 Languages
+     * const languages = await prisma.language.findMany({ take: 10 })
+     * 
+     * // Only select the `code`
+     * const languageWithCodeOnly = await prisma.language.findMany({ select: { code: true } })
+     * 
+     */
+    findMany<T extends LanguageFindManyArgs>(args?: SelectSubset<T, LanguageFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$LanguagePayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a Language.
+     * @param {LanguageCreateArgs} args - Arguments to create a Language.
+     * @example
+     * // Create one Language
+     * const Language = await prisma.language.create({
+     *   data: {
+     *     // ... data to create a Language
+     *   }
+     * })
+     * 
+     */
+    create<T extends LanguageCreateArgs>(args: SelectSubset<T, LanguageCreateArgs<ExtArgs>>): Prisma__LanguageClient<$Result.GetResult<Prisma.$LanguagePayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many Languages.
+     * @param {LanguageCreateManyArgs} args - Arguments to create many Languages.
+     * @example
+     * // Create many Languages
+     * const language = await prisma.language.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends LanguageCreateManyArgs>(args?: SelectSubset<T, LanguageCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many Languages and returns the data saved in the database.
+     * @param {LanguageCreateManyAndReturnArgs} args - Arguments to create many Languages.
+     * @example
+     * // Create many Languages
+     * const language = await prisma.language.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many Languages and only return the `code`
+     * const languageWithCodeOnly = await prisma.language.createManyAndReturn({
+     *   select: { code: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends LanguageCreateManyAndReturnArgs>(args?: SelectSubset<T, LanguageCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$LanguagePayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a Language.
+     * @param {LanguageDeleteArgs} args - Arguments to delete one Language.
+     * @example
+     * // Delete one Language
+     * const Language = await prisma.language.delete({
+     *   where: {
+     *     // ... filter to delete one Language
+     *   }
+     * })
+     * 
+     */
+    delete<T extends LanguageDeleteArgs>(args: SelectSubset<T, LanguageDeleteArgs<ExtArgs>>): Prisma__LanguageClient<$Result.GetResult<Prisma.$LanguagePayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one Language.
+     * @param {LanguageUpdateArgs} args - Arguments to update one Language.
+     * @example
+     * // Update one Language
+     * const language = await prisma.language.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends LanguageUpdateArgs>(args: SelectSubset<T, LanguageUpdateArgs<ExtArgs>>): Prisma__LanguageClient<$Result.GetResult<Prisma.$LanguagePayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more Languages.
+     * @param {LanguageDeleteManyArgs} args - Arguments to filter Languages to delete.
+     * @example
+     * // Delete a few Languages
+     * const { count } = await prisma.language.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends LanguageDeleteManyArgs>(args?: SelectSubset<T, LanguageDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more Languages.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {LanguageUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many Languages
+     * const language = await prisma.language.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends LanguageUpdateManyArgs>(args: SelectSubset<T, LanguageUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more Languages and returns the data updated in the database.
+     * @param {LanguageUpdateManyAndReturnArgs} args - Arguments to update many Languages.
+     * @example
+     * // Update many Languages
+     * const language = await prisma.language.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more Languages and only return the `code`
+     * const languageWithCodeOnly = await prisma.language.updateManyAndReturn({
+     *   select: { code: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends LanguageUpdateManyAndReturnArgs>(args: SelectSubset<T, LanguageUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$LanguagePayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one Language.
+     * @param {LanguageUpsertArgs} args - Arguments to update or create a Language.
+     * @example
+     * // Update or create a Language
+     * const language = await prisma.language.upsert({
+     *   create: {
+     *     // ... data to create a Language
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the Language we want to update
+     *   }
+     * })
+     */
+    upsert<T extends LanguageUpsertArgs>(args: SelectSubset<T, LanguageUpsertArgs<ExtArgs>>): Prisma__LanguageClient<$Result.GetResult<Prisma.$LanguagePayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of Languages.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {LanguageCountArgs} args - Arguments to filter Languages to count.
+     * @example
+     * // Count the number of Languages
+     * const count = await prisma.language.count({
+     *   where: {
+     *     // ... the filter for the Languages we want to count
+     *   }
+     * })
+    **/
+    count<T extends LanguageCountArgs>(
+      args?: Subset<T, LanguageCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], LanguageCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a Language.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {LanguageAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends LanguageAggregateArgs>(args: Subset<T, LanguageAggregateArgs>): Prisma.PrismaPromise<GetLanguageAggregateType<T>>
+
+    /**
+     * Group by Language.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {LanguageGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends LanguageGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: LanguageGroupByArgs['orderBy'] }
+        : { orderBy?: LanguageGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, LanguageGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetLanguageGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the Language model
+   */
+  readonly fields: LanguageFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for Language.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__LanguageClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    petTypeTranslations<T extends Language$petTypeTranslationsArgs<ExtArgs> = {}>(args?: Subset<T, Language$petTypeTranslationsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PetTypeTranslationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the Language model
+   */
+  interface LanguageFieldRefs {
+    readonly code: FieldRef<"Language", 'String'>
+    readonly name: FieldRef<"Language", 'String'>
+    readonly nativeName: FieldRef<"Language", 'String'>
+    readonly isDefault: FieldRef<"Language", 'Boolean'>
+    readonly isActive: FieldRef<"Language", 'Boolean'>
+    readonly sortOrder: FieldRef<"Language", 'Int'>
+    readonly created_at: FieldRef<"Language", 'DateTime'>
+    readonly updated_at: FieldRef<"Language", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * Language findUnique
+   */
+  export type LanguageFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Language
+     */
+    select?: LanguageSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Language
+     */
+    omit?: LanguageOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: LanguageInclude<ExtArgs> | null
+    /**
+     * Filter, which Language to fetch.
+     */
+    where: LanguageWhereUniqueInput
+  }
+
+  /**
+   * Language findUniqueOrThrow
+   */
+  export type LanguageFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Language
+     */
+    select?: LanguageSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Language
+     */
+    omit?: LanguageOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: LanguageInclude<ExtArgs> | null
+    /**
+     * Filter, which Language to fetch.
+     */
+    where: LanguageWhereUniqueInput
+  }
+
+  /**
+   * Language findFirst
+   */
+  export type LanguageFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Language
+     */
+    select?: LanguageSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Language
+     */
+    omit?: LanguageOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: LanguageInclude<ExtArgs> | null
+    /**
+     * Filter, which Language to fetch.
+     */
+    where?: LanguageWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Languages to fetch.
+     */
+    orderBy?: LanguageOrderByWithRelationInput | LanguageOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for Languages.
+     */
+    cursor?: LanguageWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Languages from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Languages.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of Languages.
+     */
+    distinct?: LanguageScalarFieldEnum | LanguageScalarFieldEnum[]
+  }
+
+  /**
+   * Language findFirstOrThrow
+   */
+  export type LanguageFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Language
+     */
+    select?: LanguageSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Language
+     */
+    omit?: LanguageOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: LanguageInclude<ExtArgs> | null
+    /**
+     * Filter, which Language to fetch.
+     */
+    where?: LanguageWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Languages to fetch.
+     */
+    orderBy?: LanguageOrderByWithRelationInput | LanguageOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for Languages.
+     */
+    cursor?: LanguageWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Languages from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Languages.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of Languages.
+     */
+    distinct?: LanguageScalarFieldEnum | LanguageScalarFieldEnum[]
+  }
+
+  /**
+   * Language findMany
+   */
+  export type LanguageFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Language
+     */
+    select?: LanguageSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Language
+     */
+    omit?: LanguageOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: LanguageInclude<ExtArgs> | null
+    /**
+     * Filter, which Languages to fetch.
+     */
+    where?: LanguageWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Languages to fetch.
+     */
+    orderBy?: LanguageOrderByWithRelationInput | LanguageOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing Languages.
+     */
+    cursor?: LanguageWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Languages from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Languages.
+     */
+    skip?: number
+    distinct?: LanguageScalarFieldEnum | LanguageScalarFieldEnum[]
+  }
+
+  /**
+   * Language create
+   */
+  export type LanguageCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Language
+     */
+    select?: LanguageSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Language
+     */
+    omit?: LanguageOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: LanguageInclude<ExtArgs> | null
+    /**
+     * The data needed to create a Language.
+     */
+    data: XOR<LanguageCreateInput, LanguageUncheckedCreateInput>
+  }
+
+  /**
+   * Language createMany
+   */
+  export type LanguageCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many Languages.
+     */
+    data: LanguageCreateManyInput | LanguageCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * Language createManyAndReturn
+   */
+  export type LanguageCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Language
+     */
+    select?: LanguageSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the Language
+     */
+    omit?: LanguageOmit<ExtArgs> | null
+    /**
+     * The data used to create many Languages.
+     */
+    data: LanguageCreateManyInput | LanguageCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * Language update
+   */
+  export type LanguageUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Language
+     */
+    select?: LanguageSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Language
+     */
+    omit?: LanguageOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: LanguageInclude<ExtArgs> | null
+    /**
+     * The data needed to update a Language.
+     */
+    data: XOR<LanguageUpdateInput, LanguageUncheckedUpdateInput>
+    /**
+     * Choose, which Language to update.
+     */
+    where: LanguageWhereUniqueInput
+  }
+
+  /**
+   * Language updateMany
+   */
+  export type LanguageUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update Languages.
+     */
+    data: XOR<LanguageUpdateManyMutationInput, LanguageUncheckedUpdateManyInput>
+    /**
+     * Filter which Languages to update
+     */
+    where?: LanguageWhereInput
+    /**
+     * Limit how many Languages to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * Language updateManyAndReturn
+   */
+  export type LanguageUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Language
+     */
+    select?: LanguageSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the Language
+     */
+    omit?: LanguageOmit<ExtArgs> | null
+    /**
+     * The data used to update Languages.
+     */
+    data: XOR<LanguageUpdateManyMutationInput, LanguageUncheckedUpdateManyInput>
+    /**
+     * Filter which Languages to update
+     */
+    where?: LanguageWhereInput
+    /**
+     * Limit how many Languages to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * Language upsert
+   */
+  export type LanguageUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Language
+     */
+    select?: LanguageSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Language
+     */
+    omit?: LanguageOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: LanguageInclude<ExtArgs> | null
+    /**
+     * The filter to search for the Language to update in case it exists.
+     */
+    where: LanguageWhereUniqueInput
+    /**
+     * In case the Language found by the `where` argument doesn't exist, create a new Language with this data.
+     */
+    create: XOR<LanguageCreateInput, LanguageUncheckedCreateInput>
+    /**
+     * In case the Language was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<LanguageUpdateInput, LanguageUncheckedUpdateInput>
+  }
+
+  /**
+   * Language delete
+   */
+  export type LanguageDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Language
+     */
+    select?: LanguageSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Language
+     */
+    omit?: LanguageOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: LanguageInclude<ExtArgs> | null
+    /**
+     * Filter which Language to delete.
+     */
+    where: LanguageWhereUniqueInput
+  }
+
+  /**
+   * Language deleteMany
+   */
+  export type LanguageDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which Languages to delete
+     */
+    where?: LanguageWhereInput
+    /**
+     * Limit how many Languages to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * Language.petTypeTranslations
+   */
+  export type Language$petTypeTranslationsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PetTypeTranslation
+     */
+    select?: PetTypeTranslationSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PetTypeTranslation
+     */
+    omit?: PetTypeTranslationOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PetTypeTranslationInclude<ExtArgs> | null
+    where?: PetTypeTranslationWhereInput
+    orderBy?: PetTypeTranslationOrderByWithRelationInput | PetTypeTranslationOrderByWithRelationInput[]
+    cursor?: PetTypeTranslationWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: PetTypeTranslationScalarFieldEnum | PetTypeTranslationScalarFieldEnum[]
+  }
+
+  /**
+   * Language without action
+   */
+  export type LanguageDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Language
+     */
+    select?: LanguageSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Language
+     */
+    omit?: LanguageOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: LanguageInclude<ExtArgs> | null
+  }
+
+
+  /**
    * Model PetType
    */
 
@@ -13513,7 +14878,6 @@ export namespace Prisma {
 
   export type PetTypeMinAggregateOutputType = {
     id: number | null
-    name: string | null
     slug: string | null
     order: number | null
     created_at: Date | null
@@ -13522,7 +14886,6 @@ export namespace Prisma {
 
   export type PetTypeMaxAggregateOutputType = {
     id: number | null
-    name: string | null
     slug: string | null
     order: number | null
     created_at: Date | null
@@ -13531,7 +14894,6 @@ export namespace Prisma {
 
   export type PetTypeCountAggregateOutputType = {
     id: number
-    name: number
     slug: number
     order: number
     meta: number
@@ -13554,7 +14916,6 @@ export namespace Prisma {
 
   export type PetTypeMinAggregateInputType = {
     id?: true
-    name?: true
     slug?: true
     order?: true
     created_at?: true
@@ -13563,7 +14924,6 @@ export namespace Prisma {
 
   export type PetTypeMaxAggregateInputType = {
     id?: true
-    name?: true
     slug?: true
     order?: true
     created_at?: true
@@ -13572,7 +14932,6 @@ export namespace Prisma {
 
   export type PetTypeCountAggregateInputType = {
     id?: true
-    name?: true
     slug?: true
     order?: true
     meta?: true
@@ -13670,7 +15029,6 @@ export namespace Prisma {
 
   export type PetTypeGroupByOutputType = {
     id: number
-    name: string
     slug: string
     order: number
     meta: JsonValue | null
@@ -13700,7 +15058,6 @@ export namespace Prisma {
 
   export type PetTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
-    name?: boolean
     slug?: boolean
     order?: boolean
     meta?: boolean
@@ -13708,12 +15065,12 @@ export namespace Prisma {
     created_at?: boolean
     updated_at?: boolean
     pets?: boolean | PetType$petsArgs<ExtArgs>
+    translations?: boolean | PetType$translationsArgs<ExtArgs>
     _count?: boolean | PetTypeCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["petType"]>
 
   export type PetTypeSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
-    name?: boolean
     slug?: boolean
     order?: boolean
     meta?: boolean
@@ -13724,7 +15081,6 @@ export namespace Prisma {
 
   export type PetTypeSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
-    name?: boolean
     slug?: boolean
     order?: boolean
     meta?: boolean
@@ -13735,7 +15091,6 @@ export namespace Prisma {
 
   export type PetTypeSelectScalar = {
     id?: boolean
-    name?: boolean
     slug?: boolean
     order?: boolean
     meta?: boolean
@@ -13744,9 +15099,10 @@ export namespace Prisma {
     updated_at?: boolean
   }
 
-  export type PetTypeOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "name" | "slug" | "order" | "meta" | "settings" | "created_at" | "updated_at", ExtArgs["result"]["petType"]>
+  export type PetTypeOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "slug" | "order" | "meta" | "settings" | "created_at" | "updated_at", ExtArgs["result"]["petType"]>
   export type PetTypeInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     pets?: boolean | PetType$petsArgs<ExtArgs>
+    translations?: boolean | PetType$translationsArgs<ExtArgs>
     _count?: boolean | PetTypeCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type PetTypeIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
@@ -13756,10 +15112,10 @@ export namespace Prisma {
     name: "PetType"
     objects: {
       pets: Prisma.$PetPayload<ExtArgs>[]
+      translations: Prisma.$PetTypeTranslationPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       id: number
-      name: string
       slug: string
       order: number
       meta: Prisma.JsonValue | null
@@ -14161,6 +15517,7 @@ export namespace Prisma {
   export interface Prisma__PetTypeClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
     readonly [Symbol.toStringTag]: "PrismaPromise"
     pets<T extends PetType$petsArgs<ExtArgs> = {}>(args?: Subset<T, PetType$petsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PetPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    translations<T extends PetType$translationsArgs<ExtArgs> = {}>(args?: Subset<T, PetType$translationsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PetTypeTranslationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -14191,7 +15548,6 @@ export namespace Prisma {
    */
   interface PetTypeFieldRefs {
     readonly id: FieldRef<"PetType", 'Int'>
-    readonly name: FieldRef<"PetType", 'String'>
     readonly slug: FieldRef<"PetType", 'String'>
     readonly order: FieldRef<"PetType", 'Int'>
     readonly meta: FieldRef<"PetType", 'Json'>
@@ -14610,6 +15966,30 @@ export namespace Prisma {
   }
 
   /**
+   * PetType.translations
+   */
+  export type PetType$translationsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PetTypeTranslation
+     */
+    select?: PetTypeTranslationSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PetTypeTranslation
+     */
+    omit?: PetTypeTranslationOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PetTypeTranslationInclude<ExtArgs> | null
+    where?: PetTypeTranslationWhereInput
+    orderBy?: PetTypeTranslationOrderByWithRelationInput | PetTypeTranslationOrderByWithRelationInput[]
+    cursor?: PetTypeTranslationWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: PetTypeTranslationScalarFieldEnum | PetTypeTranslationScalarFieldEnum[]
+  }
+
+  /**
    * PetType without action
    */
   export type PetTypeDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -14625,6 +16005,1097 @@ export namespace Prisma {
      * Choose, which related nodes to fetch as well
      */
     include?: PetTypeInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model PetTypeTranslation
+   */
+
+  export type AggregatePetTypeTranslation = {
+    _count: PetTypeTranslationCountAggregateOutputType | null
+    _avg: PetTypeTranslationAvgAggregateOutputType | null
+    _sum: PetTypeTranslationSumAggregateOutputType | null
+    _min: PetTypeTranslationMinAggregateOutputType | null
+    _max: PetTypeTranslationMaxAggregateOutputType | null
+  }
+
+  export type PetTypeTranslationAvgAggregateOutputType = {
+    id: number | null
+    petTypeId: number | null
+  }
+
+  export type PetTypeTranslationSumAggregateOutputType = {
+    id: number | null
+    petTypeId: number | null
+  }
+
+  export type PetTypeTranslationMinAggregateOutputType = {
+    id: number | null
+    petTypeId: number | null
+    langCode: string | null
+    name: string | null
+  }
+
+  export type PetTypeTranslationMaxAggregateOutputType = {
+    id: number | null
+    petTypeId: number | null
+    langCode: string | null
+    name: string | null
+  }
+
+  export type PetTypeTranslationCountAggregateOutputType = {
+    id: number
+    petTypeId: number
+    langCode: number
+    name: number
+    _all: number
+  }
+
+
+  export type PetTypeTranslationAvgAggregateInputType = {
+    id?: true
+    petTypeId?: true
+  }
+
+  export type PetTypeTranslationSumAggregateInputType = {
+    id?: true
+    petTypeId?: true
+  }
+
+  export type PetTypeTranslationMinAggregateInputType = {
+    id?: true
+    petTypeId?: true
+    langCode?: true
+    name?: true
+  }
+
+  export type PetTypeTranslationMaxAggregateInputType = {
+    id?: true
+    petTypeId?: true
+    langCode?: true
+    name?: true
+  }
+
+  export type PetTypeTranslationCountAggregateInputType = {
+    id?: true
+    petTypeId?: true
+    langCode?: true
+    name?: true
+    _all?: true
+  }
+
+  export type PetTypeTranslationAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which PetTypeTranslation to aggregate.
+     */
+    where?: PetTypeTranslationWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of PetTypeTranslations to fetch.
+     */
+    orderBy?: PetTypeTranslationOrderByWithRelationInput | PetTypeTranslationOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: PetTypeTranslationWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` PetTypeTranslations from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` PetTypeTranslations.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned PetTypeTranslations
+    **/
+    _count?: true | PetTypeTranslationCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: PetTypeTranslationAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: PetTypeTranslationSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: PetTypeTranslationMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: PetTypeTranslationMaxAggregateInputType
+  }
+
+  export type GetPetTypeTranslationAggregateType<T extends PetTypeTranslationAggregateArgs> = {
+        [P in keyof T & keyof AggregatePetTypeTranslation]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregatePetTypeTranslation[P]>
+      : GetScalarType<T[P], AggregatePetTypeTranslation[P]>
+  }
+
+
+
+
+  export type PetTypeTranslationGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: PetTypeTranslationWhereInput
+    orderBy?: PetTypeTranslationOrderByWithAggregationInput | PetTypeTranslationOrderByWithAggregationInput[]
+    by: PetTypeTranslationScalarFieldEnum[] | PetTypeTranslationScalarFieldEnum
+    having?: PetTypeTranslationScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: PetTypeTranslationCountAggregateInputType | true
+    _avg?: PetTypeTranslationAvgAggregateInputType
+    _sum?: PetTypeTranslationSumAggregateInputType
+    _min?: PetTypeTranslationMinAggregateInputType
+    _max?: PetTypeTranslationMaxAggregateInputType
+  }
+
+  export type PetTypeTranslationGroupByOutputType = {
+    id: number
+    petTypeId: number
+    langCode: string
+    name: string
+    _count: PetTypeTranslationCountAggregateOutputType | null
+    _avg: PetTypeTranslationAvgAggregateOutputType | null
+    _sum: PetTypeTranslationSumAggregateOutputType | null
+    _min: PetTypeTranslationMinAggregateOutputType | null
+    _max: PetTypeTranslationMaxAggregateOutputType | null
+  }
+
+  type GetPetTypeTranslationGroupByPayload<T extends PetTypeTranslationGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<PetTypeTranslationGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof PetTypeTranslationGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], PetTypeTranslationGroupByOutputType[P]>
+            : GetScalarType<T[P], PetTypeTranslationGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type PetTypeTranslationSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    petTypeId?: boolean
+    langCode?: boolean
+    name?: boolean
+    petType?: boolean | PetTypeDefaultArgs<ExtArgs>
+    language?: boolean | LanguageDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["petTypeTranslation"]>
+
+  export type PetTypeTranslationSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    petTypeId?: boolean
+    langCode?: boolean
+    name?: boolean
+    petType?: boolean | PetTypeDefaultArgs<ExtArgs>
+    language?: boolean | LanguageDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["petTypeTranslation"]>
+
+  export type PetTypeTranslationSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    petTypeId?: boolean
+    langCode?: boolean
+    name?: boolean
+    petType?: boolean | PetTypeDefaultArgs<ExtArgs>
+    language?: boolean | LanguageDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["petTypeTranslation"]>
+
+  export type PetTypeTranslationSelectScalar = {
+    id?: boolean
+    petTypeId?: boolean
+    langCode?: boolean
+    name?: boolean
+  }
+
+  export type PetTypeTranslationOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "petTypeId" | "langCode" | "name", ExtArgs["result"]["petTypeTranslation"]>
+  export type PetTypeTranslationInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    petType?: boolean | PetTypeDefaultArgs<ExtArgs>
+    language?: boolean | LanguageDefaultArgs<ExtArgs>
+  }
+  export type PetTypeTranslationIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    petType?: boolean | PetTypeDefaultArgs<ExtArgs>
+    language?: boolean | LanguageDefaultArgs<ExtArgs>
+  }
+  export type PetTypeTranslationIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    petType?: boolean | PetTypeDefaultArgs<ExtArgs>
+    language?: boolean | LanguageDefaultArgs<ExtArgs>
+  }
+
+  export type $PetTypeTranslationPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "PetTypeTranslation"
+    objects: {
+      petType: Prisma.$PetTypePayload<ExtArgs>
+      language: Prisma.$LanguagePayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: number
+      petTypeId: number
+      langCode: string
+      name: string
+    }, ExtArgs["result"]["petTypeTranslation"]>
+    composites: {}
+  }
+
+  type PetTypeTranslationGetPayload<S extends boolean | null | undefined | PetTypeTranslationDefaultArgs> = $Result.GetResult<Prisma.$PetTypeTranslationPayload, S>
+
+  type PetTypeTranslationCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<PetTypeTranslationFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: PetTypeTranslationCountAggregateInputType | true
+    }
+
+  export interface PetTypeTranslationDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['PetTypeTranslation'], meta: { name: 'PetTypeTranslation' } }
+    /**
+     * Find zero or one PetTypeTranslation that matches the filter.
+     * @param {PetTypeTranslationFindUniqueArgs} args - Arguments to find a PetTypeTranslation
+     * @example
+     * // Get one PetTypeTranslation
+     * const petTypeTranslation = await prisma.petTypeTranslation.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends PetTypeTranslationFindUniqueArgs>(args: SelectSubset<T, PetTypeTranslationFindUniqueArgs<ExtArgs>>): Prisma__PetTypeTranslationClient<$Result.GetResult<Prisma.$PetTypeTranslationPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one PetTypeTranslation that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {PetTypeTranslationFindUniqueOrThrowArgs} args - Arguments to find a PetTypeTranslation
+     * @example
+     * // Get one PetTypeTranslation
+     * const petTypeTranslation = await prisma.petTypeTranslation.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends PetTypeTranslationFindUniqueOrThrowArgs>(args: SelectSubset<T, PetTypeTranslationFindUniqueOrThrowArgs<ExtArgs>>): Prisma__PetTypeTranslationClient<$Result.GetResult<Prisma.$PetTypeTranslationPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first PetTypeTranslation that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PetTypeTranslationFindFirstArgs} args - Arguments to find a PetTypeTranslation
+     * @example
+     * // Get one PetTypeTranslation
+     * const petTypeTranslation = await prisma.petTypeTranslation.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends PetTypeTranslationFindFirstArgs>(args?: SelectSubset<T, PetTypeTranslationFindFirstArgs<ExtArgs>>): Prisma__PetTypeTranslationClient<$Result.GetResult<Prisma.$PetTypeTranslationPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first PetTypeTranslation that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PetTypeTranslationFindFirstOrThrowArgs} args - Arguments to find a PetTypeTranslation
+     * @example
+     * // Get one PetTypeTranslation
+     * const petTypeTranslation = await prisma.petTypeTranslation.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends PetTypeTranslationFindFirstOrThrowArgs>(args?: SelectSubset<T, PetTypeTranslationFindFirstOrThrowArgs<ExtArgs>>): Prisma__PetTypeTranslationClient<$Result.GetResult<Prisma.$PetTypeTranslationPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more PetTypeTranslations that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PetTypeTranslationFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all PetTypeTranslations
+     * const petTypeTranslations = await prisma.petTypeTranslation.findMany()
+     * 
+     * // Get first 10 PetTypeTranslations
+     * const petTypeTranslations = await prisma.petTypeTranslation.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const petTypeTranslationWithIdOnly = await prisma.petTypeTranslation.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends PetTypeTranslationFindManyArgs>(args?: SelectSubset<T, PetTypeTranslationFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PetTypeTranslationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a PetTypeTranslation.
+     * @param {PetTypeTranslationCreateArgs} args - Arguments to create a PetTypeTranslation.
+     * @example
+     * // Create one PetTypeTranslation
+     * const PetTypeTranslation = await prisma.petTypeTranslation.create({
+     *   data: {
+     *     // ... data to create a PetTypeTranslation
+     *   }
+     * })
+     * 
+     */
+    create<T extends PetTypeTranslationCreateArgs>(args: SelectSubset<T, PetTypeTranslationCreateArgs<ExtArgs>>): Prisma__PetTypeTranslationClient<$Result.GetResult<Prisma.$PetTypeTranslationPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many PetTypeTranslations.
+     * @param {PetTypeTranslationCreateManyArgs} args - Arguments to create many PetTypeTranslations.
+     * @example
+     * // Create many PetTypeTranslations
+     * const petTypeTranslation = await prisma.petTypeTranslation.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends PetTypeTranslationCreateManyArgs>(args?: SelectSubset<T, PetTypeTranslationCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many PetTypeTranslations and returns the data saved in the database.
+     * @param {PetTypeTranslationCreateManyAndReturnArgs} args - Arguments to create many PetTypeTranslations.
+     * @example
+     * // Create many PetTypeTranslations
+     * const petTypeTranslation = await prisma.petTypeTranslation.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many PetTypeTranslations and only return the `id`
+     * const petTypeTranslationWithIdOnly = await prisma.petTypeTranslation.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends PetTypeTranslationCreateManyAndReturnArgs>(args?: SelectSubset<T, PetTypeTranslationCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PetTypeTranslationPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a PetTypeTranslation.
+     * @param {PetTypeTranslationDeleteArgs} args - Arguments to delete one PetTypeTranslation.
+     * @example
+     * // Delete one PetTypeTranslation
+     * const PetTypeTranslation = await prisma.petTypeTranslation.delete({
+     *   where: {
+     *     // ... filter to delete one PetTypeTranslation
+     *   }
+     * })
+     * 
+     */
+    delete<T extends PetTypeTranslationDeleteArgs>(args: SelectSubset<T, PetTypeTranslationDeleteArgs<ExtArgs>>): Prisma__PetTypeTranslationClient<$Result.GetResult<Prisma.$PetTypeTranslationPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one PetTypeTranslation.
+     * @param {PetTypeTranslationUpdateArgs} args - Arguments to update one PetTypeTranslation.
+     * @example
+     * // Update one PetTypeTranslation
+     * const petTypeTranslation = await prisma.petTypeTranslation.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends PetTypeTranslationUpdateArgs>(args: SelectSubset<T, PetTypeTranslationUpdateArgs<ExtArgs>>): Prisma__PetTypeTranslationClient<$Result.GetResult<Prisma.$PetTypeTranslationPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more PetTypeTranslations.
+     * @param {PetTypeTranslationDeleteManyArgs} args - Arguments to filter PetTypeTranslations to delete.
+     * @example
+     * // Delete a few PetTypeTranslations
+     * const { count } = await prisma.petTypeTranslation.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends PetTypeTranslationDeleteManyArgs>(args?: SelectSubset<T, PetTypeTranslationDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more PetTypeTranslations.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PetTypeTranslationUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many PetTypeTranslations
+     * const petTypeTranslation = await prisma.petTypeTranslation.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends PetTypeTranslationUpdateManyArgs>(args: SelectSubset<T, PetTypeTranslationUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more PetTypeTranslations and returns the data updated in the database.
+     * @param {PetTypeTranslationUpdateManyAndReturnArgs} args - Arguments to update many PetTypeTranslations.
+     * @example
+     * // Update many PetTypeTranslations
+     * const petTypeTranslation = await prisma.petTypeTranslation.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more PetTypeTranslations and only return the `id`
+     * const petTypeTranslationWithIdOnly = await prisma.petTypeTranslation.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends PetTypeTranslationUpdateManyAndReturnArgs>(args: SelectSubset<T, PetTypeTranslationUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PetTypeTranslationPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one PetTypeTranslation.
+     * @param {PetTypeTranslationUpsertArgs} args - Arguments to update or create a PetTypeTranslation.
+     * @example
+     * // Update or create a PetTypeTranslation
+     * const petTypeTranslation = await prisma.petTypeTranslation.upsert({
+     *   create: {
+     *     // ... data to create a PetTypeTranslation
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the PetTypeTranslation we want to update
+     *   }
+     * })
+     */
+    upsert<T extends PetTypeTranslationUpsertArgs>(args: SelectSubset<T, PetTypeTranslationUpsertArgs<ExtArgs>>): Prisma__PetTypeTranslationClient<$Result.GetResult<Prisma.$PetTypeTranslationPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of PetTypeTranslations.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PetTypeTranslationCountArgs} args - Arguments to filter PetTypeTranslations to count.
+     * @example
+     * // Count the number of PetTypeTranslations
+     * const count = await prisma.petTypeTranslation.count({
+     *   where: {
+     *     // ... the filter for the PetTypeTranslations we want to count
+     *   }
+     * })
+    **/
+    count<T extends PetTypeTranslationCountArgs>(
+      args?: Subset<T, PetTypeTranslationCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], PetTypeTranslationCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a PetTypeTranslation.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PetTypeTranslationAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends PetTypeTranslationAggregateArgs>(args: Subset<T, PetTypeTranslationAggregateArgs>): Prisma.PrismaPromise<GetPetTypeTranslationAggregateType<T>>
+
+    /**
+     * Group by PetTypeTranslation.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PetTypeTranslationGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends PetTypeTranslationGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: PetTypeTranslationGroupByArgs['orderBy'] }
+        : { orderBy?: PetTypeTranslationGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, PetTypeTranslationGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetPetTypeTranslationGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the PetTypeTranslation model
+   */
+  readonly fields: PetTypeTranslationFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for PetTypeTranslation.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__PetTypeTranslationClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    petType<T extends PetTypeDefaultArgs<ExtArgs> = {}>(args?: Subset<T, PetTypeDefaultArgs<ExtArgs>>): Prisma__PetTypeClient<$Result.GetResult<Prisma.$PetTypePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    language<T extends LanguageDefaultArgs<ExtArgs> = {}>(args?: Subset<T, LanguageDefaultArgs<ExtArgs>>): Prisma__LanguageClient<$Result.GetResult<Prisma.$LanguagePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the PetTypeTranslation model
+   */
+  interface PetTypeTranslationFieldRefs {
+    readonly id: FieldRef<"PetTypeTranslation", 'Int'>
+    readonly petTypeId: FieldRef<"PetTypeTranslation", 'Int'>
+    readonly langCode: FieldRef<"PetTypeTranslation", 'String'>
+    readonly name: FieldRef<"PetTypeTranslation", 'String'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * PetTypeTranslation findUnique
+   */
+  export type PetTypeTranslationFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PetTypeTranslation
+     */
+    select?: PetTypeTranslationSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PetTypeTranslation
+     */
+    omit?: PetTypeTranslationOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PetTypeTranslationInclude<ExtArgs> | null
+    /**
+     * Filter, which PetTypeTranslation to fetch.
+     */
+    where: PetTypeTranslationWhereUniqueInput
+  }
+
+  /**
+   * PetTypeTranslation findUniqueOrThrow
+   */
+  export type PetTypeTranslationFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PetTypeTranslation
+     */
+    select?: PetTypeTranslationSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PetTypeTranslation
+     */
+    omit?: PetTypeTranslationOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PetTypeTranslationInclude<ExtArgs> | null
+    /**
+     * Filter, which PetTypeTranslation to fetch.
+     */
+    where: PetTypeTranslationWhereUniqueInput
+  }
+
+  /**
+   * PetTypeTranslation findFirst
+   */
+  export type PetTypeTranslationFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PetTypeTranslation
+     */
+    select?: PetTypeTranslationSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PetTypeTranslation
+     */
+    omit?: PetTypeTranslationOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PetTypeTranslationInclude<ExtArgs> | null
+    /**
+     * Filter, which PetTypeTranslation to fetch.
+     */
+    where?: PetTypeTranslationWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of PetTypeTranslations to fetch.
+     */
+    orderBy?: PetTypeTranslationOrderByWithRelationInput | PetTypeTranslationOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for PetTypeTranslations.
+     */
+    cursor?: PetTypeTranslationWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` PetTypeTranslations from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` PetTypeTranslations.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of PetTypeTranslations.
+     */
+    distinct?: PetTypeTranslationScalarFieldEnum | PetTypeTranslationScalarFieldEnum[]
+  }
+
+  /**
+   * PetTypeTranslation findFirstOrThrow
+   */
+  export type PetTypeTranslationFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PetTypeTranslation
+     */
+    select?: PetTypeTranslationSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PetTypeTranslation
+     */
+    omit?: PetTypeTranslationOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PetTypeTranslationInclude<ExtArgs> | null
+    /**
+     * Filter, which PetTypeTranslation to fetch.
+     */
+    where?: PetTypeTranslationWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of PetTypeTranslations to fetch.
+     */
+    orderBy?: PetTypeTranslationOrderByWithRelationInput | PetTypeTranslationOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for PetTypeTranslations.
+     */
+    cursor?: PetTypeTranslationWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` PetTypeTranslations from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` PetTypeTranslations.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of PetTypeTranslations.
+     */
+    distinct?: PetTypeTranslationScalarFieldEnum | PetTypeTranslationScalarFieldEnum[]
+  }
+
+  /**
+   * PetTypeTranslation findMany
+   */
+  export type PetTypeTranslationFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PetTypeTranslation
+     */
+    select?: PetTypeTranslationSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PetTypeTranslation
+     */
+    omit?: PetTypeTranslationOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PetTypeTranslationInclude<ExtArgs> | null
+    /**
+     * Filter, which PetTypeTranslations to fetch.
+     */
+    where?: PetTypeTranslationWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of PetTypeTranslations to fetch.
+     */
+    orderBy?: PetTypeTranslationOrderByWithRelationInput | PetTypeTranslationOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing PetTypeTranslations.
+     */
+    cursor?: PetTypeTranslationWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` PetTypeTranslations from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` PetTypeTranslations.
+     */
+    skip?: number
+    distinct?: PetTypeTranslationScalarFieldEnum | PetTypeTranslationScalarFieldEnum[]
+  }
+
+  /**
+   * PetTypeTranslation create
+   */
+  export type PetTypeTranslationCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PetTypeTranslation
+     */
+    select?: PetTypeTranslationSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PetTypeTranslation
+     */
+    omit?: PetTypeTranslationOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PetTypeTranslationInclude<ExtArgs> | null
+    /**
+     * The data needed to create a PetTypeTranslation.
+     */
+    data: XOR<PetTypeTranslationCreateInput, PetTypeTranslationUncheckedCreateInput>
+  }
+
+  /**
+   * PetTypeTranslation createMany
+   */
+  export type PetTypeTranslationCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many PetTypeTranslations.
+     */
+    data: PetTypeTranslationCreateManyInput | PetTypeTranslationCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * PetTypeTranslation createManyAndReturn
+   */
+  export type PetTypeTranslationCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PetTypeTranslation
+     */
+    select?: PetTypeTranslationSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the PetTypeTranslation
+     */
+    omit?: PetTypeTranslationOmit<ExtArgs> | null
+    /**
+     * The data used to create many PetTypeTranslations.
+     */
+    data: PetTypeTranslationCreateManyInput | PetTypeTranslationCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PetTypeTranslationIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * PetTypeTranslation update
+   */
+  export type PetTypeTranslationUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PetTypeTranslation
+     */
+    select?: PetTypeTranslationSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PetTypeTranslation
+     */
+    omit?: PetTypeTranslationOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PetTypeTranslationInclude<ExtArgs> | null
+    /**
+     * The data needed to update a PetTypeTranslation.
+     */
+    data: XOR<PetTypeTranslationUpdateInput, PetTypeTranslationUncheckedUpdateInput>
+    /**
+     * Choose, which PetTypeTranslation to update.
+     */
+    where: PetTypeTranslationWhereUniqueInput
+  }
+
+  /**
+   * PetTypeTranslation updateMany
+   */
+  export type PetTypeTranslationUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update PetTypeTranslations.
+     */
+    data: XOR<PetTypeTranslationUpdateManyMutationInput, PetTypeTranslationUncheckedUpdateManyInput>
+    /**
+     * Filter which PetTypeTranslations to update
+     */
+    where?: PetTypeTranslationWhereInput
+    /**
+     * Limit how many PetTypeTranslations to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * PetTypeTranslation updateManyAndReturn
+   */
+  export type PetTypeTranslationUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PetTypeTranslation
+     */
+    select?: PetTypeTranslationSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the PetTypeTranslation
+     */
+    omit?: PetTypeTranslationOmit<ExtArgs> | null
+    /**
+     * The data used to update PetTypeTranslations.
+     */
+    data: XOR<PetTypeTranslationUpdateManyMutationInput, PetTypeTranslationUncheckedUpdateManyInput>
+    /**
+     * Filter which PetTypeTranslations to update
+     */
+    where?: PetTypeTranslationWhereInput
+    /**
+     * Limit how many PetTypeTranslations to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PetTypeTranslationIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * PetTypeTranslation upsert
+   */
+  export type PetTypeTranslationUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PetTypeTranslation
+     */
+    select?: PetTypeTranslationSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PetTypeTranslation
+     */
+    omit?: PetTypeTranslationOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PetTypeTranslationInclude<ExtArgs> | null
+    /**
+     * The filter to search for the PetTypeTranslation to update in case it exists.
+     */
+    where: PetTypeTranslationWhereUniqueInput
+    /**
+     * In case the PetTypeTranslation found by the `where` argument doesn't exist, create a new PetTypeTranslation with this data.
+     */
+    create: XOR<PetTypeTranslationCreateInput, PetTypeTranslationUncheckedCreateInput>
+    /**
+     * In case the PetTypeTranslation was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<PetTypeTranslationUpdateInput, PetTypeTranslationUncheckedUpdateInput>
+  }
+
+  /**
+   * PetTypeTranslation delete
+   */
+  export type PetTypeTranslationDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PetTypeTranslation
+     */
+    select?: PetTypeTranslationSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PetTypeTranslation
+     */
+    omit?: PetTypeTranslationOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PetTypeTranslationInclude<ExtArgs> | null
+    /**
+     * Filter which PetTypeTranslation to delete.
+     */
+    where: PetTypeTranslationWhereUniqueInput
+  }
+
+  /**
+   * PetTypeTranslation deleteMany
+   */
+  export type PetTypeTranslationDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which PetTypeTranslations to delete
+     */
+    where?: PetTypeTranslationWhereInput
+    /**
+     * Limit how many PetTypeTranslations to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * PetTypeTranslation without action
+   */
+  export type PetTypeTranslationDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PetTypeTranslation
+     */
+    select?: PetTypeTranslationSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PetTypeTranslation
+     */
+    omit?: PetTypeTranslationOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PetTypeTranslationInclude<ExtArgs> | null
   }
 
 
@@ -23157,9 +25628,22 @@ export namespace Prisma {
   export type AuditLogScalarFieldEnum = (typeof AuditLogScalarFieldEnum)[keyof typeof AuditLogScalarFieldEnum]
 
 
+  export const LanguageScalarFieldEnum: {
+    code: 'code',
+    name: 'name',
+    nativeName: 'nativeName',
+    isDefault: 'isDefault',
+    isActive: 'isActive',
+    sortOrder: 'sortOrder',
+    created_at: 'created_at',
+    updated_at: 'updated_at'
+  };
+
+  export type LanguageScalarFieldEnum = (typeof LanguageScalarFieldEnum)[keyof typeof LanguageScalarFieldEnum]
+
+
   export const PetTypeScalarFieldEnum: {
     id: 'id',
-    name: 'name',
     slug: 'slug',
     order: 'order',
     meta: 'meta',
@@ -23169,6 +25653,16 @@ export namespace Prisma {
   };
 
   export type PetTypeScalarFieldEnum = (typeof PetTypeScalarFieldEnum)[keyof typeof PetTypeScalarFieldEnum]
+
+
+  export const PetTypeTranslationScalarFieldEnum: {
+    id: 'id',
+    petTypeId: 'petTypeId',
+    langCode: 'langCode',
+    name: 'name'
+  };
+
+  export type PetTypeTranslationScalarFieldEnum = (typeof PetTypeTranslationScalarFieldEnum)[keyof typeof PetTypeTranslationScalarFieldEnum]
 
 
   export const PetScalarFieldEnum: {
@@ -24416,12 +26910,83 @@ export namespace Prisma {
     timestamp?: DateTimeWithAggregatesFilter<"AuditLog"> | Date | string
   }
 
+  export type LanguageWhereInput = {
+    AND?: LanguageWhereInput | LanguageWhereInput[]
+    OR?: LanguageWhereInput[]
+    NOT?: LanguageWhereInput | LanguageWhereInput[]
+    code?: StringFilter<"Language"> | string
+    name?: StringFilter<"Language"> | string
+    nativeName?: StringFilter<"Language"> | string
+    isDefault?: BoolFilter<"Language"> | boolean
+    isActive?: BoolFilter<"Language"> | boolean
+    sortOrder?: IntFilter<"Language"> | number
+    created_at?: DateTimeFilter<"Language"> | Date | string
+    updated_at?: DateTimeFilter<"Language"> | Date | string
+    petTypeTranslations?: PetTypeTranslationListRelationFilter
+  }
+
+  export type LanguageOrderByWithRelationInput = {
+    code?: SortOrder
+    name?: SortOrder
+    nativeName?: SortOrder
+    isDefault?: SortOrder
+    isActive?: SortOrder
+    sortOrder?: SortOrder
+    created_at?: SortOrder
+    updated_at?: SortOrder
+    petTypeTranslations?: PetTypeTranslationOrderByRelationAggregateInput
+  }
+
+  export type LanguageWhereUniqueInput = Prisma.AtLeast<{
+    code?: string
+    AND?: LanguageWhereInput | LanguageWhereInput[]
+    OR?: LanguageWhereInput[]
+    NOT?: LanguageWhereInput | LanguageWhereInput[]
+    name?: StringFilter<"Language"> | string
+    nativeName?: StringFilter<"Language"> | string
+    isDefault?: BoolFilter<"Language"> | boolean
+    isActive?: BoolFilter<"Language"> | boolean
+    sortOrder?: IntFilter<"Language"> | number
+    created_at?: DateTimeFilter<"Language"> | Date | string
+    updated_at?: DateTimeFilter<"Language"> | Date | string
+    petTypeTranslations?: PetTypeTranslationListRelationFilter
+  }, "code">
+
+  export type LanguageOrderByWithAggregationInput = {
+    code?: SortOrder
+    name?: SortOrder
+    nativeName?: SortOrder
+    isDefault?: SortOrder
+    isActive?: SortOrder
+    sortOrder?: SortOrder
+    created_at?: SortOrder
+    updated_at?: SortOrder
+    _count?: LanguageCountOrderByAggregateInput
+    _avg?: LanguageAvgOrderByAggregateInput
+    _max?: LanguageMaxOrderByAggregateInput
+    _min?: LanguageMinOrderByAggregateInput
+    _sum?: LanguageSumOrderByAggregateInput
+  }
+
+  export type LanguageScalarWhereWithAggregatesInput = {
+    AND?: LanguageScalarWhereWithAggregatesInput | LanguageScalarWhereWithAggregatesInput[]
+    OR?: LanguageScalarWhereWithAggregatesInput[]
+    NOT?: LanguageScalarWhereWithAggregatesInput | LanguageScalarWhereWithAggregatesInput[]
+    code?: StringWithAggregatesFilter<"Language"> | string
+    name?: StringWithAggregatesFilter<"Language"> | string
+    nativeName?: StringWithAggregatesFilter<"Language"> | string
+    isDefault?: BoolWithAggregatesFilter<"Language"> | boolean
+    isActive?: BoolWithAggregatesFilter<"Language"> | boolean
+    sortOrder?: IntWithAggregatesFilter<"Language"> | number
+    created_at?: DateTimeWithAggregatesFilter<"Language"> | Date | string
+    updated_at?: DateTimeWithAggregatesFilter<"Language"> | Date | string
+  }
+
   export type PetTypeWhereInput = {
     AND?: PetTypeWhereInput | PetTypeWhereInput[]
     OR?: PetTypeWhereInput[]
     NOT?: PetTypeWhereInput | PetTypeWhereInput[]
     id?: IntFilter<"PetType"> | number
-    name?: StringFilter<"PetType"> | string
     slug?: StringFilter<"PetType"> | string
     order?: IntFilter<"PetType"> | number
     meta?: JsonNullableFilter<"PetType">
@@ -24429,11 +26994,11 @@ export namespace Prisma {
     created_at?: DateTimeFilter<"PetType"> | Date | string
     updated_at?: DateTimeFilter<"PetType"> | Date | string
     pets?: PetListRelationFilter
+    translations?: PetTypeTranslationListRelationFilter
   }
 
   export type PetTypeOrderByWithRelationInput = {
     id?: SortOrder
-    name?: SortOrder
     slug?: SortOrder
     order?: SortOrder
     meta?: SortOrderInput | SortOrder
@@ -24441,11 +27006,11 @@ export namespace Prisma {
     created_at?: SortOrder
     updated_at?: SortOrder
     pets?: PetOrderByRelationAggregateInput
+    translations?: PetTypeTranslationOrderByRelationAggregateInput
   }
 
   export type PetTypeWhereUniqueInput = Prisma.AtLeast<{
     id?: number
-    name?: string
     slug?: string
     AND?: PetTypeWhereInput | PetTypeWhereInput[]
     OR?: PetTypeWhereInput[]
@@ -24456,11 +27021,11 @@ export namespace Prisma {
     created_at?: DateTimeFilter<"PetType"> | Date | string
     updated_at?: DateTimeFilter<"PetType"> | Date | string
     pets?: PetListRelationFilter
-  }, "id" | "name" | "slug">
+    translations?: PetTypeTranslationListRelationFilter
+  }, "id" | "slug">
 
   export type PetTypeOrderByWithAggregationInput = {
     id?: SortOrder
-    name?: SortOrder
     slug?: SortOrder
     order?: SortOrder
     meta?: SortOrderInput | SortOrder
@@ -24479,13 +27044,68 @@ export namespace Prisma {
     OR?: PetTypeScalarWhereWithAggregatesInput[]
     NOT?: PetTypeScalarWhereWithAggregatesInput | PetTypeScalarWhereWithAggregatesInput[]
     id?: IntWithAggregatesFilter<"PetType"> | number
-    name?: StringWithAggregatesFilter<"PetType"> | string
     slug?: StringWithAggregatesFilter<"PetType"> | string
     order?: IntWithAggregatesFilter<"PetType"> | number
     meta?: JsonNullableWithAggregatesFilter<"PetType">
     settings?: JsonNullableWithAggregatesFilter<"PetType">
     created_at?: DateTimeWithAggregatesFilter<"PetType"> | Date | string
     updated_at?: DateTimeWithAggregatesFilter<"PetType"> | Date | string
+  }
+
+  export type PetTypeTranslationWhereInput = {
+    AND?: PetTypeTranslationWhereInput | PetTypeTranslationWhereInput[]
+    OR?: PetTypeTranslationWhereInput[]
+    NOT?: PetTypeTranslationWhereInput | PetTypeTranslationWhereInput[]
+    id?: IntFilter<"PetTypeTranslation"> | number
+    petTypeId?: IntFilter<"PetTypeTranslation"> | number
+    langCode?: StringFilter<"PetTypeTranslation"> | string
+    name?: StringFilter<"PetTypeTranslation"> | string
+    petType?: XOR<PetTypeScalarRelationFilter, PetTypeWhereInput>
+    language?: XOR<LanguageScalarRelationFilter, LanguageWhereInput>
+  }
+
+  export type PetTypeTranslationOrderByWithRelationInput = {
+    id?: SortOrder
+    petTypeId?: SortOrder
+    langCode?: SortOrder
+    name?: SortOrder
+    petType?: PetTypeOrderByWithRelationInput
+    language?: LanguageOrderByWithRelationInput
+  }
+
+  export type PetTypeTranslationWhereUniqueInput = Prisma.AtLeast<{
+    id?: number
+    petTypeId_langCode?: PetTypeTranslationPetTypeIdLangCodeCompoundUniqueInput
+    AND?: PetTypeTranslationWhereInput | PetTypeTranslationWhereInput[]
+    OR?: PetTypeTranslationWhereInput[]
+    NOT?: PetTypeTranslationWhereInput | PetTypeTranslationWhereInput[]
+    petTypeId?: IntFilter<"PetTypeTranslation"> | number
+    langCode?: StringFilter<"PetTypeTranslation"> | string
+    name?: StringFilter<"PetTypeTranslation"> | string
+    petType?: XOR<PetTypeScalarRelationFilter, PetTypeWhereInput>
+    language?: XOR<LanguageScalarRelationFilter, LanguageWhereInput>
+  }, "id" | "petTypeId_langCode">
+
+  export type PetTypeTranslationOrderByWithAggregationInput = {
+    id?: SortOrder
+    petTypeId?: SortOrder
+    langCode?: SortOrder
+    name?: SortOrder
+    _count?: PetTypeTranslationCountOrderByAggregateInput
+    _avg?: PetTypeTranslationAvgOrderByAggregateInput
+    _max?: PetTypeTranslationMaxOrderByAggregateInput
+    _min?: PetTypeTranslationMinOrderByAggregateInput
+    _sum?: PetTypeTranslationSumOrderByAggregateInput
+  }
+
+  export type PetTypeTranslationScalarWhereWithAggregatesInput = {
+    AND?: PetTypeTranslationScalarWhereWithAggregatesInput | PetTypeTranslationScalarWhereWithAggregatesInput[]
+    OR?: PetTypeTranslationScalarWhereWithAggregatesInput[]
+    NOT?: PetTypeTranslationScalarWhereWithAggregatesInput | PetTypeTranslationScalarWhereWithAggregatesInput[]
+    id?: IntWithAggregatesFilter<"PetTypeTranslation"> | number
+    petTypeId?: IntWithAggregatesFilter<"PetTypeTranslation"> | number
+    langCode?: StringWithAggregatesFilter<"PetTypeTranslation"> | string
+    name?: StringWithAggregatesFilter<"PetTypeTranslation"> | string
   }
 
   export type PetWhereInput = {
@@ -26258,8 +28878,88 @@ export namespace Prisma {
     timestamp?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
-  export type PetTypeCreateInput = {
+  export type LanguageCreateInput = {
+    code: string
     name: string
+    nativeName: string
+    isDefault?: boolean
+    isActive?: boolean
+    sortOrder?: number
+    created_at?: Date | string
+    updated_at?: Date | string
+    petTypeTranslations?: PetTypeTranslationCreateNestedManyWithoutLanguageInput
+  }
+
+  export type LanguageUncheckedCreateInput = {
+    code: string
+    name: string
+    nativeName: string
+    isDefault?: boolean
+    isActive?: boolean
+    sortOrder?: number
+    created_at?: Date | string
+    updated_at?: Date | string
+    petTypeTranslations?: PetTypeTranslationUncheckedCreateNestedManyWithoutLanguageInput
+  }
+
+  export type LanguageUpdateInput = {
+    code?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    nativeName?: StringFieldUpdateOperationsInput | string
+    isDefault?: BoolFieldUpdateOperationsInput | boolean
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    sortOrder?: IntFieldUpdateOperationsInput | number
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    petTypeTranslations?: PetTypeTranslationUpdateManyWithoutLanguageNestedInput
+  }
+
+  export type LanguageUncheckedUpdateInput = {
+    code?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    nativeName?: StringFieldUpdateOperationsInput | string
+    isDefault?: BoolFieldUpdateOperationsInput | boolean
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    sortOrder?: IntFieldUpdateOperationsInput | number
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    petTypeTranslations?: PetTypeTranslationUncheckedUpdateManyWithoutLanguageNestedInput
+  }
+
+  export type LanguageCreateManyInput = {
+    code: string
+    name: string
+    nativeName: string
+    isDefault?: boolean
+    isActive?: boolean
+    sortOrder?: number
+    created_at?: Date | string
+    updated_at?: Date | string
+  }
+
+  export type LanguageUpdateManyMutationInput = {
+    code?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    nativeName?: StringFieldUpdateOperationsInput | string
+    isDefault?: BoolFieldUpdateOperationsInput | boolean
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    sortOrder?: IntFieldUpdateOperationsInput | number
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type LanguageUncheckedUpdateManyInput = {
+    code?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    nativeName?: StringFieldUpdateOperationsInput | string
+    isDefault?: BoolFieldUpdateOperationsInput | boolean
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    sortOrder?: IntFieldUpdateOperationsInput | number
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type PetTypeCreateInput = {
     slug: string
     order?: number
     meta?: NullableJsonNullValueInput | InputJsonValue
@@ -26267,11 +28967,11 @@ export namespace Prisma {
     created_at?: Date | string
     updated_at?: Date | string
     pets?: PetCreateNestedManyWithoutPetTypeInput
+    translations?: PetTypeTranslationCreateNestedManyWithoutPetTypeInput
   }
 
   export type PetTypeUncheckedCreateInput = {
     id?: number
-    name: string
     slug: string
     order?: number
     meta?: NullableJsonNullValueInput | InputJsonValue
@@ -26279,10 +28979,10 @@ export namespace Prisma {
     created_at?: Date | string
     updated_at?: Date | string
     pets?: PetUncheckedCreateNestedManyWithoutPetTypeInput
+    translations?: PetTypeTranslationUncheckedCreateNestedManyWithoutPetTypeInput
   }
 
   export type PetTypeUpdateInput = {
-    name?: StringFieldUpdateOperationsInput | string
     slug?: StringFieldUpdateOperationsInput | string
     order?: IntFieldUpdateOperationsInput | number
     meta?: NullableJsonNullValueInput | InputJsonValue
@@ -26290,11 +28990,11 @@ export namespace Prisma {
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
     pets?: PetUpdateManyWithoutPetTypeNestedInput
+    translations?: PetTypeTranslationUpdateManyWithoutPetTypeNestedInput
   }
 
   export type PetTypeUncheckedUpdateInput = {
     id?: IntFieldUpdateOperationsInput | number
-    name?: StringFieldUpdateOperationsInput | string
     slug?: StringFieldUpdateOperationsInput | string
     order?: IntFieldUpdateOperationsInput | number
     meta?: NullableJsonNullValueInput | InputJsonValue
@@ -26302,11 +29002,11 @@ export namespace Prisma {
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
     pets?: PetUncheckedUpdateManyWithoutPetTypeNestedInput
+    translations?: PetTypeTranslationUncheckedUpdateManyWithoutPetTypeNestedInput
   }
 
   export type PetTypeCreateManyInput = {
     id?: number
-    name: string
     slug: string
     order?: number
     meta?: NullableJsonNullValueInput | InputJsonValue
@@ -26316,7 +29016,6 @@ export namespace Prisma {
   }
 
   export type PetTypeUpdateManyMutationInput = {
-    name?: StringFieldUpdateOperationsInput | string
     slug?: StringFieldUpdateOperationsInput | string
     order?: IntFieldUpdateOperationsInput | number
     meta?: NullableJsonNullValueInput | InputJsonValue
@@ -26327,13 +29026,56 @@ export namespace Prisma {
 
   export type PetTypeUncheckedUpdateManyInput = {
     id?: IntFieldUpdateOperationsInput | number
-    name?: StringFieldUpdateOperationsInput | string
     slug?: StringFieldUpdateOperationsInput | string
     order?: IntFieldUpdateOperationsInput | number
     meta?: NullableJsonNullValueInput | InputJsonValue
     settings?: NullableJsonNullValueInput | InputJsonValue
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type PetTypeTranslationCreateInput = {
+    name: string
+    petType: PetTypeCreateNestedOneWithoutTranslationsInput
+    language: LanguageCreateNestedOneWithoutPetTypeTranslationsInput
+  }
+
+  export type PetTypeTranslationUncheckedCreateInput = {
+    id?: number
+    petTypeId: number
+    langCode: string
+    name: string
+  }
+
+  export type PetTypeTranslationUpdateInput = {
+    name?: StringFieldUpdateOperationsInput | string
+    petType?: PetTypeUpdateOneRequiredWithoutTranslationsNestedInput
+    language?: LanguageUpdateOneRequiredWithoutPetTypeTranslationsNestedInput
+  }
+
+  export type PetTypeTranslationUncheckedUpdateInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    petTypeId?: IntFieldUpdateOperationsInput | number
+    langCode?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+  }
+
+  export type PetTypeTranslationCreateManyInput = {
+    id?: number
+    petTypeId: number
+    langCode: string
+    name: string
+  }
+
+  export type PetTypeTranslationUpdateManyMutationInput = {
+    name?: StringFieldUpdateOperationsInput | string
+  }
+
+  export type PetTypeTranslationUncheckedUpdateManyInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    petTypeId?: IntFieldUpdateOperationsInput | number
+    langCode?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
   }
 
   export type PetCreateInput = {
@@ -27940,9 +30682,59 @@ export namespace Prisma {
     _max?: NestedEnumAuditEntityTypeNullableFilter<$PrismaModel>
   }
 
+  export type PetTypeTranslationListRelationFilter = {
+    every?: PetTypeTranslationWhereInput
+    some?: PetTypeTranslationWhereInput
+    none?: PetTypeTranslationWhereInput
+  }
+
+  export type PetTypeTranslationOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type LanguageCountOrderByAggregateInput = {
+    code?: SortOrder
+    name?: SortOrder
+    nativeName?: SortOrder
+    isDefault?: SortOrder
+    isActive?: SortOrder
+    sortOrder?: SortOrder
+    created_at?: SortOrder
+    updated_at?: SortOrder
+  }
+
+  export type LanguageAvgOrderByAggregateInput = {
+    sortOrder?: SortOrder
+  }
+
+  export type LanguageMaxOrderByAggregateInput = {
+    code?: SortOrder
+    name?: SortOrder
+    nativeName?: SortOrder
+    isDefault?: SortOrder
+    isActive?: SortOrder
+    sortOrder?: SortOrder
+    created_at?: SortOrder
+    updated_at?: SortOrder
+  }
+
+  export type LanguageMinOrderByAggregateInput = {
+    code?: SortOrder
+    name?: SortOrder
+    nativeName?: SortOrder
+    isDefault?: SortOrder
+    isActive?: SortOrder
+    sortOrder?: SortOrder
+    created_at?: SortOrder
+    updated_at?: SortOrder
+  }
+
+  export type LanguageSumOrderByAggregateInput = {
+    sortOrder?: SortOrder
+  }
+
   export type PetTypeCountOrderByAggregateInput = {
     id?: SortOrder
-    name?: SortOrder
     slug?: SortOrder
     order?: SortOrder
     meta?: SortOrder
@@ -27958,7 +30750,6 @@ export namespace Prisma {
 
   export type PetTypeMaxOrderByAggregateInput = {
     id?: SortOrder
-    name?: SortOrder
     slug?: SortOrder
     order?: SortOrder
     created_at?: SortOrder
@@ -27967,7 +30758,6 @@ export namespace Prisma {
 
   export type PetTypeMinOrderByAggregateInput = {
     id?: SortOrder
-    name?: SortOrder
     slug?: SortOrder
     order?: SortOrder
     created_at?: SortOrder
@@ -27977,6 +30767,52 @@ export namespace Prisma {
   export type PetTypeSumOrderByAggregateInput = {
     id?: SortOrder
     order?: SortOrder
+  }
+
+  export type PetTypeScalarRelationFilter = {
+    is?: PetTypeWhereInput
+    isNot?: PetTypeWhereInput
+  }
+
+  export type LanguageScalarRelationFilter = {
+    is?: LanguageWhereInput
+    isNot?: LanguageWhereInput
+  }
+
+  export type PetTypeTranslationPetTypeIdLangCodeCompoundUniqueInput = {
+    petTypeId: number
+    langCode: string
+  }
+
+  export type PetTypeTranslationCountOrderByAggregateInput = {
+    id?: SortOrder
+    petTypeId?: SortOrder
+    langCode?: SortOrder
+    name?: SortOrder
+  }
+
+  export type PetTypeTranslationAvgOrderByAggregateInput = {
+    id?: SortOrder
+    petTypeId?: SortOrder
+  }
+
+  export type PetTypeTranslationMaxOrderByAggregateInput = {
+    id?: SortOrder
+    petTypeId?: SortOrder
+    langCode?: SortOrder
+    name?: SortOrder
+  }
+
+  export type PetTypeTranslationMinOrderByAggregateInput = {
+    id?: SortOrder
+    petTypeId?: SortOrder
+    langCode?: SortOrder
+    name?: SortOrder
+  }
+
+  export type PetTypeTranslationSumOrderByAggregateInput = {
+    id?: SortOrder
+    petTypeId?: SortOrder
   }
 
   export type EnumGenderNullableFilter<$PrismaModel = never> = {
@@ -27999,11 +30835,6 @@ export namespace Prisma {
     in?: $Enums.Size[] | ListEnumSizeFieldRefInput<$PrismaModel> | null
     notIn?: $Enums.Size[] | ListEnumSizeFieldRefInput<$PrismaModel> | null
     not?: NestedEnumSizeNullableFilter<$PrismaModel> | $Enums.Size | null
-  }
-
-  export type PetTypeScalarRelationFilter = {
-    is?: PetTypeWhereInput
-    isNot?: PetTypeWhereInput
   }
 
   export type PetCountOrderByAggregateInput = {
@@ -29368,6 +32199,48 @@ export namespace Prisma {
     update?: XOR<XOR<UserUpdateToOneWithWhereWithoutAuditLogsInput, UserUpdateWithoutAuditLogsInput>, UserUncheckedUpdateWithoutAuditLogsInput>
   }
 
+  export type PetTypeTranslationCreateNestedManyWithoutLanguageInput = {
+    create?: XOR<PetTypeTranslationCreateWithoutLanguageInput, PetTypeTranslationUncheckedCreateWithoutLanguageInput> | PetTypeTranslationCreateWithoutLanguageInput[] | PetTypeTranslationUncheckedCreateWithoutLanguageInput[]
+    connectOrCreate?: PetTypeTranslationCreateOrConnectWithoutLanguageInput | PetTypeTranslationCreateOrConnectWithoutLanguageInput[]
+    createMany?: PetTypeTranslationCreateManyLanguageInputEnvelope
+    connect?: PetTypeTranslationWhereUniqueInput | PetTypeTranslationWhereUniqueInput[]
+  }
+
+  export type PetTypeTranslationUncheckedCreateNestedManyWithoutLanguageInput = {
+    create?: XOR<PetTypeTranslationCreateWithoutLanguageInput, PetTypeTranslationUncheckedCreateWithoutLanguageInput> | PetTypeTranslationCreateWithoutLanguageInput[] | PetTypeTranslationUncheckedCreateWithoutLanguageInput[]
+    connectOrCreate?: PetTypeTranslationCreateOrConnectWithoutLanguageInput | PetTypeTranslationCreateOrConnectWithoutLanguageInput[]
+    createMany?: PetTypeTranslationCreateManyLanguageInputEnvelope
+    connect?: PetTypeTranslationWhereUniqueInput | PetTypeTranslationWhereUniqueInput[]
+  }
+
+  export type PetTypeTranslationUpdateManyWithoutLanguageNestedInput = {
+    create?: XOR<PetTypeTranslationCreateWithoutLanguageInput, PetTypeTranslationUncheckedCreateWithoutLanguageInput> | PetTypeTranslationCreateWithoutLanguageInput[] | PetTypeTranslationUncheckedCreateWithoutLanguageInput[]
+    connectOrCreate?: PetTypeTranslationCreateOrConnectWithoutLanguageInput | PetTypeTranslationCreateOrConnectWithoutLanguageInput[]
+    upsert?: PetTypeTranslationUpsertWithWhereUniqueWithoutLanguageInput | PetTypeTranslationUpsertWithWhereUniqueWithoutLanguageInput[]
+    createMany?: PetTypeTranslationCreateManyLanguageInputEnvelope
+    set?: PetTypeTranslationWhereUniqueInput | PetTypeTranslationWhereUniqueInput[]
+    disconnect?: PetTypeTranslationWhereUniqueInput | PetTypeTranslationWhereUniqueInput[]
+    delete?: PetTypeTranslationWhereUniqueInput | PetTypeTranslationWhereUniqueInput[]
+    connect?: PetTypeTranslationWhereUniqueInput | PetTypeTranslationWhereUniqueInput[]
+    update?: PetTypeTranslationUpdateWithWhereUniqueWithoutLanguageInput | PetTypeTranslationUpdateWithWhereUniqueWithoutLanguageInput[]
+    updateMany?: PetTypeTranslationUpdateManyWithWhereWithoutLanguageInput | PetTypeTranslationUpdateManyWithWhereWithoutLanguageInput[]
+    deleteMany?: PetTypeTranslationScalarWhereInput | PetTypeTranslationScalarWhereInput[]
+  }
+
+  export type PetTypeTranslationUncheckedUpdateManyWithoutLanguageNestedInput = {
+    create?: XOR<PetTypeTranslationCreateWithoutLanguageInput, PetTypeTranslationUncheckedCreateWithoutLanguageInput> | PetTypeTranslationCreateWithoutLanguageInput[] | PetTypeTranslationUncheckedCreateWithoutLanguageInput[]
+    connectOrCreate?: PetTypeTranslationCreateOrConnectWithoutLanguageInput | PetTypeTranslationCreateOrConnectWithoutLanguageInput[]
+    upsert?: PetTypeTranslationUpsertWithWhereUniqueWithoutLanguageInput | PetTypeTranslationUpsertWithWhereUniqueWithoutLanguageInput[]
+    createMany?: PetTypeTranslationCreateManyLanguageInputEnvelope
+    set?: PetTypeTranslationWhereUniqueInput | PetTypeTranslationWhereUniqueInput[]
+    disconnect?: PetTypeTranslationWhereUniqueInput | PetTypeTranslationWhereUniqueInput[]
+    delete?: PetTypeTranslationWhereUniqueInput | PetTypeTranslationWhereUniqueInput[]
+    connect?: PetTypeTranslationWhereUniqueInput | PetTypeTranslationWhereUniqueInput[]
+    update?: PetTypeTranslationUpdateWithWhereUniqueWithoutLanguageInput | PetTypeTranslationUpdateWithWhereUniqueWithoutLanguageInput[]
+    updateMany?: PetTypeTranslationUpdateManyWithWhereWithoutLanguageInput | PetTypeTranslationUpdateManyWithWhereWithoutLanguageInput[]
+    deleteMany?: PetTypeTranslationScalarWhereInput | PetTypeTranslationScalarWhereInput[]
+  }
+
   export type PetCreateNestedManyWithoutPetTypeInput = {
     create?: XOR<PetCreateWithoutPetTypeInput, PetUncheckedCreateWithoutPetTypeInput> | PetCreateWithoutPetTypeInput[] | PetUncheckedCreateWithoutPetTypeInput[]
     connectOrCreate?: PetCreateOrConnectWithoutPetTypeInput | PetCreateOrConnectWithoutPetTypeInput[]
@@ -29375,11 +32248,25 @@ export namespace Prisma {
     connect?: PetWhereUniqueInput | PetWhereUniqueInput[]
   }
 
+  export type PetTypeTranslationCreateNestedManyWithoutPetTypeInput = {
+    create?: XOR<PetTypeTranslationCreateWithoutPetTypeInput, PetTypeTranslationUncheckedCreateWithoutPetTypeInput> | PetTypeTranslationCreateWithoutPetTypeInput[] | PetTypeTranslationUncheckedCreateWithoutPetTypeInput[]
+    connectOrCreate?: PetTypeTranslationCreateOrConnectWithoutPetTypeInput | PetTypeTranslationCreateOrConnectWithoutPetTypeInput[]
+    createMany?: PetTypeTranslationCreateManyPetTypeInputEnvelope
+    connect?: PetTypeTranslationWhereUniqueInput | PetTypeTranslationWhereUniqueInput[]
+  }
+
   export type PetUncheckedCreateNestedManyWithoutPetTypeInput = {
     create?: XOR<PetCreateWithoutPetTypeInput, PetUncheckedCreateWithoutPetTypeInput> | PetCreateWithoutPetTypeInput[] | PetUncheckedCreateWithoutPetTypeInput[]
     connectOrCreate?: PetCreateOrConnectWithoutPetTypeInput | PetCreateOrConnectWithoutPetTypeInput[]
     createMany?: PetCreateManyPetTypeInputEnvelope
     connect?: PetWhereUniqueInput | PetWhereUniqueInput[]
+  }
+
+  export type PetTypeTranslationUncheckedCreateNestedManyWithoutPetTypeInput = {
+    create?: XOR<PetTypeTranslationCreateWithoutPetTypeInput, PetTypeTranslationUncheckedCreateWithoutPetTypeInput> | PetTypeTranslationCreateWithoutPetTypeInput[] | PetTypeTranslationUncheckedCreateWithoutPetTypeInput[]
+    connectOrCreate?: PetTypeTranslationCreateOrConnectWithoutPetTypeInput | PetTypeTranslationCreateOrConnectWithoutPetTypeInput[]
+    createMany?: PetTypeTranslationCreateManyPetTypeInputEnvelope
+    connect?: PetTypeTranslationWhereUniqueInput | PetTypeTranslationWhereUniqueInput[]
   }
 
   export type PetUpdateManyWithoutPetTypeNestedInput = {
@@ -29396,6 +32283,20 @@ export namespace Prisma {
     deleteMany?: PetScalarWhereInput | PetScalarWhereInput[]
   }
 
+  export type PetTypeTranslationUpdateManyWithoutPetTypeNestedInput = {
+    create?: XOR<PetTypeTranslationCreateWithoutPetTypeInput, PetTypeTranslationUncheckedCreateWithoutPetTypeInput> | PetTypeTranslationCreateWithoutPetTypeInput[] | PetTypeTranslationUncheckedCreateWithoutPetTypeInput[]
+    connectOrCreate?: PetTypeTranslationCreateOrConnectWithoutPetTypeInput | PetTypeTranslationCreateOrConnectWithoutPetTypeInput[]
+    upsert?: PetTypeTranslationUpsertWithWhereUniqueWithoutPetTypeInput | PetTypeTranslationUpsertWithWhereUniqueWithoutPetTypeInput[]
+    createMany?: PetTypeTranslationCreateManyPetTypeInputEnvelope
+    set?: PetTypeTranslationWhereUniqueInput | PetTypeTranslationWhereUniqueInput[]
+    disconnect?: PetTypeTranslationWhereUniqueInput | PetTypeTranslationWhereUniqueInput[]
+    delete?: PetTypeTranslationWhereUniqueInput | PetTypeTranslationWhereUniqueInput[]
+    connect?: PetTypeTranslationWhereUniqueInput | PetTypeTranslationWhereUniqueInput[]
+    update?: PetTypeTranslationUpdateWithWhereUniqueWithoutPetTypeInput | PetTypeTranslationUpdateWithWhereUniqueWithoutPetTypeInput[]
+    updateMany?: PetTypeTranslationUpdateManyWithWhereWithoutPetTypeInput | PetTypeTranslationUpdateManyWithWhereWithoutPetTypeInput[]
+    deleteMany?: PetTypeTranslationScalarWhereInput | PetTypeTranslationScalarWhereInput[]
+  }
+
   export type PetUncheckedUpdateManyWithoutPetTypeNestedInput = {
     create?: XOR<PetCreateWithoutPetTypeInput, PetUncheckedCreateWithoutPetTypeInput> | PetCreateWithoutPetTypeInput[] | PetUncheckedCreateWithoutPetTypeInput[]
     connectOrCreate?: PetCreateOrConnectWithoutPetTypeInput | PetCreateOrConnectWithoutPetTypeInput[]
@@ -29408,6 +32309,48 @@ export namespace Prisma {
     update?: PetUpdateWithWhereUniqueWithoutPetTypeInput | PetUpdateWithWhereUniqueWithoutPetTypeInput[]
     updateMany?: PetUpdateManyWithWhereWithoutPetTypeInput | PetUpdateManyWithWhereWithoutPetTypeInput[]
     deleteMany?: PetScalarWhereInput | PetScalarWhereInput[]
+  }
+
+  export type PetTypeTranslationUncheckedUpdateManyWithoutPetTypeNestedInput = {
+    create?: XOR<PetTypeTranslationCreateWithoutPetTypeInput, PetTypeTranslationUncheckedCreateWithoutPetTypeInput> | PetTypeTranslationCreateWithoutPetTypeInput[] | PetTypeTranslationUncheckedCreateWithoutPetTypeInput[]
+    connectOrCreate?: PetTypeTranslationCreateOrConnectWithoutPetTypeInput | PetTypeTranslationCreateOrConnectWithoutPetTypeInput[]
+    upsert?: PetTypeTranslationUpsertWithWhereUniqueWithoutPetTypeInput | PetTypeTranslationUpsertWithWhereUniqueWithoutPetTypeInput[]
+    createMany?: PetTypeTranslationCreateManyPetTypeInputEnvelope
+    set?: PetTypeTranslationWhereUniqueInput | PetTypeTranslationWhereUniqueInput[]
+    disconnect?: PetTypeTranslationWhereUniqueInput | PetTypeTranslationWhereUniqueInput[]
+    delete?: PetTypeTranslationWhereUniqueInput | PetTypeTranslationWhereUniqueInput[]
+    connect?: PetTypeTranslationWhereUniqueInput | PetTypeTranslationWhereUniqueInput[]
+    update?: PetTypeTranslationUpdateWithWhereUniqueWithoutPetTypeInput | PetTypeTranslationUpdateWithWhereUniqueWithoutPetTypeInput[]
+    updateMany?: PetTypeTranslationUpdateManyWithWhereWithoutPetTypeInput | PetTypeTranslationUpdateManyWithWhereWithoutPetTypeInput[]
+    deleteMany?: PetTypeTranslationScalarWhereInput | PetTypeTranslationScalarWhereInput[]
+  }
+
+  export type PetTypeCreateNestedOneWithoutTranslationsInput = {
+    create?: XOR<PetTypeCreateWithoutTranslationsInput, PetTypeUncheckedCreateWithoutTranslationsInput>
+    connectOrCreate?: PetTypeCreateOrConnectWithoutTranslationsInput
+    connect?: PetTypeWhereUniqueInput
+  }
+
+  export type LanguageCreateNestedOneWithoutPetTypeTranslationsInput = {
+    create?: XOR<LanguageCreateWithoutPetTypeTranslationsInput, LanguageUncheckedCreateWithoutPetTypeTranslationsInput>
+    connectOrCreate?: LanguageCreateOrConnectWithoutPetTypeTranslationsInput
+    connect?: LanguageWhereUniqueInput
+  }
+
+  export type PetTypeUpdateOneRequiredWithoutTranslationsNestedInput = {
+    create?: XOR<PetTypeCreateWithoutTranslationsInput, PetTypeUncheckedCreateWithoutTranslationsInput>
+    connectOrCreate?: PetTypeCreateOrConnectWithoutTranslationsInput
+    upsert?: PetTypeUpsertWithoutTranslationsInput
+    connect?: PetTypeWhereUniqueInput
+    update?: XOR<XOR<PetTypeUpdateToOneWithWhereWithoutTranslationsInput, PetTypeUpdateWithoutTranslationsInput>, PetTypeUncheckedUpdateWithoutTranslationsInput>
+  }
+
+  export type LanguageUpdateOneRequiredWithoutPetTypeTranslationsNestedInput = {
+    create?: XOR<LanguageCreateWithoutPetTypeTranslationsInput, LanguageUncheckedCreateWithoutPetTypeTranslationsInput>
+    connectOrCreate?: LanguageCreateOrConnectWithoutPetTypeTranslationsInput
+    upsert?: LanguageUpsertWithoutPetTypeTranslationsInput
+    connect?: LanguageWhereUniqueInput
+    update?: XOR<XOR<LanguageUpdateToOneWithWhereWithoutPetTypeTranslationsInput, LanguageUpdateWithoutPetTypeTranslationsInput>, LanguageUncheckedUpdateWithoutPetTypeTranslationsInput>
   }
 
   export type PetCreatephotosInput = {
@@ -31624,6 +34567,53 @@ export namespace Prisma {
     alert_zones?: AlertZoneUncheckedUpdateManyWithoutUserNestedInput
   }
 
+  export type PetTypeTranslationCreateWithoutLanguageInput = {
+    name: string
+    petType: PetTypeCreateNestedOneWithoutTranslationsInput
+  }
+
+  export type PetTypeTranslationUncheckedCreateWithoutLanguageInput = {
+    id?: number
+    petTypeId: number
+    name: string
+  }
+
+  export type PetTypeTranslationCreateOrConnectWithoutLanguageInput = {
+    where: PetTypeTranslationWhereUniqueInput
+    create: XOR<PetTypeTranslationCreateWithoutLanguageInput, PetTypeTranslationUncheckedCreateWithoutLanguageInput>
+  }
+
+  export type PetTypeTranslationCreateManyLanguageInputEnvelope = {
+    data: PetTypeTranslationCreateManyLanguageInput | PetTypeTranslationCreateManyLanguageInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type PetTypeTranslationUpsertWithWhereUniqueWithoutLanguageInput = {
+    where: PetTypeTranslationWhereUniqueInput
+    update: XOR<PetTypeTranslationUpdateWithoutLanguageInput, PetTypeTranslationUncheckedUpdateWithoutLanguageInput>
+    create: XOR<PetTypeTranslationCreateWithoutLanguageInput, PetTypeTranslationUncheckedCreateWithoutLanguageInput>
+  }
+
+  export type PetTypeTranslationUpdateWithWhereUniqueWithoutLanguageInput = {
+    where: PetTypeTranslationWhereUniqueInput
+    data: XOR<PetTypeTranslationUpdateWithoutLanguageInput, PetTypeTranslationUncheckedUpdateWithoutLanguageInput>
+  }
+
+  export type PetTypeTranslationUpdateManyWithWhereWithoutLanguageInput = {
+    where: PetTypeTranslationScalarWhereInput
+    data: XOR<PetTypeTranslationUpdateManyMutationInput, PetTypeTranslationUncheckedUpdateManyWithoutLanguageInput>
+  }
+
+  export type PetTypeTranslationScalarWhereInput = {
+    AND?: PetTypeTranslationScalarWhereInput | PetTypeTranslationScalarWhereInput[]
+    OR?: PetTypeTranslationScalarWhereInput[]
+    NOT?: PetTypeTranslationScalarWhereInput | PetTypeTranslationScalarWhereInput[]
+    id?: IntFilter<"PetTypeTranslation"> | number
+    petTypeId?: IntFilter<"PetTypeTranslation"> | number
+    langCode?: StringFilter<"PetTypeTranslation"> | string
+    name?: StringFilter<"PetTypeTranslation"> | string
+  }
+
   export type PetCreateWithoutPetTypeInput = {
     tagId: string
     name: string
@@ -31663,6 +34653,27 @@ export namespace Prisma {
     skipDuplicates?: boolean
   }
 
+  export type PetTypeTranslationCreateWithoutPetTypeInput = {
+    name: string
+    language: LanguageCreateNestedOneWithoutPetTypeTranslationsInput
+  }
+
+  export type PetTypeTranslationUncheckedCreateWithoutPetTypeInput = {
+    id?: number
+    langCode: string
+    name: string
+  }
+
+  export type PetTypeTranslationCreateOrConnectWithoutPetTypeInput = {
+    where: PetTypeTranslationWhereUniqueInput
+    create: XOR<PetTypeTranslationCreateWithoutPetTypeInput, PetTypeTranslationUncheckedCreateWithoutPetTypeInput>
+  }
+
+  export type PetTypeTranslationCreateManyPetTypeInputEnvelope = {
+    data: PetTypeTranslationCreateManyPetTypeInput | PetTypeTranslationCreateManyPetTypeInput[]
+    skipDuplicates?: boolean
+  }
+
   export type PetUpsertWithWhereUniqueWithoutPetTypeInput = {
     where: PetWhereUniqueInput
     update: XOR<PetUpdateWithoutPetTypeInput, PetUncheckedUpdateWithoutPetTypeInput>
@@ -31677,6 +34688,140 @@ export namespace Prisma {
   export type PetUpdateManyWithWhereWithoutPetTypeInput = {
     where: PetScalarWhereInput
     data: XOR<PetUpdateManyMutationInput, PetUncheckedUpdateManyWithoutPetTypeInput>
+  }
+
+  export type PetTypeTranslationUpsertWithWhereUniqueWithoutPetTypeInput = {
+    where: PetTypeTranslationWhereUniqueInput
+    update: XOR<PetTypeTranslationUpdateWithoutPetTypeInput, PetTypeTranslationUncheckedUpdateWithoutPetTypeInput>
+    create: XOR<PetTypeTranslationCreateWithoutPetTypeInput, PetTypeTranslationUncheckedCreateWithoutPetTypeInput>
+  }
+
+  export type PetTypeTranslationUpdateWithWhereUniqueWithoutPetTypeInput = {
+    where: PetTypeTranslationWhereUniqueInput
+    data: XOR<PetTypeTranslationUpdateWithoutPetTypeInput, PetTypeTranslationUncheckedUpdateWithoutPetTypeInput>
+  }
+
+  export type PetTypeTranslationUpdateManyWithWhereWithoutPetTypeInput = {
+    where: PetTypeTranslationScalarWhereInput
+    data: XOR<PetTypeTranslationUpdateManyMutationInput, PetTypeTranslationUncheckedUpdateManyWithoutPetTypeInput>
+  }
+
+  export type PetTypeCreateWithoutTranslationsInput = {
+    slug: string
+    order?: number
+    meta?: NullableJsonNullValueInput | InputJsonValue
+    settings?: NullableJsonNullValueInput | InputJsonValue
+    created_at?: Date | string
+    updated_at?: Date | string
+    pets?: PetCreateNestedManyWithoutPetTypeInput
+  }
+
+  export type PetTypeUncheckedCreateWithoutTranslationsInput = {
+    id?: number
+    slug: string
+    order?: number
+    meta?: NullableJsonNullValueInput | InputJsonValue
+    settings?: NullableJsonNullValueInput | InputJsonValue
+    created_at?: Date | string
+    updated_at?: Date | string
+    pets?: PetUncheckedCreateNestedManyWithoutPetTypeInput
+  }
+
+  export type PetTypeCreateOrConnectWithoutTranslationsInput = {
+    where: PetTypeWhereUniqueInput
+    create: XOR<PetTypeCreateWithoutTranslationsInput, PetTypeUncheckedCreateWithoutTranslationsInput>
+  }
+
+  export type LanguageCreateWithoutPetTypeTranslationsInput = {
+    code: string
+    name: string
+    nativeName: string
+    isDefault?: boolean
+    isActive?: boolean
+    sortOrder?: number
+    created_at?: Date | string
+    updated_at?: Date | string
+  }
+
+  export type LanguageUncheckedCreateWithoutPetTypeTranslationsInput = {
+    code: string
+    name: string
+    nativeName: string
+    isDefault?: boolean
+    isActive?: boolean
+    sortOrder?: number
+    created_at?: Date | string
+    updated_at?: Date | string
+  }
+
+  export type LanguageCreateOrConnectWithoutPetTypeTranslationsInput = {
+    where: LanguageWhereUniqueInput
+    create: XOR<LanguageCreateWithoutPetTypeTranslationsInput, LanguageUncheckedCreateWithoutPetTypeTranslationsInput>
+  }
+
+  export type PetTypeUpsertWithoutTranslationsInput = {
+    update: XOR<PetTypeUpdateWithoutTranslationsInput, PetTypeUncheckedUpdateWithoutTranslationsInput>
+    create: XOR<PetTypeCreateWithoutTranslationsInput, PetTypeUncheckedCreateWithoutTranslationsInput>
+    where?: PetTypeWhereInput
+  }
+
+  export type PetTypeUpdateToOneWithWhereWithoutTranslationsInput = {
+    where?: PetTypeWhereInput
+    data: XOR<PetTypeUpdateWithoutTranslationsInput, PetTypeUncheckedUpdateWithoutTranslationsInput>
+  }
+
+  export type PetTypeUpdateWithoutTranslationsInput = {
+    slug?: StringFieldUpdateOperationsInput | string
+    order?: IntFieldUpdateOperationsInput | number
+    meta?: NullableJsonNullValueInput | InputJsonValue
+    settings?: NullableJsonNullValueInput | InputJsonValue
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    pets?: PetUpdateManyWithoutPetTypeNestedInput
+  }
+
+  export type PetTypeUncheckedUpdateWithoutTranslationsInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    slug?: StringFieldUpdateOperationsInput | string
+    order?: IntFieldUpdateOperationsInput | number
+    meta?: NullableJsonNullValueInput | InputJsonValue
+    settings?: NullableJsonNullValueInput | InputJsonValue
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    pets?: PetUncheckedUpdateManyWithoutPetTypeNestedInput
+  }
+
+  export type LanguageUpsertWithoutPetTypeTranslationsInput = {
+    update: XOR<LanguageUpdateWithoutPetTypeTranslationsInput, LanguageUncheckedUpdateWithoutPetTypeTranslationsInput>
+    create: XOR<LanguageCreateWithoutPetTypeTranslationsInput, LanguageUncheckedCreateWithoutPetTypeTranslationsInput>
+    where?: LanguageWhereInput
+  }
+
+  export type LanguageUpdateToOneWithWhereWithoutPetTypeTranslationsInput = {
+    where?: LanguageWhereInput
+    data: XOR<LanguageUpdateWithoutPetTypeTranslationsInput, LanguageUncheckedUpdateWithoutPetTypeTranslationsInput>
+  }
+
+  export type LanguageUpdateWithoutPetTypeTranslationsInput = {
+    code?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    nativeName?: StringFieldUpdateOperationsInput | string
+    isDefault?: BoolFieldUpdateOperationsInput | boolean
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    sortOrder?: IntFieldUpdateOperationsInput | number
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type LanguageUncheckedUpdateWithoutPetTypeTranslationsInput = {
+    code?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    nativeName?: StringFieldUpdateOperationsInput | string
+    isDefault?: BoolFieldUpdateOperationsInput | boolean
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    sortOrder?: IntFieldUpdateOperationsInput | number
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type UserCreateWithoutPetsInput = {
@@ -31736,24 +34881,24 @@ export namespace Prisma {
   }
 
   export type PetTypeCreateWithoutPetsInput = {
-    name: string
     slug: string
     order?: number
     meta?: NullableJsonNullValueInput | InputJsonValue
     settings?: NullableJsonNullValueInput | InputJsonValue
     created_at?: Date | string
     updated_at?: Date | string
+    translations?: PetTypeTranslationCreateNestedManyWithoutPetTypeInput
   }
 
   export type PetTypeUncheckedCreateWithoutPetsInput = {
     id?: number
-    name: string
     slug: string
     order?: number
     meta?: NullableJsonNullValueInput | InputJsonValue
     settings?: NullableJsonNullValueInput | InputJsonValue
     created_at?: Date | string
     updated_at?: Date | string
+    translations?: PetTypeTranslationUncheckedCreateNestedManyWithoutPetTypeInput
   }
 
   export type PetTypeCreateOrConnectWithoutPetsInput = {
@@ -31835,24 +34980,24 @@ export namespace Prisma {
   }
 
   export type PetTypeUpdateWithoutPetsInput = {
-    name?: StringFieldUpdateOperationsInput | string
     slug?: StringFieldUpdateOperationsInput | string
     order?: IntFieldUpdateOperationsInput | number
     meta?: NullableJsonNullValueInput | InputJsonValue
     settings?: NullableJsonNullValueInput | InputJsonValue
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    translations?: PetTypeTranslationUpdateManyWithoutPetTypeNestedInput
   }
 
   export type PetTypeUncheckedUpdateWithoutPetsInput = {
     id?: IntFieldUpdateOperationsInput | number
-    name?: StringFieldUpdateOperationsInput | string
     slug?: StringFieldUpdateOperationsInput | string
     order?: IntFieldUpdateOperationsInput | number
     meta?: NullableJsonNullValueInput | InputJsonValue
     settings?: NullableJsonNullValueInput | InputJsonValue
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    translations?: PetTypeTranslationUncheckedUpdateManyWithoutPetTypeNestedInput
   }
 
   export type AlertUpdateWithWhereUniqueWithoutPetInput = {
@@ -33678,6 +36823,29 @@ export namespace Prisma {
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
+  export type PetTypeTranslationCreateManyLanguageInput = {
+    id?: number
+    petTypeId: number
+    name: string
+  }
+
+  export type PetTypeTranslationUpdateWithoutLanguageInput = {
+    name?: StringFieldUpdateOperationsInput | string
+    petType?: PetTypeUpdateOneRequiredWithoutTranslationsNestedInput
+  }
+
+  export type PetTypeTranslationUncheckedUpdateWithoutLanguageInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    petTypeId?: IntFieldUpdateOperationsInput | number
+    name?: StringFieldUpdateOperationsInput | string
+  }
+
+  export type PetTypeTranslationUncheckedUpdateManyWithoutLanguageInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    petTypeId?: IntFieldUpdateOperationsInput | number
+    name?: StringFieldUpdateOperationsInput | string
+  }
+
   export type PetCreateManyPetTypeInput = {
     id?: number
     tagId: string
@@ -33690,6 +36858,12 @@ export namespace Prisma {
     birthday?: Date | string | null
     created_at?: Date | string
     updated_at?: Date | string
+  }
+
+  export type PetTypeTranslationCreateManyPetTypeInput = {
+    id?: number
+    langCode: string
+    name: string
   }
 
   export type PetUpdateWithoutPetTypeInput = {
@@ -33733,6 +36907,23 @@ export namespace Prisma {
     birthday?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type PetTypeTranslationUpdateWithoutPetTypeInput = {
+    name?: StringFieldUpdateOperationsInput | string
+    language?: LanguageUpdateOneRequiredWithoutPetTypeTranslationsNestedInput
+  }
+
+  export type PetTypeTranslationUncheckedUpdateWithoutPetTypeInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    langCode?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+  }
+
+  export type PetTypeTranslationUncheckedUpdateManyWithoutPetTypeInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    langCode?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
   }
 
   export type AlertUpdateWithoutPetInput = {

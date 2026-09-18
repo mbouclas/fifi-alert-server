@@ -11,7 +11,9 @@ import { Pet, Prisma, AlertStatus } from '@prisma-lib/client';
 import { customAlphabet } from 'nanoid';
 import { CreatePetDto, UpdatePetDto } from './dto';
 
-type PetWithType = Prisma.PetGetPayload<{ include: { petType: true } }>;
+import { PetWithType, petWithTypeInclude } from './pet.mapper';
+
+export type { PetWithType };
 
 @Injectable()
 export class PetService {
@@ -90,7 +92,7 @@ export class PetService {
           user: { connect: { id: userId } },
           petType: { connect: { id: petTypeId } },
         },
-        include: { petType: true },
+        include: petWithTypeInclude,
       });
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
@@ -113,7 +115,7 @@ export class PetService {
     return this.prisma.pet.findMany({
       where: { userId },
       orderBy: { created_at: 'desc' },
-      include: { petType: true },
+      include: petWithTypeInclude,
     });
   }
 
@@ -124,7 +126,7 @@ export class PetService {
   async findOne(id: number, userId?: number): Promise<PetWithType> {
     const pet = await this.prisma.pet.findUnique({
       where: { id },
-      include: { petType: true },
+      include: petWithTypeInclude,
     });
 
     if (!pet) {
@@ -147,7 +149,7 @@ export class PetService {
   async findByTagId(tagId: string): Promise<PetWithType> {
     const pet = await this.prisma.pet.findUnique({
       where: { tagId },
-      include: { petType: true },
+      include: petWithTypeInclude,
     });
 
     if (!pet) {
@@ -181,7 +183,7 @@ export class PetService {
       return await this.prisma.pet.update({
         where: { id },
         data: updateInput,
-        include: { petType: true },
+        include: petWithTypeInclude,
       });
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
@@ -232,7 +234,7 @@ export class PetService {
     return this.prisma.pet.update({
       where: { id },
       data: { isMissing: true },
-      include: { petType: true },
+      include: petWithTypeInclude,
     });
   }
 
@@ -252,7 +254,7 @@ export class PetService {
     const updatedPet = await this.prisma.pet.update({
       where: { id },
       data: { isMissing: false },
-      include: { petType: true },
+      include: petWithTypeInclude,
     });
 
     // Auto-resolve any active alerts for this pet
@@ -297,7 +299,7 @@ export class PetService {
     return this.prisma.pet.findMany({
       where: { isMissing: true },
       orderBy: { updated_at: 'desc' },
-      include: { petType: true },
+      include: petWithTypeInclude,
     });
   }
 

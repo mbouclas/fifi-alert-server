@@ -1,13 +1,56 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { PetTypesService } from './pet-types.service';
 import { PrismaService } from '../services/prisma.service';
-import { ConflictException, NotFoundException } from '@nestjs/common';
+import { LanguageService } from '../i18n/language.service';
+import {
+  BadRequestException,
+  ConflictException,
+  NotFoundException,
+} from '@nestjs/common';
 import { Prisma } from '@prisma-lib/client';
 import { PetTypeOrderBy, SortDirection } from './dto';
+import { petTypeInclude } from './pet-type.mapper';
 
 describe('PetTypesService', () => {
   let service: PetTypesService;
-  let prisma: PrismaService;
+
+  const now = new Date();
+  const dog = {
+    id: 1,
+    slug: 'dog',
+    order: 10,
+    meta: null,
+    settings: null,
+    created_at: now,
+    updated_at: now,
+    translations: [
+      { id: 1, petTypeId: 1, langCode: 'el', name: 'Σκύλος' },
+      { id: 2, petTypeId: 1, langCode: 'en', name: 'Dog' },
+    ],
+  };
+  const cat = {
+    ...dog,
+    id: 2,
+    slug: 'cat',
+    order: 20,
+    translations: [
+      { id: 3, petTypeId: 2, langCode: 'el', name: 'Γάτα' },
+      { id: 4, petTypeId: 2, langCode: 'en', name: 'Cat' },
+    ],
+  };
+  /** Only has a Greek translation. */
+  const ferret = {
+    ...dog,
+    id: 3,
+    slug: 'ferret',
+    order: 30,
+    translations: [{ id: 5, petTypeId: 3, langCode: 'el', name: 'Κουνάβι' }],
+  };
+
+  const languages = [
+    { code: 'el', name: 'Greek', nativeName: 'Ελληνικά', isDefault: true, isActive: true, sortOrder: 10 },
+    { code: 'en', name: 'English', nativeName: 'English', isDefault: false, isActive: true, sortOrder: 20 },
+  ];
 
   const mockPrismaService = {
     petType: {
@@ -19,21 +62,25 @@ describe('PetTypesService', () => {
     },
   };
 
+  const mockLanguageService = {
+    getActive: jest.fn().mockResolvedValue(languages),
+    getDefaultCode: jest.fn().mockResolvedValue('el'),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         PetTypesService,
-        {
-          provide: PrismaService,
-          useValue: mockPrismaService,
-        },
+        { provide: PrismaService, useValue: mockPrismaService },
+        { provide: LanguageService, useValue: mockLanguageService },
       ],
     }).compile();
 
     service = module.get<PetTypesService>(PetTypesService);
-    prisma = module.get<PrismaService>(PrismaService);
 
     jest.clearAllMocks();
+    mockLanguageService.getActive.mockResolvedValue(languages);
+    mockLanguageService.getDefaultCode.mockResolvedValue('el');
   });
 
   it('should be defined', () => {
@@ -41,25 +88,51 @@ describe('PetTypesService', () => {
   });
 
   describe('create', () => {
-    it('should create a pet type', async () => {
-      const dto = { name: 'Dog', slug: 'dog', order: 10 };
-      const created = {
-        id: 1,
-        ...dto,
-        created_at: new Date(),
-        updated_at: new Date(),
-      };
+    it('should create a pet type with nested translations and return all of them', async () => {
+      const dto = { translations: { el: 'Σκύλος', en: 'Dog' }, slug: 'dog', order: 10 };
+      mockPrismaService.petType.create.mockResolvedValue(dog);
 
-      mockPrismaService.petType.create.mockResolvedValue(created);
+      const result = await service.create(dto, { lang: 'en' });
 
-      await expect(service.create(dto)).resolves.toEqual(created);
       expect(mockPrismaService.petType.create).toHaveBeenCalledWith({
-        data: dto,
+        data: {
+          slug: 'dog',
+          order: 10,
+          translations: {
+            create: [
+              { langCode: 'el', name: 'Σκύλος' },
+              { langCode: 'en', name: 'Dog' },
+            ],
+          },
+        },
+        include: petTypeInclude,
+      });
+      expect(result).toMatchObject({
+        id: 1,
+        slug: 'dog',
+        name: 'Dog',
+        lang: 'en',
+        translations: { el: 'Σκύλος', en: 'Dog' },
       });
     });
 
+    it('should reject when the default language translation is missing', async () => {
+      await expect(
+        service.create({ translations: { en: 'Dog' }, slug: 'dog' }, { lang: 'el' }),
+      ).rejects.toThrow(BadRequestException);
+      expect(mockPrismaService.petType.create).not.toHaveBeenCalled();
+    });
+
+    it('should reject unknown language codes', async () => {
+      await expect(
+        service.create(
+          { translations: { el: 'Σκύλος', xx: 'Nope' }, slug: 'dog' },
+          { lang: 'el' },
+        ),
+      ).rejects.toThrow(BadRequestException);
+    });
+
     it('should throw ConflictException on duplicate slug', async () => {
-      const dto = { name: 'Dog', slug: 'dog' };
       mockPrismaService.petType.create.mockRejectedValue(
         new Prisma.PrismaClientKnownRequestError('duplicate', {
           code: 'P2002',
@@ -67,50 +140,95 @@ describe('PetTypesService', () => {
         }),
       );
 
-      await expect(service.create(dto)).rejects.toThrow(
-        ConflictException,
-      );
+      await expect(
+        service.create({ translations: { el: 'Σκύλος' }, slug: 'dog' }, { lang: 'el' }),
+      ).rejects.toThrow(ConflictException);
     });
   });
 
   describe('findAll', () => {
-    it('should return pet types ordered by manual order by default', async () => {
-      const petTypes = [
-        { id: 1, name: 'Dog', slug: 'dog', order: 10 },
-        { id: 2, name: 'Cat', slug: 'cat', order: 20 },
-      ];
-      mockPrismaService.petType.findMany.mockResolvedValue(petTypes);
+    it('should return pet types in the requested language ordered by manual order by default', async () => {
+      mockPrismaService.petType.findMany.mockResolvedValue([dog, cat]);
 
-      await expect(service.findAll()).resolves.toEqual(petTypes);
+      const result = await service.findAll(undefined, undefined, { lang: 'en' });
+
       expect(mockPrismaService.petType.findMany).toHaveBeenCalledWith({
         orderBy: { order: 'asc' },
+        include: petTypeInclude,
       });
+      expect(result.map((r) => r.name)).toEqual(['Dog', 'Cat']);
+      expect(result[0].lang).toBe('en');
+      expect(result[0]).not.toHaveProperty('translations');
     });
 
-    it('should apply custom ordering', async () => {
+    it('should fall back to the default language when a translation is missing', async () => {
+      mockPrismaService.petType.findMany.mockResolvedValue([ferret]);
+
+      const [result] = await service.findAll(undefined, undefined, { lang: 'en' });
+
+      expect(result.name).toBe('Κουνάβι');
+      expect(result.lang).toBe('el');
+    });
+
+    it('should include the translations map when requested', async () => {
+      mockPrismaService.petType.findMany.mockResolvedValue([dog]);
+
+      const [result] = await service.findAll(undefined, undefined, {
+        lang: 'el',
+        includeTranslations: true,
+      });
+
+      expect(result.translations).toEqual({ el: 'Σκύλος', en: 'Dog' });
+    });
+
+    it('should sort by the resolved name in memory when ordering by name', async () => {
+      mockPrismaService.petType.findMany.mockResolvedValue([dog, cat]);
+
+      const result = await service.findAll(PetTypeOrderBy.NAME, SortDirection.DESC, {
+        lang: 'en',
+      });
+
+      expect(mockPrismaService.petType.findMany).toHaveBeenCalledWith({
+        orderBy: { order: 'asc' },
+        include: petTypeInclude,
+      });
+      expect(result.map((r) => r.name)).toEqual(['Dog', 'Cat']);
+
+      const asc = await service.findAll(PetTypeOrderBy.NAME, SortDirection.ASC, { lang: 'en' });
+      expect(asc.map((r) => r.name)).toEqual(['Cat', 'Dog']);
+    });
+
+    it('should pass other order fields to the database', async () => {
       mockPrismaService.petType.findMany.mockResolvedValue([]);
 
-      await expect(
-        service.findAll(PetTypeOrderBy.NAME, SortDirection.DESC),
-      ).resolves.toEqual([]);
+      await service.findAll(PetTypeOrderBy.SLUG, SortDirection.DESC, { lang: 'el' });
+
       expect(mockPrismaService.petType.findMany).toHaveBeenCalledWith({
-        orderBy: { name: 'desc' },
+        orderBy: { slug: 'desc' },
+        include: petTypeInclude,
       });
     });
   });
 
   describe('findOne', () => {
-    it('should return a pet type by id', async () => {
-      const petType = { id: 1, name: 'Dog', slug: 'dog' };
-      mockPrismaService.petType.findUnique.mockResolvedValue(petType);
+    it('should return a pet type by id in the requested language', async () => {
+      mockPrismaService.petType.findUnique.mockResolvedValue(dog);
 
-      await expect(service.findOne(1)).resolves.toEqual(petType);
+      await expect(service.findOne(1, { lang: 'el' })).resolves.toMatchObject({
+        id: 1,
+        name: 'Σκύλος',
+        lang: 'el',
+      });
+      expect(mockPrismaService.petType.findUnique).toHaveBeenCalledWith({
+        where: { id: 1 },
+        include: petTypeInclude,
+      });
     });
 
     it('should throw NotFoundException when missing', async () => {
       mockPrismaService.petType.findUnique.mockResolvedValue(null);
 
-      await expect(service.findOne(999)).rejects.toThrow(
+      await expect(service.findOne(999, { lang: 'el' })).rejects.toThrow(
         NotFoundException,
       );
     });
@@ -118,29 +236,62 @@ describe('PetTypesService', () => {
 
   describe('findBySlug', () => {
     it('should return a pet type by slug', async () => {
-      const petType = { id: 1, name: 'Dog', slug: 'dog' };
-      mockPrismaService.petType.findUnique.mockResolvedValue(petType);
+      mockPrismaService.petType.findUnique.mockResolvedValue(dog);
 
-      await expect(service.findBySlug('dog')).resolves.toEqual(petType);
+      await expect(service.findBySlug('dog', { lang: 'en' })).resolves.toMatchObject({
+        slug: 'dog',
+        name: 'Dog',
+      });
     });
 
     it('should throw NotFoundException when missing', async () => {
       mockPrismaService.petType.findUnique.mockResolvedValue(null);
 
-      await expect(service.findBySlug('missing')).rejects.toThrow(
+      await expect(service.findBySlug('missing', { lang: 'el' })).rejects.toThrow(
         NotFoundException,
       );
     });
   });
 
   describe('update', () => {
-    it('should update a pet type', async () => {
-      const updated = { id: 1, name: 'Dog', slug: 'dog' };
-      mockPrismaService.petType.update.mockResolvedValue(updated);
+    it('should upsert provided translations and return all of them', async () => {
+      mockPrismaService.petType.update.mockResolvedValue(dog);
 
-      await expect(service.update(1, { name: 'Dog' })).resolves.toEqual(
-        updated,
-      );
+      const result = await service.update(1, { translations: { en: 'Doggo' }, order: 15 }, {
+        lang: 'el',
+      });
+
+      expect(mockPrismaService.petType.update).toHaveBeenCalledWith({
+        where: { id: 1 },
+        data: {
+          order: 15,
+          translations: {
+            upsert: [
+              {
+                where: { petTypeId_langCode: { petTypeId: 1, langCode: 'en' } },
+                update: { name: 'Doggo' },
+                create: { langCode: 'en', name: 'Doggo' },
+              },
+            ],
+          },
+        },
+        include: petTypeInclude,
+      });
+      expect(result.translations).toEqual({ el: 'Σκύλος', en: 'Dog' });
+    });
+
+    it('should not require the default language on update', async () => {
+      mockPrismaService.petType.update.mockResolvedValue(dog);
+
+      await expect(
+        service.update(1, { translations: { en: 'Dog' } }, { lang: 'el' }),
+      ).resolves.toBeDefined();
+    });
+
+    it('should reject unknown language codes', async () => {
+      await expect(
+        service.update(1, { translations: { xx: 'Nope' } }, { lang: 'el' }),
+      ).rejects.toThrow(BadRequestException);
     });
 
     it('should throw NotFoundException when missing', async () => {
@@ -151,9 +302,9 @@ describe('PetTypesService', () => {
         }),
       );
 
-      await expect(
-        service.update(999, { name: 'Missing' }),
-      ).rejects.toThrow(NotFoundException);
+      await expect(service.update(999, { order: 1 }, { lang: 'el' })).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 
@@ -172,9 +323,7 @@ describe('PetTypesService', () => {
         }),
       );
 
-      await expect(service.remove(999)).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(service.remove(999)).rejects.toThrow(NotFoundException);
     });
   });
 });

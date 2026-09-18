@@ -8,13 +8,28 @@ import {
   UnprocessableEntityException,
 } from '@nestjs/common';
 import { Gender, Size } from '@prisma-lib/client';
+import { petWithTypeInclude } from './pet.mapper';
 
 describe('PetService', () => {
   let service: PetService;
   let prisma: PrismaService;
 
-  const petTypeDog = { id: 1, name: 'Dog', slug: 'dog' };
-  const petTypeCat = { id: 2, name: 'Cat', slug: 'cat' };
+  const petTypeDog = {
+    id: 1,
+    slug: 'dog',
+    translations: [
+      { id: 1, petTypeId: 1, langCode: 'el', name: 'Σκύλος' },
+      { id: 2, petTypeId: 1, langCode: 'en', name: 'Dog' },
+    ],
+  };
+  const petTypeCat = {
+    id: 2,
+    slug: 'cat',
+    translations: [
+      { id: 3, petTypeId: 2, langCode: 'el', name: 'Γάτα' },
+      { id: 4, petTypeId: 2, langCode: 'en', name: 'Cat' },
+    ],
+  };
 
   const mockPrismaService = {
     pet: {
@@ -91,7 +106,7 @@ describe('PetService', () => {
           user: { connect: { id: userId } },
           petType: { connect: { id: petTypeDog.id } },
         },
-        include: { petType: true },
+        include: petWithTypeInclude,
       });
     });
 
@@ -190,7 +205,7 @@ describe('PetService', () => {
       expect(mockPrismaService.pet.findMany).toHaveBeenCalledWith({
         where: { userId },
         orderBy: { created_at: 'desc' },
-        include: { petType: true },
+        include: petWithTypeInclude,
       });
     });
   });
@@ -222,7 +237,7 @@ describe('PetService', () => {
       expect(result).toEqual(mockPet);
       expect(mockPrismaService.pet.findUnique).toHaveBeenCalledWith({
         where: { id: petId },
-        include: { petType: true },
+        include: petWithTypeInclude,
       });
     });
 
@@ -287,7 +302,7 @@ describe('PetService', () => {
       expect(result).toEqual(mockPet);
       expect(mockPrismaService.pet.findUnique).toHaveBeenCalledWith({
         where: { tagId },
-        include: { petType: true },
+        include: petWithTypeInclude,
       });
     });
 
@@ -333,7 +348,7 @@ describe('PetService', () => {
       expect(mockPrismaService.pet.update).toHaveBeenCalledWith({
         where: { id: petId },
         data: updateData,
-        include: { petType: true },
+        include: petWithTypeInclude,
       });
     });
   });
@@ -402,7 +417,7 @@ describe('PetService', () => {
       expect(mockPrismaService.pet.update).toHaveBeenCalledWith({
         where: { id: petId },
         data: { isMissing: true },
-        include: { petType: true },
+        include: petWithTypeInclude,
       });
     });
 
@@ -466,7 +481,7 @@ describe('PetService', () => {
       expect(mockPrismaService.pet.update).toHaveBeenCalledWith({
         where: { id: petId },
         data: { isMissing: false },
-        include: { petType: true },
+        include: petWithTypeInclude,
       });
     });
 
@@ -526,7 +541,7 @@ describe('PetService', () => {
       expect(mockPrismaService.pet.findMany).toHaveBeenCalledWith({
         where: { isMissing: true },
         orderBy: { updated_at: 'desc' },
-        include: { petType: true },
+        include: petWithTypeInclude,
       });
     });
   });

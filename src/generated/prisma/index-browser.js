@@ -246,15 +246,32 @@ exports.Prisma.AuditLogScalarFieldEnum = {
   timestamp: 'timestamp'
 };
 
+exports.Prisma.LanguageScalarFieldEnum = {
+  code: 'code',
+  name: 'name',
+  nativeName: 'nativeName',
+  isDefault: 'isDefault',
+  isActive: 'isActive',
+  sortOrder: 'sortOrder',
+  created_at: 'created_at',
+  updated_at: 'updated_at'
+};
+
 exports.Prisma.PetTypeScalarFieldEnum = {
   id: 'id',
-  name: 'name',
   slug: 'slug',
   order: 'order',
   meta: 'meta',
   settings: 'settings',
   created_at: 'created_at',
   updated_at: 'updated_at'
+};
+
+exports.Prisma.PetTypeTranslationScalarFieldEnum = {
+  id: 'id',
+  petTypeId: 'petTypeId',
+  langCode: 'langCode',
+  name: 'name'
 };
 
 exports.Prisma.PetScalarFieldEnum = {
@@ -523,7 +540,9 @@ exports.Prisma.ModelName = {
   Gate: 'Gate',
   Verification: 'Verification',
   AuditLog: 'AuditLog',
+  Language: 'Language',
   PetType: 'PetType',
+  PetTypeTranslation: 'PetTypeTranslation',
   Pet: 'Pet',
   Alert: 'Alert',
   Device: 'Device',

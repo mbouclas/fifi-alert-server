@@ -1,31 +1,8 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Gender, Size } from '@prisma-lib/client';
+import { PetTypeResponseDto } from '../../pet-types/dto/pet-type-response.dto';
 
-export class PetTypeResponseDto {
-  @ApiProperty({
-    description: 'Pet type ID',
-    example: 1,
-  })
-  id: number;
-
-  @ApiProperty({
-    description: 'Pet type name',
-    example: 'Dog',
-  })
-  name: string;
-
-  @ApiProperty({
-    description: 'Pet type slug',
-    example: 'dog',
-  })
-  slug: string;
-
-  @ApiProperty({
-    description: 'Pet type display order',
-    example: 10,
-  })
-  order: number;
-}
+export { PetTypeResponseDto };
 
 export class PetResponseDto {
   @ApiProperty({
@@ -53,7 +30,8 @@ export class PetResponseDto {
   petTypeId: number;
 
   @ApiProperty({
-    description: 'Pet type details',
+    description:
+      'Pet type details. `name` is localised via `lang` / Accept-Language.',
     type: PetTypeResponseDto,
   })
   petType: PetTypeResponseDto;

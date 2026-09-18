@@ -53,22 +53,28 @@ describe('Pet API (e2e)', () => {
   });
 
   async function setupTestData() {
-    // Create pet types used in tests
-    const dogType = await prisma.petType.upsert({
-      where: { slug: 'dog' },
-      update: { name: 'Dog' },
-      create: { name: 'Dog', slug: 'dog' },
-    });
-    const catType = await prisma.petType.upsert({
-      where: { slug: 'cat' },
-      update: { name: 'Cat' },
-      create: { name: 'Cat', slug: 'cat' },
-    });
-    const birdType = await prisma.petType.upsert({
-      where: { slug: 'bird' },
-      update: { name: 'Bird' },
-      create: { name: 'Bird', slug: 'bird' },
-    });
+    // Create pet types used in tests (with translations; el is the default language)
+    const ensurePetType = async (slug: string, el: string, en: string) => {
+      const petType = await prisma.petType.upsert({
+        where: { slug },
+        update: {},
+        create: { slug },
+      });
+      for (const t of [
+        { langCode: 'el', name: el },
+        { langCode: 'en', name: en },
+      ]) {
+        await prisma.petTypeTranslation.upsert({
+          where: { petTypeId_langCode: { petTypeId: petType.id, langCode: t.langCode } },
+          update: { name: t.name },
+          create: { petTypeId: petType.id, ...t },
+        });
+      }
+      return petType;
+    };
+    const dogType = await ensurePetType('dog', 'Σκύλος', 'Dog');
+    const catType = await ensurePetType('cat', 'Γάτα', 'Cat');
+    const birdType = await ensurePetType('bird', 'Πουλί', 'Bird');
 
     petTypeDogId = dogType.id;
     petTypeCatId = catType.id;
@@ -185,6 +191,10 @@ describe('Pet API (e2e)', () => {
       expect(response.body.petTypeId).toBe(createDto.petTypeId);
       expect(response.body.petType).toHaveProperty('id', createDto.petTypeId);
       expect(response.body.petType).toHaveProperty('slug', 'dog');
+      // Default language is Greek
+      expect(response.body.petType).toHaveProperty('name', 'Σκύλος');
+      expect(response.body.petType).toHaveProperty('lang', 'el');
+      expect(response.body.petType).not.toHaveProperty('translations');
       expect(response.body.gender).toBe(createDto.gender);
       expect(response.body.size).toBe(createDto.size);
       expect(response.body.isMissing).toBe(false);
@@ -298,6 +308,38 @@ describe('Pet API (e2e)', () => {
       expect(response.body.name).toBe('Max');
       expect(response.body.petTypeId).toBe(petTypeDogId);
       expect(response.body.petType).toHaveProperty('slug', 'dog');
+      expect(response.body.petType).toHaveProperty('name', 'Σκύλος');
+    });
+
+    it('should localise the pet type name via ?lang= (200)', async () => {
+      const response = await request(app.getHttpServer())
+        .get(`/pets/${testPetId}?lang=en`)
+        .set('Authorization', `Bearer ${authToken}`)
+        .expect(200);
+
+      expect(response.body.petType).toHaveProperty('name', 'Dog');
+      expect(response.body.petType).toHaveProperty('lang', 'en');
+    });
+
+    it('should localise the pet type name via Accept-Language (200)', async () => {
+      const response = await request(app.getHttpServer())
+        .get(`/pets/${testPetId}`)
+        .set('Authorization', `Bearer ${authToken}`)
+        .set('Accept-Language', 'en-GB,en;q=0.9,el;q=0.5')
+        .expect(200);
+
+      expect(response.body.petType).toHaveProperty('name', 'Dog');
+      expect(response.body.petType).toHaveProperty('lang', 'en');
+    });
+
+    it('should fall back to the default language for unknown lang (200)', async () => {
+      const response = await request(app.getHttpServer())
+        .get(`/pets/${testPetId}?lang=xx`)
+        .set('Authorization', `Bearer ${authToken}`)
+        .expect(200);
+
+      expect(response.body.petType).toHaveProperty('name', 'Σκύλος');
+      expect(response.body.petType).toHaveProperty('lang', 'el');
     });
 
     it("should reject access to another user's pet (403)", async () => {

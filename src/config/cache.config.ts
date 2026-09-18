@@ -51,6 +51,13 @@ export const CacheKeys = {
     ACTIVE_ALERT_ZONES: 'alert-zones:active',
 
     /**
+     * All active languages (code, names, default flag)
+     * TTL: 15 minutes
+     * Invalidated on: language CREATE, UPDATE, DELETE (LanguageService.invalidate)
+     */
+    LANGUAGES_ACTIVE: 'languages:active',
+
+    /**
      * User-specific alert zones
      * TTL: 5 minutes
      * Invalidated on: User's alert zone CREATE, UPDATE, DELETE
