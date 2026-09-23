@@ -6,10 +6,10 @@ import Redis from 'ioredis';
  * Rate Limiting Service using Redis Sorted Sets
  * Task 2.9
  *
- * Enforces the following limits per user:
- * - 5 alerts per hour
- * - 20 alerts per 24 hours
- * - 50 alerts per 7 days
+ * Enforces the following limits per user (configurable via .env):
+ * - RATE_LIMIT_ALERTS_PER_HOUR (default 5)
+ * - RATE_LIMIT_ALERTS_PER_DAY (default 20)
+ * - RATE_LIMIT_ALERTS_PER_WEEK (default 50)
  */
 @Injectable()
 export class RateLimitService {
@@ -17,13 +17,30 @@ export class RateLimitService {
   private readonly redis: Redis;
 
   // Rate limit configurations (from NOTIFICATION_PLAYBOOK.md)
-  private readonly limits = {
-    hourly: { count: 5, windowMs: 60 * 60 * 1000 }, // 1 hour
-    daily: { count: 20, windowMs: 24 * 60 * 60 * 1000 }, // 24 hours
-    weekly: { count: 50, windowMs: 7 * 24 * 60 * 60 * 1000 }, // 7 days
-  };
+  private readonly limits: Record<
+    'hourly' | 'daily' | 'weekly',
+    { count: number; windowMs: number }
+  >;
 
   constructor(private readonly configService: ConfigService) {
+    const readLimit = (key: string, fallback: number) =>
+      parseInt(this.configService.get(key, String(fallback)), 10) || fallback;
+
+    this.limits = {
+      hourly: {
+        count: readLimit('RATE_LIMIT_ALERTS_PER_HOUR', 5),
+        windowMs: 60 * 60 * 1000, // 1 hour
+      },
+      daily: {
+        count: readLimit('RATE_LIMIT_ALERTS_PER_DAY', 20),
+        windowMs: 24 * 60 * 60 * 1000, // 24 hours
+      },
+      weekly: {
+        count: readLimit('RATE_LIMIT_ALERTS_PER_WEEK', 50),
+        windowMs: 7 * 24 * 60 * 60 * 1000, // 7 days
+      },
+    };
+
     // Initialize Redis client with same config as BullMQ
     this.redis = new Redis({
       host: this.configService.get('REDIS_HOST', 'localhost'),

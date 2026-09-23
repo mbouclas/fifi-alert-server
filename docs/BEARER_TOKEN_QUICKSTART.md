@@ -55,7 +55,7 @@ Add to your `.env`:
 JWT_SECRET=<your-secret-64-chars-min>
 JWT_REFRESH_SECRET=<your-refresh-secret-64-chars-min>
 JWT_ACCESS_EXPIRATION=15m
-JWT_REFRESH_EXPIRATION=7d
+JWT_REFRESH_EXPIRATION=30d
 ```
 
 Generate secrets:

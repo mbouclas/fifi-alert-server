@@ -1,4 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { getQueueToken } from '@nestjs/bullmq';
 import { Job } from 'bullmq';
 import { NotificationQueueProcessor } from './notification-queue.processor';
@@ -7,6 +8,8 @@ import { LocationService } from '../location/location.service';
 import { PrismaService } from '../services/prisma.service';
 import { FCMService } from './fcm.service';
 import { APNsService } from './apns.service';
+import { WebPushService } from './webpush.service';
+import { AlertEmailService } from './alert-email.service';
 import { NOTIFICATION_QUEUE } from './notification.constants';
 import {
   NotificationConfidence,
@@ -22,6 +25,8 @@ describe('NotificationQueueProcessor', () => {
   let prismaService: PrismaService;
   let fcmService: FCMService;
   let apnsService: APNsService;
+  let webPushService: WebPushService;
+  let alertEmailService: AlertEmailService;
   let mockQueue: any;
 
   beforeEach(async () => {
@@ -31,6 +36,23 @@ describe('NotificationQueueProcessor', () => {
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
+        {
+          provide: EventEmitter2,
+          useValue: { emit: jest.fn() },
+        },
+        {
+          provide: WebPushService,
+          useValue: {
+            sendNotification: jest.fn(),
+          },
+        },
+        {
+          provide: AlertEmailService,
+          useValue: {
+            isOptedIn: jest.fn().mockResolvedValue(false),
+            sendAlertEmail: jest.fn().mockResolvedValue(true),
+          },
+        },
         NotificationQueueProcessor,
         {
           provide: NotificationService,
@@ -55,7 +77,9 @@ describe('NotificationQueueProcessor', () => {
             notification: {
               create: jest.fn(),
               findUnique: jest.fn(),
+              findFirst: jest.fn(),
               update: jest.fn(),
+              count: jest.fn(),
             },
           },
         },
@@ -86,6 +110,12 @@ describe('NotificationQueueProcessor', () => {
     prismaService = module.get<PrismaService>(PrismaService);
     fcmService = module.get<FCMService>(FCMService);
     apnsService = module.get<APNsService>(APNsService);
+    webPushService = module.get<WebPushService>(WebPushService);
+    alertEmailService = module.get<AlertEmailService>(AlertEmailService);
+
+    // Fatigue guards default to "clear" so each test opts into the case it cares about.
+    (prismaService.notification.findFirst as jest.Mock).mockResolvedValue(null);
+    (prismaService.notification.count as jest.Mock).mockResolvedValue(0);
   });
 
   afterEach(() => {
@@ -138,6 +168,7 @@ describe('NotificationQueueProcessor', () => {
       (locationService.findDevicesForAlert as jest.Mock).mockResolvedValue([
         {
           deviceId: '10',
+          userId: '1',
           pushToken: 'token-123',
           confidence: NotificationConfidence.HIGH,
           matchReason: 'SAVED_ZONE',
@@ -146,6 +177,7 @@ describe('NotificationQueueProcessor', () => {
         },
         {
           deviceId: '20',
+          userId: '2',
           pushToken: 'token-456',
           confidence: NotificationConfidence.MEDIUM,
           matchReason: 'FRESH_GPS',
@@ -165,11 +197,163 @@ describe('NotificationQueueProcessor', () => {
       await processor.processAlertNotifications(job);
 
       expect(locationService.findDevicesForAlert).toHaveBeenCalledWith(1);
-      expect(prismaService.notification.create).toHaveBeenCalledTimes(2);
-      expect(mockQueue.add).toHaveBeenCalledTimes(2);
+
+      // A job with no wave is treated as HIGH, so only the HIGH match is queued;
+      // the MEDIUM match is left for the delayed wave.
+      expect(prismaService.notification.create).toHaveBeenCalledTimes(1);
+      expect(mockQueue.add).toHaveBeenCalledTimes(1);
       expect(mockQueue.add).toHaveBeenCalledWith('send-push-notification', {
         notificationId: 100,
       });
+    });
+
+    it('should only queue the wave it was asked for', async () => {
+      (prismaService.alert.findUnique as jest.Mock).mockResolvedValue({
+        id: 1,
+        status: AlertStatus.ACTIVE,
+      });
+
+      (locationService.findDevicesForAlert as jest.Mock).mockResolvedValue([
+        {
+          deviceId: '10',
+          userId: '1',
+          pushToken: 'token-123',
+          confidence: NotificationConfidence.HIGH,
+          matchReason: 'SAVED_ZONE',
+          distanceKm: 1.5,
+          matchedVia: 'Saved zone: Home',
+        },
+        {
+          deviceId: '20',
+          userId: '2',
+          pushToken: 'token-456',
+          confidence: NotificationConfidence.MEDIUM,
+          matchReason: 'FRESH_GPS',
+          distanceKm: 3.2,
+          matchedVia: 'Stale GPS',
+        },
+      ]);
+
+      (prismaService.notification.create as jest.Mock).mockResolvedValue({
+        id: 200,
+      });
+
+      await processor.processAlertNotifications({
+        data: { alertId: 1, wave: 'MEDIUM' },
+      } as Job);
+
+      expect(prismaService.notification.create).toHaveBeenCalledTimes(1);
+      expect(prismaService.notification.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          device_id: 20,
+          confidence: NotificationConfidence.MEDIUM,
+        }),
+      });
+    });
+
+    it('should not re-notify a user an earlier wave already reached', async () => {
+      (prismaService.alert.findUnique as jest.Mock).mockResolvedValue({
+        id: 1,
+        status: AlertStatus.ACTIVE,
+      });
+
+      (locationService.findDevicesForAlert as jest.Mock).mockResolvedValue([
+        {
+          deviceId: '20',
+          userId: '2',
+          pushToken: 'token-456',
+          confidence: NotificationConfidence.MEDIUM,
+          matchReason: 'FRESH_GPS',
+          distanceKm: 3.2,
+          matchedVia: 'Stale GPS',
+        },
+      ]);
+
+      // User 2 already has a notification row for this alert from the HIGH wave.
+      (prismaService.notification.findFirst as jest.Mock).mockResolvedValue({
+        id: 99,
+      });
+
+      await processor.processAlertNotifications({
+        data: { alertId: 1, wave: 'MEDIUM' },
+      } as Job);
+
+      expect(prismaService.notification.create).not.toHaveBeenCalled();
+      expect(notificationService.trackExclusion).toHaveBeenCalledWith(
+        1,
+        20,
+        'ALREADY_NOTIFIED',
+      );
+    });
+
+    it('should exclude users over the rolling daily cap', async () => {
+      (prismaService.alert.findUnique as jest.Mock).mockResolvedValue({
+        id: 1,
+        status: AlertStatus.ACTIVE,
+      });
+
+      (locationService.findDevicesForAlert as jest.Mock).mockResolvedValue([
+        {
+          deviceId: '20',
+          userId: '2',
+          pushToken: 'token-456',
+          confidence: NotificationConfidence.MEDIUM,
+          matchReason: 'FRESH_GPS',
+          distanceKm: 3.2,
+          matchedVia: 'Stale GPS',
+        },
+      ]);
+
+      // MEDIUM cap is 5 per rolling 24h.
+      (prismaService.notification.count as jest.Mock).mockResolvedValue(5);
+
+      await processor.processAlertNotifications({
+        data: { alertId: 1, wave: 'MEDIUM' },
+      } as Job);
+
+      expect(prismaService.notification.create).not.toHaveBeenCalled();
+      expect(notificationService.trackExclusion).toHaveBeenCalledWith(
+        1,
+        20,
+        'DAILY_CAP',
+      );
+    });
+
+    it('should hold back non-HIGH waves during quiet hours', async () => {
+      // 03:00 local
+      jest.useFakeTimers().setSystemTime(new Date(2026, 0, 15, 3, 0, 0));
+
+      (prismaService.alert.findUnique as jest.Mock).mockResolvedValue({
+        id: 1,
+        status: AlertStatus.ACTIVE,
+      });
+
+      (locationService.findDevicesForAlert as jest.Mock).mockResolvedValue([
+        {
+          deviceId: '20',
+          userId: '2',
+          pushToken: 'token-456',
+          confidence: NotificationConfidence.LOW,
+          matchReason: 'IP',
+          distanceKm: 12,
+          matchedVia: 'IP geolocation',
+        },
+      ]);
+
+      try {
+        await processor.processAlertNotifications({
+          data: { alertId: 1, wave: 'LOW' },
+        } as Job);
+
+        expect(prismaService.notification.create).not.toHaveBeenCalled();
+        expect(notificationService.trackExclusion).toHaveBeenCalledWith(
+          1,
+          20,
+          'QUIET_HOURS',
+        );
+      } finally {
+        jest.useRealTimers();
+      }
     });
 
     it('should track exclusions for devices without push tokens', async () => {
@@ -181,6 +365,7 @@ describe('NotificationQueueProcessor', () => {
       (locationService.findDevicesForAlert as jest.Mock).mockResolvedValue([
         {
           deviceId: '10',
+          userId: '1',
           pushToken: null,
           confidence: NotificationConfidence.HIGH,
           matchReason: 'FRESH_GPS',
@@ -223,6 +408,7 @@ describe('NotificationQueueProcessor', () => {
       (locationService.findDevicesForAlert as jest.Mock).mockResolvedValue([
         {
           deviceId: '1',
+          userId: '0',
           pushToken: 'token-1',
           confidence: NotificationConfidence.HIGH,
           matchReason: 'SAVED_ZONE',
@@ -231,6 +417,7 @@ describe('NotificationQueueProcessor', () => {
         },
         {
           deviceId: '2',
+          userId: '0',
           pushToken: 'token-2',
           confidence: NotificationConfidence.HIGH,
           matchReason: 'FRESH_GPS',
@@ -239,6 +426,7 @@ describe('NotificationQueueProcessor', () => {
         },
         {
           deviceId: '3',
+          userId: '0',
           pushToken: 'token-3',
           confidence: NotificationConfidence.MEDIUM,
           matchReason: 'STALE_GPS',
@@ -247,6 +435,7 @@ describe('NotificationQueueProcessor', () => {
         },
         {
           deviceId: '4',
+          userId: '0',
           pushToken: 'token-4',
           confidence: NotificationConfidence.LOW,
           matchReason: 'IP_GEOLOCATION',
@@ -419,6 +608,188 @@ describe('NotificationQueueProcessor', () => {
         'Black cat',
         'Downtown',
       );
+    });
+
+    it('should send web push for a WEB device (installed PWA)', async () => {
+      (prismaService.notification.findUnique as jest.Mock).mockResolvedValue({
+        id: 100,
+        alert_id: 1,
+        device_id: 10,
+        confidence: NotificationConfidence.HIGH,
+        match_reason: 'ALERT_ZONE:Home',
+        distance_km: 1.2,
+        alert: {
+          id: 1,
+          pet_name: 'Fifi',
+          pet_species: 'DOG',
+          pet_description: 'Brown terrier',
+          location_address: 'Nicosia',
+          pet_photos: [],
+        },
+        device: {
+          id: 10,
+          push_token: '{"endpoint":"https://web.push.apple.com/abc","keys":{"p256dh":"key","auth":"auth"}}',
+          platform: 'WEB',
+        },
+      });
+
+      (webPushService.sendNotification as jest.Mock).mockResolvedValue({
+        success: true,
+        messageId: 'web-push-message-789',
+      });
+
+      (notificationService.buildTitle as jest.Mock).mockReturnValue(
+        'Missing DOG: Fifi',
+      );
+      (notificationService.buildBody as jest.Mock).mockReturnValue(
+        'Brown terrier',
+      );
+      (prismaService.notification.update as jest.Mock).mockResolvedValue({
+        id: 100,
+      });
+
+      await processor.processPushNotification({
+        data: { notificationId: 100 },
+      } as Job);
+
+      expect(webPushService.sendNotification).toHaveBeenCalledTimes(1);
+      // WEB must not fall through to the native transports
+      expect(apnsService.sendNotification).not.toHaveBeenCalled();
+
+      expect(prismaService.notification.update).toHaveBeenCalledWith({
+        where: { id: 100 },
+        data: expect.objectContaining({
+          status: 'SENT',
+          push_message_id: 'web-push-message-789',
+        }),
+      });
+    });
+
+    it('should mark a dead web push subscription as failed', async () => {
+      (prismaService.notification.findUnique as jest.Mock).mockResolvedValue({
+        id: 101,
+        alert_id: 1,
+        device_id: 11,
+        confidence: NotificationConfidence.HIGH,
+        match_reason: 'ALERT_ZONE:Home',
+        distance_km: 1.2,
+        alert: {
+          id: 1,
+          pet_name: 'Fifi',
+          pet_species: 'DOG',
+          pet_description: 'Brown terrier',
+          location_address: 'Nicosia',
+          pet_photos: [],
+        },
+        device: {
+          id: 11,
+          push_token: '{"endpoint":"https://web.push.apple.com/abc","keys":{"p256dh":"key","auth":"auth"}}',
+          platform: 'WEB',
+        },
+      });
+
+      // iOS destroys the subscription when the home screen icon is removed;
+      // the push service then answers 410 Gone.
+      (webPushService.sendNotification as jest.Mock).mockResolvedValue({
+        success: false,
+        error: 'Gone',
+        invalidToken: true,
+      });
+
+      (notificationService.buildTitle as jest.Mock).mockReturnValue('t');
+      (notificationService.buildBody as jest.Mock).mockReturnValue('b');
+      (prismaService.notification.update as jest.Mock).mockResolvedValue({
+        id: 101,
+      });
+
+      await expect(
+        processor.processPushNotification({
+          data: { notificationId: 101 },
+        } as Job),
+      ).rejects.toThrow();
+
+      expect(prismaService.notification.update).toHaveBeenCalledWith({
+        where: { id: 101 },
+        data: expect.objectContaining({ status: 'FAILED' }),
+      });
+    });
+
+    it('should fall back to email on the HIGH wave when a user has no push channel', async () => {
+      (prismaService.alert.findUnique as jest.Mock).mockResolvedValue({
+        id: 1,
+        status: AlertStatus.ACTIVE,
+        pet_name: 'Fifi',
+        pet_species: 'DOG',
+        pet_description: 'Brown terrier',
+        location_address: 'Nicosia',
+        pet_photos: ['https://cdn.example/fifi.jpg'],
+      });
+
+      (locationService.findDevicesForAlert as jest.Mock).mockResolvedValue([
+        {
+          deviceId: '10',
+          userId: '1',
+          pushToken: null,
+          confidence: NotificationConfidence.HIGH,
+          matchReason: 'ALERT_ZONE',
+          distanceKm: 1.2,
+          matchedVia: 'Alert zone: Home',
+        },
+      ]);
+
+      (alertEmailService.isOptedIn as jest.Mock).mockResolvedValue(true);
+
+      await processor.processAlertNotifications({
+        data: { alertId: 1, wave: 'HIGH' },
+      } as Job);
+
+      expect(notificationService.trackExclusion).toHaveBeenCalledWith(
+        1,
+        10,
+        'PUSH_TOKEN_MISSING',
+      );
+      expect(alertEmailService.sendAlertEmail).toHaveBeenCalledWith(
+        1,
+        expect.objectContaining({
+          alertId: 1,
+          petName: 'Fifi',
+          petPhotoUrl: 'https://cdn.example/fifi.jpg',
+          distanceKm: 1.2,
+        }),
+      );
+    });
+
+    it('should not send fallback email on lower-confidence waves', async () => {
+      (prismaService.alert.findUnique as jest.Mock).mockResolvedValue({
+        id: 1,
+        status: AlertStatus.ACTIVE,
+        pet_name: 'Fifi',
+        pet_species: 'DOG',
+        pet_description: 'Brown terrier',
+        location_address: 'Nicosia',
+        pet_photos: [],
+      });
+
+      (locationService.findDevicesForAlert as jest.Mock).mockResolvedValue([
+        {
+          deviceId: '20',
+          userId: '2',
+          pushToken: null,
+          confidence: NotificationConfidence.LOW,
+          matchReason: 'IP',
+          distanceKm: 14,
+          matchedVia: 'IP geolocation',
+        },
+      ]);
+
+      (alertEmailService.isOptedIn as jest.Mock).mockResolvedValue(true);
+
+      await processor.processAlertNotifications({
+        data: { alertId: 1, wave: 'LOW' },
+      } as Job);
+
+      // "A pet is missing somewhere in your city" is not worth an email.
+      expect(alertEmailService.sendAlertEmail).not.toHaveBeenCalled();
     });
 
     it('should catch errors and continue processing', async () => {

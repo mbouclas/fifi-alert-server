@@ -173,7 +173,7 @@ src/alert/
 - `lon` (required): Longitude
 - `radiusKm` (optional): Search radius (default: 10km, max: 100km)
 - `species` (optional): Filter by species (DOG, CAT, etc.)
-- `status` (optional): Filter by status (ACTIVE, RESOLVED, EXPIRED)
+- `status` (optional): Filter by status (DRAFT, ACTIVE, RESOLVED, EXPIRED, CANCELLED)
 - `limit` (optional): Results per page (default: 20, max: 100)
 - `offset` (optional): Pagination offset
 
@@ -297,6 +297,36 @@ files: [File, File, ...]  // Max 5 files, 10MB each
 - Cancels any queued notifications
 - Sends resolution notification to sighting reporters
 - Updates alert status to RESOLVED
+
+---
+
+### POST /alerts/:id/cancel
+**Cancel (Withdraw) an Alert**
+
+**Authentication:** Required (Bearer token)  
+**Authorization:** Must be alert creator
+
+Use this when the alert was posted by mistake or is no longer relevant. Use `/resolve` when the pet was found.
+
+**Request Body (optional):**
+```typescript
+{
+  "reason": "Posted by mistake"  // Optional, max 2000 chars, stored in notes
+}
+```
+
+**Response (200 OK):** the full alert with `"status": "CANCELLED"` and `"cancelledAt"` set.
+
+**Errors:**
+- `403` - Not the alert creator
+- `404` - Alert not found
+- `422` - Alert is not DRAFT or ACTIVE (already resolved, expired or cancelled)
+
+**Side Effects:**
+- Updates alert status to CANCELLED and sets `cancelled_at`
+- Pending notification waves are skipped (the processor only fans out ACTIVE alerts)
+- Clears the linked pet's `isMissing` flag if no other ACTIVE alert exists for it
+- Cancelled alerts cannot be renewed and do not accept sightings
 
 ---
 
@@ -435,6 +465,7 @@ enum AlertStatus {
   ACTIVE
   RESOLVED
   EXPIRED
+  CANCELLED
 }
 
 enum PetSpecies {

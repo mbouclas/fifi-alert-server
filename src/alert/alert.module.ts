@@ -8,11 +8,24 @@ import { UploadModule } from '../upload/upload.module';
 import { RateLimitService } from './rate-limit.service';
 import { SharedModule } from '../shared/shared.module';
 import { NotificationModule } from '../notification/notification.module';
+import { AlertEventsModule, ALERT_STATUS_HANDLERS } from './events';
 
 @Module({
-  imports: [AuthEndpointsModule, UploadModule, SharedModule, NotificationModule],
+  imports: [
+    AuthEndpointsModule,
+    UploadModule,
+    SharedModule,
+    NotificationModule,
+    AlertEventsModule,
+  ],
   controllers: [AlertController],
-  providers: [AlertService, AlertOwnerGuard, PrismaService, RateLimitService],
+  providers: [
+    AlertService,
+    AlertOwnerGuard,
+    PrismaService,
+    RateLimitService,
+    ...ALERT_STATUS_HANDLERS,
+  ],
   exports: [AlertService],
 })
-export class AlertModule { }
+export class AlertModule {}

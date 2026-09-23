@@ -25,9 +25,9 @@ import { SharedModule } from '../shared/shared.module';
     JwtModule.register({
       global: true,
       secret: process.env.JWT_SECRET || 'your-secret-key-change-in-production',
-      signOptions: {
-        expiresIn: process.env.JWT_ACCESS_EXPIRATION || '15m',
-      },
+      // NOTE: No module-wide `expiresIn`. TokenService signs each token
+      // (access vs. refresh) explicitly with its own validated duration so
+      // the JWT `exp` claim always matches the persisted Session.expiresAt.
     }),
   ],
   controllers: [AuthController],
@@ -40,6 +40,12 @@ import { SharedModule } from '../shared/shared.module';
     TokenCleanupService,
     AuthEmailService,
   ],
-  exports: [TokenService, BearerTokenGuard, RolesGuard, MinUserLevelGuard, AuthEmailService],
+  exports: [
+    TokenService,
+    BearerTokenGuard,
+    RolesGuard,
+    MinUserLevelGuard,
+    AuthEmailService,
+  ],
 })
-export class AuthEndpointsModule { }
+export class AuthEndpointsModule {}

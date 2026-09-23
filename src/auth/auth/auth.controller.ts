@@ -24,11 +24,15 @@ import {
 import { Throttle } from '@nestjs/throttler';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Session, type UserSession } from '@thallesp/nestjs-better-auth';
-import { verifyPassword } from 'better-auth/crypto';
+import { verifyPassword, hashPassword } from 'better-auth/crypto';
 import type { Request } from 'express';
 import { auth, getEmailVerificationCallbackURL } from '../../auth';
 import { UserService } from '../../user/user.service';
-import { TokenService } from '../services/token.service';
+import {
+  TokenService,
+  RefreshTokenReuseError,
+} from '../services/token.service';
+import { PrismaService } from '../../services/prisma.service';
 import { AllowAnonymous } from '../decorators/allow-anonymous.decorator';
 import { CurrentUser } from '../decorators/current-user.decorator';
 import { BearerTokenGuard } from '../guards/bearer-token.guard';
@@ -42,6 +46,10 @@ import {
   UpdatePasswordDto,
   AuthResponseDto,
   MeResponseDto,
+  RefreshTokenDto,
+  RefreshResponseDto,
+  LogoutDto,
+  LogoutAllResponseDto,
 } from '../dto';
 import { AUDIT_EVENT_NAMES } from '../../audit/audit-event-names';
 import { IAuditEventPayload } from '../../audit/interfaces/audit-event-payload.interface';
@@ -62,7 +70,18 @@ export class AuthController {
     private readonly userService: UserService,
     private readonly tokenService: TokenService,
     private readonly eventEmitter: EventEmitter2,
+    private readonly prisma: PrismaService,
   ) {}
+
+  /**
+   * Extract the raw bearer token from the Authorization header, if any.
+   */
+  private bearerFromRequest(req: Request): string | undefined {
+    const header = req.headers.authorization;
+    if (!header) return undefined;
+    const [scheme, token] = header.split(' ');
+    return scheme?.toLowerCase() === 'bearer' && token ? token : undefined;
+  }
 
   /**
    * User login with email and password
@@ -124,12 +143,11 @@ export class AuthController {
       }
 
       failureStage = 'better-auth-sign-in';
-      const { headers, response: result } = await auth.api.signInEmail({
+      const result = await auth.api.signInEmail({
         body: {
           email: normalizedEmail,
           password: loginDto.password,
         },
-        returnHeaders: true,
       });
 
       if (!result?.user) {
@@ -171,30 +189,8 @@ export class AuthController {
         userAgent,
       );
 
-      // Extract session token from set-cookie header
-      const setCookie = headers.get('set-cookie');
-      let sessionToken: string | undefined;
-      let expiresAt: string | undefined;
-
-      if (setCookie) {
-        // Parse session token from cookie
-        const tokenMatch = setCookie.match(
-          /better-auth\.session_token=([^;]+)/,
-        );
-        if (tokenMatch) {
-          sessionToken = tokenMatch[1];
-        }
-
-        // Parse expiry from cookie (format: Expires=Fri, 05 Dec 2025 10:53:01 GMT)
-        const expiresMatch = setCookie.match(/Expires=([^;,]+(?:,[^;]+)?)/i);
-        if (expiresMatch) {
-          const expDate = new Date(expiresMatch[1].trim());
-          if (!isNaN(expDate.getTime())) {
-            expiresAt = expDate.toISOString();
-          }
-        }
-      }
-
+      // NOTE: the better-auth session cookie token is deliberately NOT
+      // returned to clients anymore. Bearer clients only need the JWT pair.
       this.logger.log(`User logged in: ${result.user.email}`);
 
       // Emit audit event for successful login
@@ -209,7 +205,6 @@ export class AuthController {
             email: result.user.email,
             ipAddress,
             userAgent,
-            sessionToken: sessionToken ? '[REDACTED]' : undefined,
           },
           success: true,
         };
@@ -225,15 +220,10 @@ export class AuthController {
           email: result.user.email,
           name: result.user.name,
         },
-        session: sessionToken
-          ? {
-              token: sessionToken,
-              expiresAt,
-            }
-          : undefined,
         accessToken: accessTokenData.token,
         refreshToken: refreshTokenData.token,
         expiresAt: accessTokenData.expiresAt.toISOString(),
+        refreshExpiresAt: refreshTokenData.expiresAt.toISOString(),
       };
     } catch (error) {
       await this.logFailedLoginAttempt(
@@ -425,71 +415,143 @@ export class AuthController {
   @ApiOperation({
     summary: 'User logout',
     description:
-      'Signs out the currently authenticated user and invalidates their session.',
+      'Revokes the bearer access token from the Authorization header and, if provided in the body, the refresh token. Also signs out any better-auth cookie session. Always returns 200.',
   })
+  @ApiBody({ type: LogoutDto, required: false })
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'Logout successful',
   })
-  @ApiResponse({
-    status: HttpStatus.UNAUTHORIZED,
-    description: 'Not authenticated',
-  })
-  async logout(@Req() req: Request): Promise<{ message: string }> {
-    try {
-      // Forward the request to Better Auth's sign-out endpoint
-      const headers = new Headers();
+  async logout(
+    @Req() req: Request,
+    @Body() body?: LogoutDto,
+  ): Promise<{ message: string }> {
+    let userId: number | undefined;
+    const accessToken = this.bearerFromRequest(req);
 
-      // Copy relevant headers from the request
+    // Identify the user BEFORE revoking (validation fails afterwards).
+    if (accessToken) {
+      try {
+        const decoded =
+          await this.tokenService.validateAccessToken(accessToken);
+        userId = decoded.id;
+      } catch {
+        // Token may already be invalid; that's fine for logout.
+      }
+    }
+
+    // Revoke the JWT pair. Each call is best-effort.
+    if (accessToken) {
+      try {
+        await this.tokenService.revokeToken(accessToken);
+      } catch (error) {
+        this.logger.warn(`Failed to revoke access token on logout: ${error}`);
+      }
+    }
+    if (body?.refreshToken) {
+      try {
+        await this.tokenService.revokeToken(body.refreshToken);
+      } catch (error) {
+        this.logger.warn(`Failed to revoke refresh token on logout: ${error}`);
+      }
+    }
+
+    // Also sign out any better-auth cookie session.
+    try {
+      const headers = new Headers();
       if (req.headers.authorization) {
         headers.set('Authorization', req.headers.authorization);
       }
       if (req.headers.cookie) {
         headers.set('Cookie', req.headers.cookie);
       }
-
-      await auth.api.signOut({
-        headers,
-      });
-
-      this.logger.log('User logged out successfully');
-
-      // Emit audit event for logout
-      try {
-        // Try to extract user info from bearer token if available
-        let userId: number | undefined;
-        if (req.headers.authorization) {
-          try {
-            const token = req.headers.authorization.replace('Bearer ', '');
-            const decoded = await this.tokenService.validateAccessToken(token);
-            userId = decoded.id; // Extract just the ID from the user object
-          } catch (e) {
-            // Token may be invalid, that's okay for logout
-          }
-        }
-
-        const auditPayload: IAuditEventPayload = {
-          eventType: 'LOGOUT',
-          entityType: 'SESSION',
-          userId,
-          action: 'user_logout',
-          description: 'User logged out',
-          metadata: {
-            ipAddress: req.ip || req.socket.remoteAddress,
-            userAgent: req.headers['user-agent'],
-          },
-          success: true,
-        };
-        this.eventEmitter.emit(AUDIT_EVENT_NAMES.USER.LOGOUT, auditPayload);
-      } catch (error) {
-        this.logger.error('Failed to emit audit event for logout:', error);
-      }
-
-      return { message: 'Logout successful' };
+      await auth.api.signOut({ headers });
     } catch (error) {
-      this.logger.error(`Logout failed: ${error}`);
-      return { message: 'Logout successful' };
+      this.logger.debug(`better-auth signOut on logout: ${error}`);
     }
+
+    this.logger.log(
+      `User logged out${userId ? `: ${userId}` : ''} (access=${!!accessToken}, refresh=${!!body?.refreshToken})`,
+    );
+
+    // Emit audit event for logout
+    try {
+      const auditPayload: IAuditEventPayload = {
+        eventType: 'LOGOUT',
+        entityType: 'SESSION',
+        userId,
+        action: 'user_logout',
+        description: 'User logged out',
+        metadata: {
+          ipAddress: req.ip || req.socket.remoteAddress,
+          userAgent: req.headers['user-agent'],
+          revokedAccessToken: !!accessToken,
+          revokedRefreshToken: !!body?.refreshToken,
+        },
+        success: true,
+      };
+      this.eventEmitter.emit(AUDIT_EVENT_NAMES.USER.LOGOUT, auditPayload);
+    } catch (error) {
+      this.logger.error('Failed to emit audit event for logout:', error);
+    }
+
+    return { message: 'Logout successful' };
+  }
+
+  /**
+   * Logout from all devices: revoke every access/refresh token of the user
+   */
+  // No @AllowAnonymous here: BearerTokenGuard must reject a missing/invalid
+  // token with 401 rather than letting the handler run without a user.
+  @Post('logout-all')
+  @UseGuards(BearerTokenGuard)
+  @HttpCode(HttpStatus.OK)
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Logout from all devices',
+    description:
+      'Revokes every access and refresh token belonging to the authenticated user, including the one used for this request.',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'All sessions revoked',
+    type: LogoutAllResponseDto,
+  })
+  @ApiResponse({
+    status: HttpStatus.UNAUTHORIZED,
+    description: 'Not authenticated',
+  })
+  async logoutAll(
+    @CurrentUser() user: ITokenUser,
+    @Req() req: Request,
+  ): Promise<LogoutAllResponseDto> {
+    const revokedCount = await this.tokenService.revokeAllUserTokens(user.id);
+
+    this.logger.log(
+      `User ${user.id} logged out from all devices (${revokedCount} tokens revoked)`,
+    );
+
+    try {
+      const auditPayload: IAuditEventPayload = {
+        eventType: 'LOGOUT',
+        entityType: 'SESSION',
+        userId: user.id,
+        action: 'user_logout_all',
+        description: 'User logged out from all devices',
+        metadata: {
+          scope: 'all',
+          revokedCount,
+          ipAddress: req.ip || req.socket.remoteAddress,
+          userAgent: req.headers['user-agent'],
+        },
+        success: true,
+      };
+      this.eventEmitter.emit(AUDIT_EVENT_NAMES.USER.LOGOUT, auditPayload);
+    } catch (error) {
+      this.logger.error('Failed to emit audit event for logout-all:', error);
+    }
+
+    return { message: 'All sessions revoked', revokedCount };
   }
 
   /**
@@ -678,6 +740,23 @@ export class AuthController {
     @Body() resetDto: ResetPasswordDto,
   ): Promise<{ message: string }> {
     try {
+      // Resolve the owner BEFORE better-auth consumes (deletes) the token.
+      // better-auth stores reset tokens as verification rows keyed
+      // `reset-password:<token>` whose value is the user id.
+      let userId: number | undefined;
+      try {
+        const verification = await this.prisma.verification.findFirst({
+          where: { identifier: `reset-password:${resetDto.token}` },
+          select: { value: true },
+        });
+        const parsed = Number(verification?.value);
+        if (Number.isInteger(parsed) && parsed > 0) userId = parsed;
+      } catch (lookupError) {
+        this.logger.warn(
+          `Could not resolve user for reset token: ${lookupError}`,
+        );
+      }
+
       await auth.api.resetPassword({
         body: {
           newPassword: resetDto.newPassword,
@@ -685,7 +764,18 @@ export class AuthController {
         },
       });
 
-      this.logger.log('Password reset successful');
+      // A password reset implies the old credential may be compromised:
+      // sign the user out everywhere.
+      if (userId !== undefined) {
+        const revoked = await this.tokenService.revokeAllUserTokens(userId);
+        this.logger.log(
+          `Password reset successful for user ${userId}; revoked ${revoked} tokens`,
+        );
+      } else {
+        this.logger.warn(
+          'Password reset successful but user id unresolved; existing tokens NOT revoked',
+        );
+      }
 
       return { message: 'Password has been reset successfully' };
     } catch (error) {
@@ -720,42 +810,89 @@ export class AuthController {
   async updatePassword(
     @Body() updateDto: UpdatePasswordDto,
     @Req() req: Request,
-  ): Promise<{ message: string }> {
+  ): Promise<{ message: string; revokedSessions: number }> {
     try {
-      // Build headers from the request
-      const headers = new Headers();
+      // Identify the caller. Bearer token first — better-auth has no bearer
+      // plugin configured, so it only understands its own session COOKIE and
+      // cannot authenticate a JWT client on its own.
+      const currentAccessToken = this.bearerFromRequest(req);
+      let userId: number | undefined;
 
-      if (req.headers.authorization) {
-        headers.set('Authorization', req.headers.authorization);
-      }
-      if (req.headers.cookie) {
+      if (currentAccessToken) {
+        try {
+          const decoded =
+            await this.tokenService.validateAccessToken(currentAccessToken);
+          userId = decoded.id;
+        } catch {
+          throw new UnauthorizedException('Invalid or expired access token');
+        }
+      } else if (req.headers.cookie) {
+        // Cookie client: resolve the user through better-auth's session.
+        const headers = new Headers();
         headers.set('Cookie', req.headers.cookie);
+        const session = await auth.api.getSession({ headers });
+        if (session?.user?.id) {
+          userId = Number(session.user.id);
+        }
       }
 
-      await auth.api.changePassword({
-        body: {
-          currentPassword: updateDto.currentPassword,
-          newPassword: updateDto.newPassword,
-          revokeOtherSessions: updateDto.revokeOtherSessions ?? false,
-        },
-        headers,
+      if (userId === undefined) {
+        throw new UnauthorizedException('Not authenticated');
+      }
+
+      // Verify the current password and write the new one directly against
+      // the credential account. This mirrors the verification done in login()
+      // and works for bearer and cookie clients alike.
+      const credentialAccount = await this.prisma.account.findFirst({
+        where: { userId, providerId: 'credential' },
+        select: { id: true, password: true },
       });
 
-      this.logger.log('Password updated successfully');
+      if (!credentialAccount?.password) {
+        throw new BadRequestException(
+          'This account does not use password authentication',
+        );
+      }
 
-      return { message: 'Password has been updated successfully' };
-    } catch (error) {
-      this.logger.error(`Password update failed: ${error}`);
+      const currentPasswordValid = await verifyPassword({
+        hash: credentialAccount.password,
+        password: updateDto.currentPassword,
+      });
 
-      const errorMessage =
-        error instanceof Error ? error.message : String(error);
-      if (
-        errorMessage.toLowerCase().includes('invalid') ||
-        errorMessage.toLowerCase().includes('incorrect')
-      ) {
+      if (!currentPasswordValid) {
         throw new UnauthorizedException('Current password is incorrect');
       }
 
+      const newHash = await hashPassword(updateDto.newPassword);
+      await this.prisma.account.update({
+        where: { id: credentialAccount.id },
+        data: { password: newHash },
+      });
+
+      // Always revoke other JWT sessions on password change; keep the
+      // current device signed in.
+      const revokedSessions = await this.tokenService.revokeAllUserTokens(
+        userId,
+        currentAccessToken,
+      );
+
+      this.logger.log(
+        `Password updated successfully${userId ? ` for user ${userId}` : ''}; revoked ${revokedSessions} other tokens`,
+      );
+
+      return {
+        message: 'Password has been updated successfully',
+        revokedSessions,
+      };
+    } catch (error) {
+      if (
+        error instanceof UnauthorizedException ||
+        error instanceof BadRequestException
+      ) {
+        throw error;
+      }
+
+      this.logger.error(`Password update failed: ${error}`);
       throw new BadRequestException('Failed to update password');
     }
   }
@@ -768,75 +905,72 @@ export class AuthController {
   @AllowAnonymous()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
-    summary: 'Refresh access token',
-    description: 'Generate a new access token using a valid refresh token.',
+    summary: 'Refresh tokens (rotating)',
+    description:
+      'Exchanges a valid refresh token for a NEW access token AND a NEW refresh token. The presented refresh token is revoked immediately. Presenting an already-rotated refresh token again returns 401; if that happens outside the grace window, every session of the user is revoked.',
   })
-  @ApiBody({
-    schema: {
-      type: 'object',
-      properties: {
-        refreshToken: {
-          type: 'string',
-          description: 'The refresh token',
-        },
-      },
-      required: ['refreshToken'],
-    },
-  })
+  @ApiBody({ type: RefreshTokenDto })
   @ApiResponse({
     status: HttpStatus.OK,
-    description: 'New access token generated',
-    schema: {
-      type: 'object',
-      properties: {
-        accessToken: { type: 'string' },
-        expiresAt: { type: 'string' },
-      },
-    },
+    description: 'New token pair generated',
+    type: RefreshResponseDto,
   })
   @ApiResponse({
     status: HttpStatus.UNAUTHORIZED,
-    description: 'Invalid or expired refresh token',
+    description: 'Invalid, expired, or already-used refresh token',
   })
   async refreshToken(
-    @Body('refreshToken') refreshToken: string,
+    @Body() body: RefreshTokenDto,
     @Req() req: Request,
-  ): Promise<{ accessToken: string; expiresAt: string }> {
-    if (!refreshToken) {
+  ): Promise<RefreshResponseDto> {
+    if (!body?.refreshToken) {
       throw new BadRequestException('Refresh token is required');
     }
 
+    const ipAddress = req.ip || req.socket.remoteAddress;
+    const userAgent = req.headers['user-agent'];
+
     try {
-      // Validate refresh token and get user ID
-      const userId = await this.tokenService.validateRefreshToken(refreshToken);
-
-      // Fetch user with roles and gates
-      const user = await this.userService.findOne({ id: userId }, [
-        'roles',
-        'gates',
-      ]);
-
-      if (!user) {
-        throw new UnauthorizedException('User not found');
-      }
-
-      // Generate new access token
-      const ipAddress = req.ip || req.socket.remoteAddress;
-      const userAgent = req.headers['user-agent'];
-
-      const accessTokenData = await this.tokenService.generateAccessToken(
-        user as any,
+      const rotated = await this.tokenService.rotateRefreshToken(
+        body.refreshToken,
         ipAddress,
         userAgent,
       );
 
-      this.logger.log(`Access token refreshed for user: ${user.email}`);
+      this.logger.log(`Tokens refreshed for user: ${rotated.userId}`);
 
       return {
-        accessToken: accessTokenData.token,
-        expiresAt: accessTokenData.expiresAt.toISOString(),
+        accessToken: rotated.accessToken,
+        expiresAt: rotated.accessExpiresAt.toISOString(),
+        refreshToken: rotated.refreshToken,
+        refreshExpiresAt: rotated.refreshExpiresAt.toISOString(),
       };
     } catch (error) {
+      if (error instanceof RefreshTokenReuseError) {
+        try {
+          const auditPayload: IAuditEventPayload = {
+            eventType: 'FAILURE',
+            entityType: 'SESSION',
+            userId: error.userId,
+            action: 'refresh_token_reuse_detected',
+            description:
+              'Rotated refresh token was presented again; all user sessions revoked',
+            errorMessage: error.message,
+            metadata: { ipAddress, userAgent },
+            success: false,
+          };
+          this.eventEmitter.emit(
+            AUDIT_EVENT_NAMES.USER.LOGIN_FAILED,
+            auditPayload,
+          );
+        } catch (auditError) {
+          this.logger.error(
+            'Failed to emit audit event for refresh token reuse:',
+            auditError,
+          );
+        }
+        throw error;
+      }
       if (error instanceof UnauthorizedException) {
         throw error;
       }

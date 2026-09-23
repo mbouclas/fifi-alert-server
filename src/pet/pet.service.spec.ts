@@ -9,6 +9,7 @@ import {
 } from '@nestjs/common';
 import { Gender, Size } from '@prisma-lib/client';
 import { petWithTypeInclude } from './pet.mapper';
+import { AlertStatusEventPublisher } from '../alert/events/alert-status-event.publisher';
 
 describe('PetService', () => {
   let service: PetService;
@@ -51,6 +52,10 @@ describe('PetService', () => {
         {
           provide: PrismaService,
           useValue: mockPrismaService,
+        },
+        {
+          provide: AlertStatusEventPublisher,
+          useValue: { resolved: jest.fn() },
         },
       ],
     }).compile();

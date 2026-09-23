@@ -16,6 +16,7 @@ import {
   CreateAlertDto,
   UpdateAlertDto,
   ResolveAlertDto,
+  CancelAlertDto,
   ListAlertsQueryDto,
   AlertResponseDto,
 } from './dto';
@@ -25,6 +26,7 @@ import { IAuditEventPayload } from '../audit/interfaces/audit-event-payload.inte
 import { EmailService, IEmailTemplate } from '@shared/email/email.service';
 import type { IEmailProvider } from '@shared/email/interfaces/email-provider.interface';
 import { NotificationService } from '../notification/notification.service';
+import { AlertStatusEventPublisher } from './events/alert-status-event.publisher';
 
 /**
  * Email template registry for alert-related emails
@@ -58,6 +60,7 @@ export class AlertService {
     private readonly eventEmitter: EventEmitter2,
     @Inject('IEmailProvider') private readonly emailProvider: IEmailProvider,
     private readonly notificationService: NotificationService,
+    private readonly alertStatusEvents: AlertStatusEventPublisher,
   ) { }
 
   /**
@@ -170,6 +173,15 @@ export class AlertService {
         error,
       );
     }
+
+    this.alertStatusEvents.activated({
+      alertId,
+      petId: dto.petId ?? null,
+      creatorId: userId,
+      previousStatus: null,
+      changedBy: userId,
+      source: 'user',
+    });
 
     // NOTE: affected_postal_codes is not pre-computed yet; the postal-code
     // matching strategy in LocationService stays dormant until a job populates it.
@@ -291,7 +303,7 @@ export class AlertService {
             SELECT 
                 id, creator_id, pet_id, pet_name, pet_species, pet_breed, pet_description, pet_color, pet_age_years, pet_photos,
                 last_seen_lat, last_seen_lon, location_address, alert_radius_km,
-                status, time_last_seen, created_at, updated_at, expires_at, resolved_at, renewal_count,
+                status, time_last_seen, created_at, updated_at, expires_at, resolved_at, cancelled_at, renewal_count,
                 contact_phone, contact_email, is_phone_public,
                 affected_postal_codes, notes, reward_offered, reward_amount,
                 ${distanceSelect}
@@ -485,6 +497,18 @@ export class AlertService {
       );
     }
 
+    this.alertStatusEvents.resolved({
+      alertId,
+      petId: alert.pet_id,
+      creatorId: alert.creator_id,
+      previousStatus: alert.status,
+      changedBy: userId,
+      source: 'user',
+      outcome: dto.outcome,
+      notes: resolutionNotes,
+      shareSuccessStory: dto.shareSuccessStory,
+    });
+
     // TODO: Cancel any queued notifications (BullMQ)
     // TODO: Queue resolution notifications to sighting reporters
 
@@ -507,6 +531,119 @@ export class AlertService {
   }
 
   /**
+   * Cancel an alert (withdrawn by the creator)
+   * Only DRAFT and ACTIVE alerts can be cancelled. Pending notification waves
+   * re-check alert.status before fanning out, so they stop on their own.
+   */
+  async cancel(
+    alertId: number,
+    userId: number,
+    dto: CancelAlertDto,
+  ): Promise<AlertResponseDto> {
+    // Verify ownership
+    const alert = await this.prisma.alert.findUnique({
+      where: { id: alertId },
+    });
+
+    if (!alert) {
+      throw new NotFoundException(`Alert with ID ${alertId} not found`);
+    }
+
+    if (alert.creator_id !== userId) {
+      throw new ForbiddenException(
+        'You do not have permission to cancel this alert',
+      );
+    }
+
+    if (
+      alert.status !== AlertStatus.DRAFT &&
+      alert.status !== AlertStatus.ACTIVE
+    ) {
+      throw new UnprocessableEntityException(
+        `Cannot cancel a ${alert.status.toLowerCase()} alert`,
+      );
+    }
+
+    // Capture oldValues for audit
+    const oldValues = {
+      status: alert.status,
+      cancelledAt: alert.cancelled_at,
+      notes: alert.notes,
+    };
+
+    const cancelledAt = new Date();
+
+    await this.prisma.alert.update({
+      where: { id: alertId },
+      data: {
+        status: AlertStatus.CANCELLED,
+        cancelled_at: cancelledAt,
+        ...(dto.reason !== undefined && { notes: dto.reason }),
+      },
+    });
+
+    this.logger.log(`Alert ${alertId} cancelled by user ${userId}`);
+
+    this.alertStatusEvents.cancelled({
+      alertId,
+      petId: alert.pet_id,
+      creatorId: alert.creator_id,
+      previousStatus: alert.status,
+      changedBy: userId,
+      source: 'user',
+      occurredAt: cancelledAt,
+      reason: dto.reason,
+    });
+
+    // Clear the pet's missing flag unless another alert is still live for it
+    if (alert.pet_id) {
+      try {
+        const otherActive = await this.prisma.alert.count({
+          where: { pet_id: alert.pet_id, status: AlertStatus.ACTIVE },
+        });
+        if (otherActive === 0) {
+          await this.prisma.pet.update({
+            where: { id: alert.pet_id },
+            data: { isMissing: false },
+          });
+        }
+      } catch (error) {
+        this.logger.error(
+          `Failed to clear missing flag for pet ${alert.pet_id} after cancelling alert ${alertId}:`,
+          error,
+        );
+      }
+    }
+
+    // Emit audit event
+    try {
+      const auditPayload: IAuditEventPayload = {
+        eventType: 'UPDATE',
+        entityType: 'ALERT',
+        entityId: alertId,
+        userId: userId,
+        action: 'alert_cancelled',
+        description: `Cancelled alert #${alertId}`,
+        oldValues,
+        newValues: {
+          status: 'CANCELLED',
+          cancelledAt,
+          ...(dto.reason !== undefined && { notes: dto.reason }),
+        },
+        success: true,
+      };
+      this.eventEmitter.emit(AUDIT_EVENT_NAMES.ENTITY.UPDATED, auditPayload);
+    } catch (error) {
+      this.logger.error(
+        'Failed to emit audit event for alert cancellation:',
+        error,
+      );
+    }
+
+    return this.findById(alertId, userId);
+  }
+
+  /**
    * Renew an alert (extend expiration)
    * Task 2.8
    */
@@ -524,6 +661,10 @@ export class AlertService {
       throw new ForbiddenException(
         'You do not have permission to renew this alert',
       );
+    }
+
+    if (alert.status === AlertStatus.CANCELLED) {
+      throw new UnprocessableEntityException('Cannot renew a cancelled alert');
     }
 
     if (alert.renewal_count >= 3) {
@@ -606,6 +747,7 @@ export class AlertService {
       updatedAt: alert.updatedAt,
       expiresAt: alert.expiresAt,
       resolvedAt: alert.resolvedAt,
+      cancelledAt: alert.cancelled_at,
       renewalCount: alert.renewalCount,
       // Contact info visibility
       contactPhone:
@@ -647,6 +789,7 @@ export class AlertService {
       updatedAt: alert.updated_at,
       expiresAt: alert.expires_at,
       resolvedAt: alert.resolved_at,
+      cancelledAt: alert.cancelled_at,
       renewalCount: alert.renewal_count,
       contactPhone: alert.is_phone_public ? alert.contact_phone : undefined,
       contactEmail: undefined, // Never expose in list view
@@ -725,16 +868,33 @@ export class AlertService {
     this.logger.log('Running alert expiration check...');
 
     try {
-      const result = await this.prisma.$executeRaw`
+      const expired = await this.prisma.$queryRaw<
+        Array<{ id: number; creator_id: number; pet_id: number | null }>
+      >`
                 UPDATE alert
                 SET status = 'EXPIRED'::\"AlertStatus\",
                     updated_at = NOW()
                 WHERE expires_at < NOW()
                   AND status = 'ACTIVE'::\"AlertStatus\"
+                RETURNING id, creator_id, pet_id
             `;
+      const result = expired.length;
 
       if (result > 0) {
         this.logger.log(`Expired ${result} alert(s)`);
+
+        const occurredAt = new Date();
+        for (const row of expired) {
+          this.alertStatusEvents.expired({
+            alertId: row.id,
+            petId: row.pet_id,
+            creatorId: row.creator_id,
+            previousStatus: AlertStatus.ACTIVE,
+            changedBy: null,
+            source: 'system_expiry',
+            occurredAt,
+          });
+        }
 
         // Emit audit event for system operation
         try {

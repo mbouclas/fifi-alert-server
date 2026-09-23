@@ -1,4 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { getQueueToken } from '@nestjs/bull';
 import { NotificationService } from './notification.service';
 import { PrismaService } from '../services/prisma.service';
@@ -17,6 +18,10 @@ describe('NotificationService', () => {
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
+        {
+          provide: EventEmitter2,
+          useValue: { emit: jest.fn() },
+        },
         NotificationService,
         {
           provide: getQueueToken(NOTIFICATION_QUEUE),
@@ -43,12 +48,31 @@ describe('NotificationService', () => {
   });
 
   describe('queueAlertNotifications', () => {
-    it('should queue alert notification job', async () => {
+    it('should queue one job per escalation wave', async () => {
       await service.queueAlertNotifications(1);
 
-      expect(mockQueue.add).toHaveBeenCalledWith('send-alert-notifications', {
-        alertId: 1,
-      });
+      expect(mockQueue.add).toHaveBeenCalledTimes(3);
+
+      // HIGH goes out immediately; MEDIUM and LOW are delayed and will no-op if
+      // the alert has been resolved by the time they run.
+      expect(mockQueue.add).toHaveBeenNthCalledWith(
+        1,
+        'send-alert-notifications',
+        { alertId: 1, wave: 'HIGH' },
+        undefined,
+      );
+      expect(mockQueue.add).toHaveBeenNthCalledWith(
+        2,
+        'send-alert-notifications',
+        { alertId: 1, wave: 'MEDIUM' },
+        { delay: 15 * 60 * 1000 },
+      );
+      expect(mockQueue.add).toHaveBeenNthCalledWith(
+        3,
+        'send-alert-notifications',
+        { alertId: 1, wave: 'LOW' },
+        { delay: 60 * 60 * 1000 },
+      );
     });
 
     it('should log job ID after queuing', async () => {

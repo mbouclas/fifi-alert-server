@@ -9,6 +9,7 @@ import {
   UseGuards,
   HttpCode,
   HttpStatus,
+  ParseIntPipe,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -96,7 +97,7 @@ export class DeviceController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 404, description: 'Device not found' })
   async updateLocation(
-    @Param('id') id: string,
+    @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateLocationDto,
     @Session() session: any,
   ): Promise<DeviceResponseDto> {
@@ -122,7 +123,7 @@ export class DeviceController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 404, description: 'Device not found' })
   async updatePushToken(
-    @Param('id') id: string,
+    @Param('id', ParseIntPipe) id: number,
     @Body() body: { push_token: string },
     @Session() session: any,
   ): Promise<DeviceResponseDto> {

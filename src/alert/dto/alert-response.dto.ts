@@ -66,7 +66,9 @@ export class AlertResponseDto {
   // Lifecycle
   @ApiProperty({
     enum: AlertStatus,
-    description: 'Alert status',
+    enumName: 'AlertStatus',
+    description:
+      'Alert status: DRAFT (not published), ACTIVE (live), RESOLVED (pet found), EXPIRED (auto-expired), CANCELLED (withdrawn by the creator)',
     example: AlertStatus.ACTIVE,
   })
   status: AlertStatus;
@@ -97,6 +99,9 @@ export class AlertResponseDto {
 
   @ApiPropertyOptional({ description: 'When alert was resolved' })
   resolvedAt?: Date;
+
+  @ApiPropertyOptional({ description: 'When alert was cancelled' })
+  cancelledAt?: Date;
 
   @ApiProperty({
     description: 'Number of times alert has been renewed',

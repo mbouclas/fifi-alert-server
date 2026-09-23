@@ -164,6 +164,77 @@ export class UpdatePasswordDto {
 }
 
 /**
+ * DTO for refreshing tokens
+ */
+export class RefreshTokenDto {
+  @ApiProperty({
+    description: 'The refresh token issued at login or by the previous refresh',
+    example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
+  })
+  @IsString()
+  refreshToken: string;
+}
+
+/**
+ * Response DTO for token refresh. The presented refresh token is revoked and
+ * a NEW refresh token is returned; clients must persist both new tokens.
+ */
+export class RefreshResponseDto {
+  @ApiProperty({
+    description: 'New JWT access token for API requests',
+    example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
+  })
+  accessToken: string;
+
+  @ApiProperty({
+    description: 'Access token expiration date (ISO 8601)',
+    example: '2026-02-04T12:15:00.000Z',
+  })
+  expiresAt: string;
+
+  @ApiProperty({
+    description:
+      'New JWT refresh token. The one sent in the request is now revoked.',
+    example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
+  })
+  refreshToken: string;
+
+  @ApiProperty({
+    description: 'Refresh token expiration date (ISO 8601)',
+    example: '2026-03-06T12:00:00.000Z',
+  })
+  refreshExpiresAt: string;
+}
+
+/**
+ * DTO for logout. The access token comes from the Authorization header; the
+ * refresh token is optional but should be sent so it is revoked too.
+ */
+export class LogoutDto {
+  @ApiPropertyOptional({
+    description: 'Refresh token to revoke alongside the access token',
+    example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
+  })
+  @IsOptional()
+  @IsString()
+  refreshToken?: string;
+}
+
+/**
+ * Response DTO for logout-all
+ */
+export class LogoutAllResponseDto {
+  @ApiProperty({ example: 'All sessions revoked' })
+  message: string;
+
+  @ApiProperty({
+    description: 'Number of access/refresh tokens revoked',
+    example: 4,
+  })
+  revokedCount: number;
+}
+
+/**
  * Response DTO for authentication operations
  */
 export class AuthResponseDto {
@@ -182,8 +253,16 @@ export class AuthResponseDto {
     name?: string;
   };
 
+  /**
+   * @deprecated Always undefined since the auth hardening release. The
+   * better-auth session cookie token is no longer exposed to clients; use
+   * `accessToken` / `refreshToken`. Kept for one release so client typings
+   * keep compiling. Will be removed.
+   */
   @ApiPropertyOptional({
-    description: 'Session object (if applicable)',
+    description:
+      'DEPRECATED. Always absent. Use accessToken / refreshToken instead.',
+    deprecated: true,
   })
   session?: {
     token: string;
@@ -207,6 +286,12 @@ export class AuthResponseDto {
     example: '2026-02-04T12:00:00.000Z',
   })
   expiresAt?: string;
+
+  @ApiPropertyOptional({
+    description: 'Refresh token expiration date',
+    example: '2026-03-06T12:00:00.000Z',
+  })
+  refreshExpiresAt?: string;
 }
 
 /**

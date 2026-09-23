@@ -95,7 +95,7 @@ model Role {
 model Session {
   id             Int       @id @default(autoincrement())
   expiresAt      DateTime
-  token          String    @pg.Text
+  token          String    @pg.Text // access/refresh: SHA-256 hex of the JWT; session (better-auth): raw
   tokenType      String    @default("session") @map("token_type") // "session" | "access" | "refresh"
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
@@ -340,6 +340,7 @@ enum AlertStatus {
   ACTIVE // Live, sending notifications
   RESOLVED // Pet found
   EXPIRED // Auto-expired after duration
+  CANCELLED // Withdrawn by the creator
 }
 
 // Pet Species Enum (used in Alerts)
@@ -399,6 +400,7 @@ model Alert {
   updated_at     DateTime    @updatedAt @map("updated_at")
   expires_at     DateTime    @map("expires_at") // Auto-calculated: created_at + 7 days
   resolved_at    DateTime?   @map("resolved_at")
+  cancelled_at   DateTime?   @map("cancelled_at")
   renewal_count  Int         @default(0) @map("renewal_count") // Max 3 renewals
 
   // Contact & Preferences

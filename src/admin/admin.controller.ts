@@ -49,13 +49,13 @@ export class AdminController {
     private readonly userService: UserService,
     private readonly tokenService: TokenService,
     private readonly prisma: PrismaService,
-  ) { }
+  ) {}
 
   // ==================== User Management ====================
 
   /**
    * Ban a user
-   * 
+   *
    * Requires super admin privileges (level <= 10)
    */
   @Post('users/:id/ban')
@@ -113,7 +113,7 @@ export class AdminController {
 
   /**
    * Unban a user
-   * 
+   *
    * Requires super admin privileges (level <= 10)
    */
   @Post('users/:id/unban')
@@ -121,7 +121,8 @@ export class AdminController {
   @MinUserLevel(10)
   @ApiOperation({
     summary: 'Unban a user',
-    description: 'Removes ban from a user account. Super admin only (level <= 10).',
+    description:
+      'Removes ban from a user account. Super admin only (level <= 10).',
   })
   @ApiParam({ name: 'id', description: 'User ID', type: Number })
   @ApiResponse({
@@ -172,11 +173,25 @@ export class AdminController {
       where.userId = parseInt(userId, 10);
     }
 
+    // NOTE: `token` is deliberately excluded. Access/refresh rows hold a
+    // SHA-256 hash, but better-auth's own `session` rows hold the raw cookie
+    // token — listing it would hand out live credentials.
     const sessions = await this.prisma.session.findMany({
       where,
       take: parseInt(limit, 10),
       orderBy: { createdAt: 'desc' },
-      include: {
+      select: {
+        id: true,
+        tokenType: true,
+        expiresAt: true,
+        createdAt: true,
+        updatedAt: true,
+        ipAddress: true,
+        userAgent: true,
+        userId: true,
+        impersonatedBy: true,
+        revoked: true,
+        revokedAt: true,
         user: {
           select: {
             id: true,
@@ -195,7 +210,7 @@ export class AdminController {
 
   /**
    * Revoke a specific session
-   * 
+   *
    * Requires moderate admin privileges (level <= 50)
    */
   @Post('sessions/:sessionId/revoke')
@@ -203,7 +218,8 @@ export class AdminController {
   @MinUserLevel(50)
   @ApiOperation({
     summary: 'Revoke a session',
-    description: 'Revokes a specific session by ID. Moderate admin only (level <= 50).',
+    description:
+      'Revokes a specific session by ID. Moderate admin only (level <= 50).',
   })
   @ApiParam({ name: 'sessionId', description: 'Session ID', type: String })
   @ApiResponse({
@@ -227,7 +243,7 @@ export class AdminController {
 
   /**
    * Revoke all sessions for a user
-   * 
+   *
    * Requires moderate admin privileges (level <= 50)
    */
   @Post('users/:id/revoke-sessions')
@@ -235,7 +251,8 @@ export class AdminController {
   @MinUserLevel(50)
   @ApiOperation({
     summary: 'Revoke all user sessions',
-    description: 'Revokes all active sessions for a specific user. Moderate admin only (level <= 50).',
+    description:
+      'Revokes all active sessions for a specific user. Moderate admin only (level <= 50).',
   })
   @ApiParam({ name: 'id', description: 'User ID', type: Number })
   @ApiResponse({
@@ -256,7 +273,7 @@ export class AdminController {
 
   /**
    * Assign a role to a user
-   * 
+   *
    * Requires super admin privileges (level <= 10)
    */
   @Post('users/:id/roles')
@@ -332,7 +349,7 @@ export class AdminController {
 
   /**
    * Remove a role from a user
-   * 
+   *
    * Requires super admin privileges (level <= 10)
    */
   @Delete('users/:id/roles/:roleId')

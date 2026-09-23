@@ -12,6 +12,14 @@ import {
 } from './notification.service';
 import { FCMService } from './fcm.service';
 import { APNsService } from './apns.service';
+import { WebPushService } from './webpush.service';
+import { AlertEmailService } from './alert-email.service';
+import {
+  QUIET_HOURS_START,
+  QUIET_HOURS_END,
+  DAILY_CAP_BY_CONFIDENCE,
+  EXCLUSION_REASONS,
+} from './notification.constants';
 import { NOTIFICATION_QUEUE } from './notification.constants';
 import { NotificationStatus } from '../generated/prisma';
 import { AUDIT_EVENT_NAMES } from '../audit/audit-event-names';
@@ -29,6 +37,8 @@ export class NotificationQueueProcessor extends WorkerHost {
     private readonly notificationService: NotificationService,
     private readonly fcmService: FCMService,
     private readonly apnsService: APNsService,
+    private readonly webPushService: WebPushService,
+    private readonly alertEmailService: AlertEmailService,
     private readonly eventEmitter: EventEmitter2,
   ) {
     super();
@@ -88,15 +98,24 @@ export class NotificationQueueProcessor extends WorkerHost {
       }
 
       // Find all matching devices using geospatial service
-      const deviceMatches =
+      const wave = job.data.wave ?? 'HIGH';
+
+      const allMatches =
         await this.locationService.findDevicesForAlert(alertId);
 
-      this.logger.log(
-        `Found ${deviceMatches.length} devices for alert ${alertId}`,
+      // Each wave only handles its own confidence tier. HIGH goes out immediately;
+      // MEDIUM and LOW arrive later, and only if the alert is still unresolved.
+      const deviceMatches = allMatches.filter(
+        (match) => match.confidence === wave,
       );
 
-      // Log confidence breakdown
-      const confidenceBreakdown = deviceMatches.reduce(
+      this.logger.log(
+        `Wave ${wave}: ${deviceMatches.length} of ${allMatches.length} matches for alert ${alertId}`,
+      );
+
+      // Breakdown covers every match, not just this wave, so the logs show the full
+      // reachable audience for the alert.
+      const confidenceBreakdown = allMatches.reduce(
         (acc, match) => {
           acc[match.confidence] = (acc[match.confidence] || 0) + 1;
           return acc;
@@ -110,13 +129,54 @@ export class NotificationQueueProcessor extends WorkerHost {
 
       // Create notification records and queue push jobs
       let queuedCount = 0;
+      const inQuietHours = this.isQuietHours();
+
       for (const match of deviceMatches) {
-        // Skip devices without push tokens
+        const deviceId = parseInt(match.deviceId);
+
+        // No push channel. On iOS this is the common case: the user never added
+        // FiFi to their Home Screen, so they cannot be subscribed at all.
         if (!match.pushToken) {
           await this.notificationService.trackExclusion(
             alertId,
-            parseInt(match.deviceId),
-            'PUSH_TOKEN_MISSING',
+            deviceId,
+            EXCLUSION_REASONS.PUSH_TOKEN_MISSING,
+          );
+
+          // Fall back to email, but only for the wave that justifies it.
+          if (wave === 'HIGH') {
+            await this.sendFallbackEmail(alert, match);
+          }
+
+          continue;
+        }
+
+        // A missing pet 400m away is worth waking someone for; a LOW-confidence
+        // city-level match at 3am is not.
+        if (inQuietHours && wave !== 'HIGH') {
+          await this.notificationService.trackExclusion(
+            alertId,
+            deviceId,
+            EXCLUSION_REASONS.QUIET_HOURS,
+          );
+          continue;
+        }
+
+        // A later wave must not re-notify someone an earlier wave already reached.
+        if (await this.hasBeenNotified(alertId, match.userId)) {
+          await this.notificationService.trackExclusion(
+            alertId,
+            deviceId,
+            EXCLUSION_REASONS.ALREADY_NOTIFIED,
+          );
+          continue;
+        }
+
+        if (await this.isOverDailyCap(match.userId, wave)) {
+          await this.notificationService.trackExclusion(
+            alertId,
+            deviceId,
+            EXCLUSION_REASONS.DAILY_CAP,
           );
           continue;
         }
@@ -125,7 +185,7 @@ export class NotificationQueueProcessor extends WorkerHost {
         const notification = await this.prisma.notification.create({
           data: {
             alert_id: alertId,
-            device_id: parseInt(match.deviceId),
+            device_id: deviceId,
             confidence: match.confidence,
             match_reason: match.matchReason,
             distance_km: match.distanceKm,
@@ -142,7 +202,7 @@ export class NotificationQueueProcessor extends WorkerHost {
       }
 
       this.logger.log(
-        `Queued ${queuedCount} push notifications for alert ${alertId}`,
+        `Wave ${wave}: queued ${queuedCount} push notifications for alert ${alertId}`,
       );
     } catch (error) {
       this.logger.error(
@@ -225,7 +285,7 @@ export class NotificationQueueProcessor extends WorkerHost {
         },
       };
 
-      // Send via FCM or APNs based on platform
+      // Send via FCM, APNs, or Web Push based on platform
       let sendResult: {
         success: boolean;
         messageId?: string;
@@ -246,6 +306,14 @@ export class NotificationQueueProcessor extends WorkerHost {
           `Sending APNs notification to device ${notification.device_id}`,
         );
         sendResult = await this.apnsService.sendNotification(
+          notification.device.push_token,
+          payload,
+        );
+      } else if (notification.device.platform === 'WEB') {
+        this.logger.log(
+          `Sending web push notification to device ${notification.device_id}`,
+        );
+        sendResult = await this.webPushService.sendNotification(
           notification.device.push_token,
           payload,
         );
@@ -380,5 +448,95 @@ export class NotificationQueueProcessor extends WorkerHost {
       `Job ${job.id} (${job.name}) failed after ${job.attemptsMade} attempts:`,
       error,
     );
+  }
+
+  /**
+   * Degraded delivery for a match with no push channel. Failures are logged and
+   * swallowed: a fallback email must never fail the whole alert fan-out.
+   */
+  private async sendFallbackEmail(
+    alert: {
+      id: number;
+      pet_name: string;
+      pet_species: string;
+      pet_description: string;
+      location_address?: string | null;
+      pet_photos?: string[] | null;
+    },
+    match: { userId: string; distanceKm: number },
+  ): Promise<void> {
+    try {
+      const userId = parseInt(match.userId);
+
+      if (!Number.isFinite(userId)) return;
+      if (!(await this.alertEmailService.isOptedIn(userId))) return;
+
+      await this.alertEmailService.sendAlertEmail(userId, {
+        alertId: alert.id,
+        petName: alert.pet_name,
+        petSpecies: alert.pet_species,
+        petDescription: alert.pet_description,
+        petPhotoUrl: alert.pet_photos?.[0],
+        locationAddress: alert.location_address ?? undefined,
+        distanceKm: match.distanceKm,
+      });
+    } catch (error) {
+      this.logger.error('Fallback email failed:', error);
+    }
+  }
+
+  /**
+   * Quiet hours in local server time. Wraps midnight (22:00 -> 07:00).
+   */
+  private isQuietHours(now: Date = new Date()): boolean {
+    const hour = now.getHours();
+    return hour >= QUIET_HOURS_START || hour < QUIET_HOURS_END;
+  }
+
+  /**
+   * Whether any device belonging to this user has already been queued or sent a
+   * notification for this alert. Guards against later waves and alert renewals.
+   */
+  private async hasBeenNotified(
+    alertId: number,
+    userId: string,
+  ): Promise<boolean> {
+    const existing = await this.prisma.notification.findFirst({
+      where: {
+        alert_id: alertId,
+        excluded: false,
+        device: { user_id: parseInt(userId) },
+      },
+      select: { id: true },
+    });
+
+    return Boolean(existing);
+  }
+
+  /**
+   * Rolling 24h per-user cap, stricter for lower-confidence tiers. Notification
+   * fatigue is the main way a crowd-sourcing app loses its audience.
+   */
+  private async isOverDailyCap(
+    userId: string,
+    wave: string,
+  ): Promise<boolean> {
+    const cap = DAILY_CAP_BY_CONFIDENCE[wave];
+
+    if (cap === undefined) {
+      return false;
+    }
+
+    const since = new Date(Date.now() - 24 * 60 * 60 * 1000);
+
+    const sentToday = await this.prisma.notification.count({
+      where: {
+        excluded: false,
+        queued_at: { gte: since },
+        device: { user_id: parseInt(userId) },
+      },
+    });
+
+    return sentToday >= cap;
   }
 }

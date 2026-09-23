@@ -12,6 +12,7 @@ import { customAlphabet } from 'nanoid';
 import { CreatePetDto, UpdatePetDto } from './dto';
 
 import { PetWithType, petWithTypeInclude } from './pet.mapper';
+import { AlertStatusEventPublisher } from '../alert/events/alert-status-event.publisher';
 
 export type { PetWithType };
 
@@ -24,7 +25,10 @@ export class PetService {
     9,
   );
 
-  constructor(private readonly prisma: PrismaService) { }
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly alertStatusEvents: AlertStatusEventPublisher,
+  ) { }
 
   /**
    * Ensure a pet type exists before creating/updating a pet.
@@ -270,7 +274,7 @@ export class PetService {
         const now = new Date();
         const resolvedCount = await this.prisma.alert.updateMany({
           where: {
-            pet_id: id,
+            id: { in: activeAlerts.map((alert) => alert.id) },
             status: AlertStatus.ACTIVE,
           },
           data: {
@@ -283,6 +287,18 @@ export class PetService {
         this.logger.log(
           `Pet ${id} marked as found. Auto-resolved ${resolvedCount.count} active alert(s).`,
         );
+
+        for (const alert of activeAlerts) {
+          this.alertStatusEvents.resolved({
+            alertId: alert.id,
+            petId: id,
+            creatorId: alert.creator_id,
+            previousStatus: alert.status,
+            changedBy: userId,
+            source: 'pet_found',
+            occurredAt: now,
+          });
+        }
       }
     } catch (error) {
       this.logger.error(`Failed to auto-resolve alerts for pet ${id}:`, error);

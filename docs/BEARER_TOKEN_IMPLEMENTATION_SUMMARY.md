@@ -74,7 +74,7 @@
 JWT_SECRET=<64-char-random-secret>
 JWT_REFRESH_SECRET=<64-char-random-secret>
 JWT_ACCESS_EXPIRATION=15m
-JWT_REFRESH_EXPIRATION=7d
+JWT_REFRESH_EXPIRATION=30d
 ```
 
 ### Critical Updates

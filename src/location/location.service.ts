@@ -154,7 +154,7 @@ export class LocationService {
         const deduplicatedMatches = this.deduplicateMatches(allMatches);
 
         this.logger.log(
-            `Found ${deduplicatedMatches.length} unique devices for alert ${alertId}`,
+            `Found ${deduplicatedMatches.length} unique recipients for alert ${alertId}`,
         );
 
         return deduplicatedMatches;
@@ -501,7 +501,11 @@ export class LocationService {
     }
 
     /**
-     * Deduplicates matches by device ID, keeping the highest priority match
+     * Deduplicates matches, keeping the highest priority match.
+     *
+     * Two passes: first per device (a device can match several strategies), then per
+     * user. Without the second pass someone with a phone and a laptop gets two pushes
+     * for the same missing pet, which reads as spam and costs us the permission.
      */
     private deduplicateMatches(matches: MatchResult[]): DeviceMatch[] {
         const deviceMap = new Map<string, MatchResult>();
@@ -513,8 +517,34 @@ export class LocationService {
             }
         }
 
+        const userMap = new Map<string, MatchResult>();
+
+        for (const match of deviceMap.values()) {
+            const existing = userMap.get(match.userId);
+
+            if (!existing) {
+                userMap.set(match.userId, match);
+                continue;
+            }
+
+            // Prefer the better match; on a tie prefer the device that can actually
+            // be reached, then the closer one.
+            if (match.priority < existing.priority) {
+                userMap.set(match.userId, match);
+            } else if (match.priority === existing.priority) {
+                if (!existing.pushToken && match.pushToken) {
+                    userMap.set(match.userId, match);
+                } else if (
+                    Boolean(existing.pushToken) === Boolean(match.pushToken) &&
+                    match.distanceKm < existing.distanceKm
+                ) {
+                    userMap.set(match.userId, match);
+                }
+            }
+        }
+
         // Convert to DeviceMatch array (remove priority field)
-        return Array.from(deviceMap.values()).map(
+        return Array.from(userMap.values()).map(
             ({ priority, ...deviceMatch }) => deviceMatch as DeviceMatch,
         );
     }

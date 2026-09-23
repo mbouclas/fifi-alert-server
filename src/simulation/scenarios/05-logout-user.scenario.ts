@@ -27,9 +27,10 @@ export class LogoutUserScenario implements IScenario {
     this.logger.log('Executing: Logout User');
 
     try {
+      // Send the refresh token too so the server revokes the whole pair.
       const response = await this.apiClient.post(
         '/auth/logout',
-        {},
+        { refreshToken: state.refreshToken },
         { token: state.accessToken },
       );
 

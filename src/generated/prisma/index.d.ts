@@ -162,7 +162,8 @@ export const AlertStatus: {
   DRAFT: 'DRAFT',
   ACTIVE: 'ACTIVE',
   RESOLVED: 'RESOLVED',
-  EXPIRED: 'EXPIRED'
+  EXPIRED: 'EXPIRED',
+  CANCELLED: 'CANCELLED'
 };
 
 export type AlertStatus = (typeof AlertStatus)[keyof typeof AlertStatus]
@@ -18380,6 +18381,7 @@ export namespace Prisma {
     updated_at: Date | null
     expires_at: Date | null
     resolved_at: Date | null
+    cancelled_at: Date | null
     renewal_count: number | null
     contact_phone: string | null
     contact_email: string | null
@@ -18409,6 +18411,7 @@ export namespace Prisma {
     updated_at: Date | null
     expires_at: Date | null
     resolved_at: Date | null
+    cancelled_at: Date | null
     renewal_count: number | null
     contact_phone: string | null
     contact_email: string | null
@@ -18439,6 +18442,7 @@ export namespace Prisma {
     updated_at: number
     expires_at: number
     resolved_at: number
+    cancelled_at: number
     renewal_count: number
     contact_phone: number
     contact_email: number
@@ -18497,6 +18501,7 @@ export namespace Prisma {
     updated_at?: true
     expires_at?: true
     resolved_at?: true
+    cancelled_at?: true
     renewal_count?: true
     contact_phone?: true
     contact_email?: true
@@ -18526,6 +18531,7 @@ export namespace Prisma {
     updated_at?: true
     expires_at?: true
     resolved_at?: true
+    cancelled_at?: true
     renewal_count?: true
     contact_phone?: true
     contact_email?: true
@@ -18556,6 +18562,7 @@ export namespace Prisma {
     updated_at?: true
     expires_at?: true
     resolved_at?: true
+    cancelled_at?: true
     renewal_count?: true
     contact_phone?: true
     contact_email?: true
@@ -18676,6 +18683,7 @@ export namespace Prisma {
     updated_at: Date
     expires_at: Date
     resolved_at: Date | null
+    cancelled_at: Date | null
     renewal_count: number
     contact_phone: string | null
     contact_email: string | null
@@ -18728,6 +18736,7 @@ export namespace Prisma {
     updated_at?: boolean
     expires_at?: boolean
     resolved_at?: boolean
+    cancelled_at?: boolean
     renewal_count?: boolean
     contact_phone?: boolean
     contact_email?: boolean
@@ -18767,6 +18776,7 @@ export namespace Prisma {
     updated_at?: boolean
     expires_at?: boolean
     resolved_at?: boolean
+    cancelled_at?: boolean
     renewal_count?: boolean
     contact_phone?: boolean
     contact_email?: boolean
@@ -18802,6 +18812,7 @@ export namespace Prisma {
     updated_at?: boolean
     expires_at?: boolean
     resolved_at?: boolean
+    cancelled_at?: boolean
     renewal_count?: boolean
     contact_phone?: boolean
     contact_email?: boolean
@@ -18814,7 +18825,7 @@ export namespace Prisma {
     settings?: boolean
   }
 
-  export type AlertOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "creator_id" | "pet_id" | "pet_name" | "pet_species" | "pet_breed" | "pet_description" | "pet_color" | "pet_age_years" | "pet_photos" | "last_seen_lat" | "last_seen_lon" | "location_address" | "alert_radius_km" | "status" | "time_last_seen" | "created_at" | "updated_at" | "expires_at" | "resolved_at" | "renewal_count" | "contact_phone" | "contact_email" | "is_phone_public" | "affected_postal_codes" | "notes" | "reward_offered" | "reward_amount" | "meta" | "settings", ExtArgs["result"]["alert"]>
+  export type AlertOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "creator_id" | "pet_id" | "pet_name" | "pet_species" | "pet_breed" | "pet_description" | "pet_color" | "pet_age_years" | "pet_photos" | "last_seen_lat" | "last_seen_lon" | "location_address" | "alert_radius_km" | "status" | "time_last_seen" | "created_at" | "updated_at" | "expires_at" | "resolved_at" | "cancelled_at" | "renewal_count" | "contact_phone" | "contact_email" | "is_phone_public" | "affected_postal_codes" | "notes" | "reward_offered" | "reward_amount" | "meta" | "settings", ExtArgs["result"]["alert"]>
   export type AlertInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     creator?: boolean | UserDefaultArgs<ExtArgs>
     pet?: boolean | Alert$petArgs<ExtArgs>
@@ -18856,6 +18867,7 @@ export namespace Prisma {
       updated_at: Date
       expires_at: Date
       resolved_at: Date | null
+      cancelled_at: Date | null
       renewal_count: number
       contact_phone: string | null
       contact_email: string | null
@@ -19242,6 +19254,7 @@ export namespace Prisma {
     readonly updated_at: FieldRef<"Alert", 'DateTime'>
     readonly expires_at: FieldRef<"Alert", 'DateTime'>
     readonly resolved_at: FieldRef<"Alert", 'DateTime'>
+    readonly cancelled_at: FieldRef<"Alert", 'DateTime'>
     readonly renewal_count: FieldRef<"Alert", 'Int'>
     readonly contact_phone: FieldRef<"Alert", 'String'>
     readonly contact_email: FieldRef<"Alert", 'String'>
@@ -25704,6 +25717,7 @@ export namespace Prisma {
     updated_at: 'updated_at',
     expires_at: 'expires_at',
     resolved_at: 'resolved_at',
+    cancelled_at: 'cancelled_at',
     renewal_count: 'renewal_count',
     contact_phone: 'contact_phone',
     contact_email: 'contact_email',
@@ -27230,6 +27244,7 @@ export namespace Prisma {
     updated_at?: DateTimeFilter<"Alert"> | Date | string
     expires_at?: DateTimeFilter<"Alert"> | Date | string
     resolved_at?: DateTimeNullableFilter<"Alert"> | Date | string | null
+    cancelled_at?: DateTimeNullableFilter<"Alert"> | Date | string | null
     renewal_count?: IntFilter<"Alert"> | number
     contact_phone?: StringNullableFilter<"Alert"> | string | null
     contact_email?: StringNullableFilter<"Alert"> | string | null
@@ -27267,6 +27282,7 @@ export namespace Prisma {
     updated_at?: SortOrder
     expires_at?: SortOrder
     resolved_at?: SortOrderInput | SortOrder
+    cancelled_at?: SortOrderInput | SortOrder
     renewal_count?: SortOrder
     contact_phone?: SortOrderInput | SortOrder
     contact_email?: SortOrderInput | SortOrder
@@ -27307,6 +27323,7 @@ export namespace Prisma {
     updated_at?: DateTimeFilter<"Alert"> | Date | string
     expires_at?: DateTimeFilter<"Alert"> | Date | string
     resolved_at?: DateTimeNullableFilter<"Alert"> | Date | string | null
+    cancelled_at?: DateTimeNullableFilter<"Alert"> | Date | string | null
     renewal_count?: IntFilter<"Alert"> | number
     contact_phone?: StringNullableFilter<"Alert"> | string | null
     contact_email?: StringNullableFilter<"Alert"> | string | null
@@ -27344,6 +27361,7 @@ export namespace Prisma {
     updated_at?: SortOrder
     expires_at?: SortOrder
     resolved_at?: SortOrderInput | SortOrder
+    cancelled_at?: SortOrderInput | SortOrder
     renewal_count?: SortOrder
     contact_phone?: SortOrderInput | SortOrder
     contact_email?: SortOrderInput | SortOrder
@@ -27385,6 +27403,7 @@ export namespace Prisma {
     updated_at?: DateTimeWithAggregatesFilter<"Alert"> | Date | string
     expires_at?: DateTimeWithAggregatesFilter<"Alert"> | Date | string
     resolved_at?: DateTimeNullableWithAggregatesFilter<"Alert"> | Date | string | null
+    cancelled_at?: DateTimeNullableWithAggregatesFilter<"Alert"> | Date | string | null
     renewal_count?: IntWithAggregatesFilter<"Alert"> | number
     contact_phone?: StringNullableWithAggregatesFilter<"Alert"> | string | null
     contact_email?: StringNullableWithAggregatesFilter<"Alert"> | string | null
@@ -29200,6 +29219,7 @@ export namespace Prisma {
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
     expires_at?: DateTimeFieldUpdateOperationsInput | Date | string
     resolved_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    cancelled_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     renewal_count?: IntFieldUpdateOperationsInput | number
     contact_phone?: NullableStringFieldUpdateOperationsInput | string | null
     contact_email?: NullableStringFieldUpdateOperationsInput | string | null
@@ -29237,6 +29257,7 @@ export namespace Prisma {
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
     expires_at?: DateTimeFieldUpdateOperationsInput | Date | string
     resolved_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    cancelled_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     renewal_count?: IntFieldUpdateOperationsInput | number
     contact_phone?: NullableStringFieldUpdateOperationsInput | string | null
     contact_email?: NullableStringFieldUpdateOperationsInput | string | null
@@ -29269,6 +29290,7 @@ export namespace Prisma {
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
     expires_at?: DateTimeFieldUpdateOperationsInput | Date | string
     resolved_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    cancelled_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     renewal_count?: IntFieldUpdateOperationsInput | number
     contact_phone?: NullableStringFieldUpdateOperationsInput | string | null
     contact_email?: NullableStringFieldUpdateOperationsInput | string | null
@@ -29302,6 +29324,7 @@ export namespace Prisma {
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
     expires_at?: DateTimeFieldUpdateOperationsInput | Date | string
     resolved_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    cancelled_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     renewal_count?: IntFieldUpdateOperationsInput | number
     contact_phone?: NullableStringFieldUpdateOperationsInput | string | null
     contact_email?: NullableStringFieldUpdateOperationsInput | string | null
@@ -30984,6 +31007,7 @@ export namespace Prisma {
     updated_at?: SortOrder
     expires_at?: SortOrder
     resolved_at?: SortOrder
+    cancelled_at?: SortOrder
     renewal_count?: SortOrder
     contact_phone?: SortOrder
     contact_email?: SortOrder
@@ -31028,6 +31052,7 @@ export namespace Prisma {
     updated_at?: SortOrder
     expires_at?: SortOrder
     resolved_at?: SortOrder
+    cancelled_at?: SortOrder
     renewal_count?: SortOrder
     contact_phone?: SortOrder
     contact_email?: SortOrder
@@ -31057,6 +31082,7 @@ export namespace Prisma {
     updated_at?: SortOrder
     expires_at?: SortOrder
     resolved_at?: SortOrder
+    cancelled_at?: SortOrder
     renewal_count?: SortOrder
     contact_phone?: SortOrder
     contact_email?: SortOrder
@@ -33614,6 +33640,7 @@ export namespace Prisma {
     updated_at?: DateTimeFilter<"Alert"> | Date | string
     expires_at?: DateTimeFilter<"Alert"> | Date | string
     resolved_at?: DateTimeNullableFilter<"Alert"> | Date | string | null
+    cancelled_at?: DateTimeNullableFilter<"Alert"> | Date | string | null
     renewal_count?: IntFilter<"Alert"> | number
     contact_phone?: StringNullableFilter<"Alert"> | string | null
     contact_email?: StringNullableFilter<"Alert"> | string | null
@@ -35788,6 +35815,7 @@ export namespace Prisma {
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
     expires_at?: DateTimeFieldUpdateOperationsInput | Date | string
     resolved_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    cancelled_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     renewal_count?: IntFieldUpdateOperationsInput | number
     contact_phone?: NullableStringFieldUpdateOperationsInput | string | null
     contact_email?: NullableStringFieldUpdateOperationsInput | string | null
@@ -35824,6 +35852,7 @@ export namespace Prisma {
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
     expires_at?: DateTimeFieldUpdateOperationsInput | Date | string
     resolved_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    cancelled_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     renewal_count?: IntFieldUpdateOperationsInput | number
     contact_phone?: NullableStringFieldUpdateOperationsInput | string | null
     contact_email?: NullableStringFieldUpdateOperationsInput | string | null
@@ -36036,6 +36065,7 @@ export namespace Prisma {
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
     expires_at?: DateTimeFieldUpdateOperationsInput | Date | string
     resolved_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    cancelled_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     renewal_count?: IntFieldUpdateOperationsInput | number
     contact_phone?: NullableStringFieldUpdateOperationsInput | string | null
     contact_email?: NullableStringFieldUpdateOperationsInput | string | null
@@ -36072,6 +36102,7 @@ export namespace Prisma {
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
     expires_at?: DateTimeFieldUpdateOperationsInput | Date | string
     resolved_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    cancelled_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     renewal_count?: IntFieldUpdateOperationsInput | number
     contact_phone?: NullableStringFieldUpdateOperationsInput | string | null
     contact_email?: NullableStringFieldUpdateOperationsInput | string | null
@@ -36483,6 +36514,7 @@ export namespace Prisma {
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
     expires_at?: DateTimeFieldUpdateOperationsInput | Date | string
     resolved_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    cancelled_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     renewal_count?: IntFieldUpdateOperationsInput | number
     contact_phone?: NullableStringFieldUpdateOperationsInput | string | null
     contact_email?: NullableStringFieldUpdateOperationsInput | string | null
@@ -36518,6 +36550,7 @@ export namespace Prisma {
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
     expires_at?: DateTimeFieldUpdateOperationsInput | Date | string
     resolved_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    cancelled_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     renewal_count?: IntFieldUpdateOperationsInput | number
     contact_phone?: NullableStringFieldUpdateOperationsInput | string | null
     contact_email?: NullableStringFieldUpdateOperationsInput | string | null
@@ -36552,6 +36585,7 @@ export namespace Prisma {
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
     expires_at?: DateTimeFieldUpdateOperationsInput | Date | string
     resolved_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    cancelled_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     renewal_count?: IntFieldUpdateOperationsInput | number
     contact_phone?: NullableStringFieldUpdateOperationsInput | string | null
     contact_email?: NullableStringFieldUpdateOperationsInput | string | null
@@ -36944,6 +36978,7 @@ export namespace Prisma {
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
     expires_at?: DateTimeFieldUpdateOperationsInput | Date | string
     resolved_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    cancelled_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     renewal_count?: IntFieldUpdateOperationsInput | number
     contact_phone?: NullableStringFieldUpdateOperationsInput | string | null
     contact_email?: NullableStringFieldUpdateOperationsInput | string | null
@@ -36979,6 +37014,7 @@ export namespace Prisma {
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
     expires_at?: DateTimeFieldUpdateOperationsInput | Date | string
     resolved_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    cancelled_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     renewal_count?: IntFieldUpdateOperationsInput | number
     contact_phone?: NullableStringFieldUpdateOperationsInput | string | null
     contact_email?: NullableStringFieldUpdateOperationsInput | string | null
@@ -37013,6 +37049,7 @@ export namespace Prisma {
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
     expires_at?: DateTimeFieldUpdateOperationsInput | Date | string
     resolved_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    cancelled_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     renewal_count?: IntFieldUpdateOperationsInput | number
     contact_phone?: NullableStringFieldUpdateOperationsInput | string | null
     contact_email?: NullableStringFieldUpdateOperationsInput | string | null

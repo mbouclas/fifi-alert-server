@@ -28,6 +28,7 @@ import {
   CreateAlertDto,
   UpdateAlertDto,
   ResolveAlertDto,
+  CancelAlertDto,
   ListAlertsQueryDto,
   AlertResponseDto,
 } from './dto';
@@ -168,6 +169,42 @@ export class AlertController {
   }
 
   /**
+   * POST /alerts/:id/cancel - Cancel an alert
+   */
+  @Post(':id/cancel')
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(BearerTokenGuard)
+  @ApiBearerAuth()
+  @ApiParam({ name: 'id', description: 'Alert ID' })
+  @ApiOperation({
+    summary: 'Cancel an alert',
+    description:
+      'Withdraws a DRAFT or ACTIVE alert (e.g. posted by mistake). Sets status to CANCELLED and stops any pending notification waves. Use /resolve instead when the pet was found.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Alert cancelled successfully',
+    type: AlertResponseDto,
+  })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden - not the alert creator',
+  })
+  @ApiResponse({ status: 404, description: 'Alert not found' })
+  @ApiResponse({
+    status: 422,
+    description: 'Alert is not DRAFT or ACTIVE (already resolved, expired or cancelled)',
+  })
+  async cancel(
+    @Param('id', ParseIntPipe) id: number,
+    @User('id') userId: number,
+    @Body() cancelAlertDto: CancelAlertDto,
+  ): Promise<AlertResponseDto> {
+    return this.alertService.cancel(id, userId, cancelAlertDto);
+  }
+
+  /**
    * POST /alerts/:id/renew - Renew an alert
    * Task 2.11
    */
@@ -187,7 +224,10 @@ export class AlertController {
     description: 'Forbidden - not the alert creator',
   })
   @ApiResponse({ status: 404, description: 'Alert not found' })
-  @ApiResponse({ status: 422, description: 'Maximum renewal limit reached' })
+  @ApiResponse({
+    status: 422,
+    description: 'Maximum renewal limit reached or alert is cancelled',
+  })
   async renew(
     @Param('id', ParseIntPipe) id: number,
     @User('id') userId: number,

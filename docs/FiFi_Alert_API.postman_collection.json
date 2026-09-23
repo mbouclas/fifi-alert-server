@@ -180,7 +180,16 @@
                     "name": "Logout",
                     "request": {
                         "method": "POST",
-                        "header": [],
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+                        },
                         "url": {
                             "raw": "{{baseUrl}}/auth/logout",
                             "host": [
@@ -191,7 +200,7 @@
                                 "logout"
                             ]
                         },
-                        "description": "Sign out the current user and invalidate their session."
+                        "description": "Revokes the bearer access token and the refresh token in the body. Always returns 200."
                     },
                     "response": []
                 },
@@ -295,6 +304,8 @@
                                     "if (pm.response.code === 200) {",
                                     "    const response = pm.response.json();",
                                     "    pm.collectionVariables.set('accessToken', response.accessToken);",
+                                    "    // Rotation: the old refresh token is revoked; keep the new one.",
+                                    "    pm.collectionVariables.set('refreshToken', response.refreshToken);",
                                     "}"
                                 ],
                                 "type": "text/javascript"
@@ -529,6 +540,35 @@
                             ]
                         },
                         "description": "Mark an alert as resolved. Only the alert creator can resolve."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Cancel Alert",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"reason\": \"Posted by mistake\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/alerts/{{alertId}}/cancel",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "alerts",
+                                "{{alertId}}",
+                                "cancel"
+                            ]
+                        },
+                        "description": "Withdraw a DRAFT or ACTIVE alert (status becomes CANCELLED). Only the alert creator can cancel. Body is optional. Returns 422 if the alert is already resolved, expired or cancelled."
                     },
                     "response": []
                 },

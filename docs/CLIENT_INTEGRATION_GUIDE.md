@@ -58,8 +58,11 @@ const response = await fetch('http://localhost:3000/auth/login', {
 });
 
 const data = await response.json();
-// Response: { accessToken, refreshToken, expiresAt, user }
+// Response: { accessToken, refreshToken, expiresAt, refreshExpiresAt, user }
+// Persist all four token fields. `session` is no longer returned.
 ```
+
+> Platform-specific migration guides: [SvelteKit](./clients/sveltekit-auth-migration.md) · [Android](./clients/android-auth-migration.md)
 
 ### 3. Accessing Protected Resources
 
@@ -483,7 +486,10 @@ class ApiClient {
       }
 
       const data = await response.json();
+      // Rotation: the refresh token we just sent is now revoked.
+      // Persist BOTH new tokens.
       this.accessToken = data.accessToken;
+      this.refreshToken = data.refreshToken;
       return true;
     } catch {
       return false;
@@ -507,6 +513,16 @@ export const apiClient = new ApiClient();
 ---
 
 ## Token Refresh Strategy
+
+### Refresh tokens rotate
+
+`POST /auth/refresh-token` returns `{ accessToken, expiresAt, refreshToken, refreshExpiresAt }`. The refresh token you sent is revoked the moment the call succeeds. Consequences for every client:
+
+1. **Persist both new tokens** before retrying the original request.
+2. **Serialize refreshes.** Two concurrent calls with the same refresh token: the second gets `401`. Use one lock / one in-flight promise.
+3. **Never auto-retry the refresh call.** A `401` from it means the token is dead: clear storage and go to login.
+4. **Reuse detection.** Presenting an already-rotated refresh token more than 30 seconds after rotation revokes **all** sessions of the user.
+5. **Logout** must send the refresh token in the body (`{ "refreshToken": "..." }`) together with the bearer header so both are revoked. `POST /auth/logout-all` revokes every session.
 
 ### Proactive Refresh (Recommended)
 

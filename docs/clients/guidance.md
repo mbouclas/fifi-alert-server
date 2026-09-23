@@ -177,7 +177,8 @@ enum AlertStatus {
   DRAFT = 'DRAFT',       // Created but not published
   ACTIVE = 'ACTIVE',     // Live, sending notifications
   RESOLVED = 'RESOLVED', // Pet found
-  EXPIRED = 'EXPIRED'    // Auto-expired after duration
+  EXPIRED = 'EXPIRED',   // Auto-expired after duration
+  CANCELLED = 'CANCELLED' // Withdrawn by the creator
 }
 
 interface Alert {
@@ -207,6 +208,7 @@ interface Alert {
   updatedAt: string;
   expiresAt: string;
   resolvedAt?: string;
+  cancelledAt?: string;
   renewalCount: number; // Max 3 renewals
   
   // Contact (visibility depends on permissions)
@@ -424,16 +426,22 @@ if (response.status === 401) {
   console.error('Too many login attempts. Try again later.');
 } else {
   const data: AuthResponse = await response.json();
-  // Store tokens
-  localStorage.setItem('accessToken', data.accessToken);
-  localStorage.setItem('refreshToken', data.refreshToken);
+  // Store ALL FOUR fields securely (see platform guides below):
+  //   data.accessToken, data.expiresAt, data.refreshToken, data.refreshExpiresAt
+  // NOTE: `data.session` is no longer returned. Do not read it.
+  tokenStore.save(data);
 }
 ```
 
-### 3. Token Refresh
+> **Platform guides:** [SvelteKit](./sveltekit-auth-migration.md) (httpOnly cookies via `hooks.server.ts`) and [Android](./android-auth-migration.md) (EncryptedSharedPreferences + OkHttp Authenticator). Web clients must **not** keep tokens in `localStorage`.
 
-**Endpoint:** `POST /auth/refresh`  
-**Authentication:** Refresh token required
+### 3. Token Refresh (rotating)
+
+**Endpoint:** `POST /auth/refresh-token`  
+**Authentication:** Refresh token required  
+**Rate Limit:** 10 per minute
+
+Refresh tokens are **single-use**. Every successful call revokes the refresh token you sent and returns a new access token **and** a new refresh token. You must persist both.
 
 ```typescript
 // Request
@@ -441,25 +449,36 @@ interface RefreshRequest {
   refreshToken: string;
 }
 
-// Response: Same as AuthResponse
+// Response
+interface RefreshResponse {
+  accessToken: string;
+  expiresAt: string;         // access token expiry, ISO 8601
+  refreshToken: string;      // NEW refresh token; the old one is now revoked
+  refreshExpiresAt: string;  // refresh token expiry, ISO 8601
+}
 
 // Example
-const response = await fetch('http://localhost:3000/auth/refresh', {
+const response = await fetch('http://localhost:3000/auth/refresh-token', {
   method: 'POST',
-  headers: {
-    'Content-Type': 'application/json',
-  },
-  body: JSON.stringify({
-    refreshToken: localStorage.getItem('refreshToken')
-  })
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ refreshToken: tokenStore.get().refreshToken }),
 });
 
 if (response.ok) {
-  const data: AuthResponse = await response.json();
-  localStorage.setItem('accessToken', data.accessToken);
-  localStorage.setItem('refreshToken', data.refreshToken);
+  const data: RefreshResponse = await response.json();
+  tokenStore.save(data); // persist BOTH new tokens before retrying anything
+} else if (response.status === 401) {
+  // Refresh token invalid, expired, or already used → sign the user out locally.
+  tokenStore.clear();
+  goToLogin();
 }
 ```
+
+**Rules**
+
+- Never run two refreshes with the same refresh token in parallel. Serialize refresh calls (one lock / one in-flight promise).
+- Never auto-retry `/auth/refresh-token`. A 401 means the token is dead.
+- Reusing an already-rotated refresh token within 30 s returns 401 only. Reusing it later is treated as theft and **every session of the user is revoked**.
 
 ### 4. Get Current User
 
@@ -500,21 +519,55 @@ if (response.ok) {
 ### 5. Logout
 
 **Endpoint:** `POST /auth/logout`  
-**Authentication:** Bearer token required
+**Authentication:** Bearer token (access token) in the header; refresh token in the body
+
+The server revokes the access token from the `Authorization` header and the refresh token from the body. Send both. The endpoint always returns 200, even if the tokens were already invalid.
 
 ```typescript
+// Request body
+interface LogoutRequest {
+  refreshToken?: string;
+}
+
 // Example
+const { accessToken, refreshToken } = tokenStore.get();
 await fetch('http://localhost:3000/auth/logout', {
   method: 'POST',
   headers: {
-    'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
-  }
-});
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${accessToken}`,
+  },
+  body: JSON.stringify({ refreshToken }),
+}).catch(() => {}); // best effort
 
-// Clear local tokens
-localStorage.removeItem('accessToken');
-localStorage.removeItem('refreshToken');
+// Always clear local tokens, even if the request failed
+tokenStore.clear();
 ```
+
+### 6. Logout from all devices
+
+**Endpoint:** `POST /auth/logout-all`  
+**Authentication:** Bearer token required
+
+Revokes every access and refresh token of the current user, including the one used for the request.
+
+```typescript
+// Response
+interface LogoutAllResponse {
+  message: string;
+  revokedCount: number;
+}
+
+await fetch('http://localhost:3000/auth/logout-all', {
+  method: 'POST',
+  headers: { 'Authorization': `Bearer ${tokenStore.get().accessToken}` },
+});
+tokenStore.clear();
+```
+
+### 7. Forced sign-out
+
+Existing tokens are revoked server-side when the user changes their password (all devices except the one making the change), resets their password, is revoked by an admin, or when refresh token reuse is detected. Clients see this as a `401` on a normal request **and** a `401` from `/auth/refresh-token`. Clear local tokens and route to the login screen. Do not retry in a loop.
 
 ---
 
@@ -866,6 +919,24 @@ const resolvedAlert = await client.post<Alert>('/alerts/123/resolve', {
   notes: 'Found safe at home!',
   foundBy: 'OWNER'
 });
+```
+
+#### Cancel Alert
+
+**Endpoint:** `POST /alerts/:id/cancel`  
+**Authentication:** Required (must be alert creator)
+
+Withdraws a `DRAFT` or `ACTIVE` alert (e.g. posted by mistake). Use `/resolve` when the pet was found. Returns `422` if the alert is already resolved, expired or cancelled. Cancelled alerts cannot be renewed and stop sending notifications.
+
+```typescript
+interface CancelAlertRequest {
+  reason?: string; // max 2000 chars, stored in notes
+}
+
+const cancelledAlert = await client.post<Alert>('/alerts/123/cancel', {
+  reason: 'Posted by mistake'
+});
+// cancelledAlert.status === 'CANCELLED'
 ```
 
 ### Devices

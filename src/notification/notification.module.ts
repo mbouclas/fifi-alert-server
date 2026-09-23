@@ -1,11 +1,16 @@
 import { Module } from '@nestjs/common';
 import { BullModule } from '@nestjs/bullmq';
 import { NotificationService } from './notification.service';
+import { NotificationController } from './notification.controller';
 import { NotificationQueueProcessor } from './notification-queue.processor';
 import { FCMService } from './fcm.service';
 import { APNsService } from './apns.service';
+import { WebPushService } from './webpush.service';
+import { AlertEmailService } from './alert-email.service';
 import { PrismaService } from '../services/prisma.service';
 import { LocationModule } from '../location/location.module';
+import { SharedModule } from '../shared/shared.module';
+import { AuthEndpointsModule } from '../auth/auth.module';
 import { NOTIFICATION_QUEUE } from './notification.constants';
 
 @Module({
@@ -30,12 +35,17 @@ import { NOTIFICATION_QUEUE } from './notification.constants';
       },
     }),
     LocationModule,
+    SharedModule, // Provides 'IEmailProvider' for AlertEmailService
+    AuthEndpointsModule, // Provides TokenService for BearerTokenGuard on NotificationController
   ],
+  controllers: [NotificationController],
   providers: [
     NotificationService,
     NotificationQueueProcessor,
     FCMService,
     APNsService,
+    WebPushService,
+    AlertEmailService,
     PrismaService,
   ],
   exports: [NotificationService],

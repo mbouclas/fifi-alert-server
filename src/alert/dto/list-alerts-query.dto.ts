@@ -66,6 +66,7 @@ export class ListAlertsQueryDto {
 
   @ApiPropertyOptional({
     enum: AlertStatus,
+    enumName: 'AlertStatus',
     description: 'Filter by alert status',
     example: AlertStatus.ACTIVE,
   })

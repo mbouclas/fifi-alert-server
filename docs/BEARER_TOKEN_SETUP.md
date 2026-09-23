@@ -53,7 +53,7 @@ Successfully implemented JWT bearer token authentication for the NestJS + better
      - `JWT_SECRET`: Secret key for access tokens
      - `JWT_REFRESH_SECRET`: Secret key for refresh tokens
      - `JWT_ACCESS_EXPIRATION`: Access token lifetime (default: 15m)
-     - `JWT_REFRESH_EXPIRATION`: Refresh token lifetime (default: 7d)
+     - `JWT_REFRESH_EXPIRATION`: Refresh token lifetime (default: 30d)
 
 ## 🚀 Next Steps to Complete Setup
 
@@ -80,7 +80,7 @@ Copy `.env.example` to `.env` and update with production-ready values:
 JWT_SECRET=<generate-with-openssl-rand-base64-64>
 JWT_REFRESH_SECRET=<generate-with-openssl-rand-base64-64>
 JWT_ACCESS_EXPIRATION=15m
-JWT_REFRESH_EXPIRATION=7d
+JWT_REFRESH_EXPIRATION=30d
 ```
 
 To generate secure secrets:
@@ -161,14 +161,33 @@ curl -X GET http://localhost:3000/auth/me \
 # Response will include roles AND gates
 ```
 
-#### Test Token Refresh
+#### Test Token Refresh (rotating)
 
 ```bash
 curl -X POST http://localhost:3000/auth/refresh-token \
   -H "Content-Type: application/json" \
   -d '{"refreshToken":"<your-refresh-token>"}'
 
-# Response will include new accessToken
+# Response: { accessToken, expiresAt, refreshToken, refreshExpiresAt }
+# The refresh token you sent is now REVOKED. Persist the new one.
+# Sending the same refresh token again returns 401; more than
+# REFRESH_TOKEN_REUSE_GRACE_SECONDS (default 30s) after rotation it is
+# treated as theft and ALL sessions of that user are revoked.
+```
+
+#### Test Logout (revokes the JWT pair)
+
+```bash
+curl -X POST http://localhost:3000/auth/logout \
+  -H "Authorization: Bearer <your-access-token>" \
+  -H "Content-Type: application/json" \
+  -d '{"refreshToken":"<your-refresh-token>"}'
+
+# Both tokens are revoked. Reusing the access token now returns 401.
+
+# Revoke every session of the user:
+curl -X POST http://localhost:3000/auth/logout-all \
+  -H "Authorization: Bearer <your-access-token>"
 ```
 
 #### Test Role-Based Protection
@@ -264,7 +283,14 @@ if (hasPremiumFeatures) {
 
 ## 🔒 Token Revocation
 
-Tokens are stored in the `session` table with revocation capability:
+Tokens are stored in the `session` table with revocation capability.
+
+**Storage format:** access and refresh tokens are persisted as a **SHA-256 hex
+digest** of the JWT, never the raw token, so a leaked database snapshot contains
+no usable credentials. All lookups hash the presented token first. better-auth's
+own rows (`token_type = 'session'`) are stored raw because better-auth reads them
+by value. Every token also carries a unique `jti` claim so two tokens minted in
+the same second are distinct.
 
 ### Revoke a Single Token
 

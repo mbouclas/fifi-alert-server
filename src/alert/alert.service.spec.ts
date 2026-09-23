@@ -4,6 +4,7 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 import { AlertService } from './alert.service';
 import { PrismaService } from '../services/prisma.service';
 import { RateLimitService } from './rate-limit.service';
+import { AlertStatusEventPublisher } from './events/alert-status-event.publisher';
 import { AlertStatus, PetSpecies } from '../generated/prisma';
 import { CreateAlertDto, UpdateAlertDto, ResolveAlertDto, AlertOutcome } from './dto';
 import type { IEmailProvider } from '@shared/email/interfaces/email-provider.interface';
@@ -13,6 +14,13 @@ describe('AlertService', () => {
     let service: AlertService;
     let prisma: PrismaService;
 
+    const mockAlertStatusEvents = {
+        activated: jest.fn(),
+        resolved: jest.fn(),
+        cancelled: jest.fn(),
+        expired: jest.fn(),
+    };
+
     const mockPrismaService = {
         $queryRaw: jest.fn(),
         $executeRaw: jest.fn(),
@@ -20,6 +28,7 @@ describe('AlertService', () => {
             findUnique: jest.fn(),
             findMany: jest.fn(),
             update: jest.fn(),
+            count: jest.fn(),
         },
         user: {
             findUnique: jest.fn(),
@@ -27,6 +36,7 @@ describe('AlertService', () => {
         },
         pet: {
             findUnique: jest.fn(),
+            update: jest.fn(),
         },
     };
 
@@ -72,6 +82,10 @@ describe('AlertService', () => {
                 {
                     provide: NotificationService,
                     useValue: mockNotificationService,
+                },
+                {
+                    provide: AlertStatusEventPublisher,
+                    useValue: mockAlertStatusEvents,
                 },
             ],
         }).compile();
@@ -432,7 +446,146 @@ describe('AlertService', () => {
         });
     });
 
+    describe('cancel', () => {
+        it('should cancel an active alert and record the reason', async () => {
+            const mockAlert = {
+                id: 1,
+                creator_id: 1,
+                pet_id: null,
+                status: AlertStatus.ACTIVE,
+                cancelled_at: null,
+                notes: null,
+            };
+
+            mockPrismaService.alert.findUnique.mockResolvedValueOnce(mockAlert);
+            mockPrismaService.alert.update.mockResolvedValueOnce({
+                ...mockAlert,
+                status: AlertStatus.CANCELLED,
+            });
+            mockPrismaService.alert.findUnique.mockResolvedValueOnce({
+                ...mockAlert,
+                status: AlertStatus.CANCELLED,
+                sightings: [],
+            });
+
+            const result = await service.cancel(1, 1, { reason: 'Posted by mistake' });
+
+            expect(result.status).toBe(AlertStatus.CANCELLED);
+            expect(mockPrismaService.alert.update).toHaveBeenCalledWith({
+                where: { id: 1 },
+                data: {
+                    status: AlertStatus.CANCELLED,
+                    cancelled_at: expect.any(Date),
+                    notes: 'Posted by mistake',
+                },
+            });
+            expect(mockEventEmitter.emit).toHaveBeenCalledWith(
+                expect.any(String),
+                expect.objectContaining({ action: 'alert_cancelled' }),
+            );
+            expect(mockAlertStatusEvents.cancelled).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    alertId: 1,
+                    creatorId: 1,
+                    previousStatus: AlertStatus.ACTIVE,
+                    changedBy: 1,
+                    source: 'user',
+                    reason: 'Posted by mistake',
+                }),
+            );
+        });
+
+        it('should clear the pet missing flag when no other alert is active', async () => {
+            const mockAlert = {
+                id: 1,
+                creator_id: 1,
+                pet_id: 7,
+                status: AlertStatus.DRAFT,
+                cancelled_at: null,
+                notes: null,
+            };
+
+            mockPrismaService.alert.findUnique.mockResolvedValueOnce(mockAlert);
+            mockPrismaService.alert.update.mockResolvedValueOnce(mockAlert);
+            mockPrismaService.alert.count.mockResolvedValueOnce(0);
+            mockPrismaService.alert.findUnique.mockResolvedValueOnce({ ...mockAlert, sightings: [] });
+
+            await service.cancel(1, 1, {});
+
+            expect(mockPrismaService.alert.update).toHaveBeenCalledWith({
+                where: { id: 1 },
+                data: { status: AlertStatus.CANCELLED, cancelled_at: expect.any(Date) },
+            });
+            expect(mockPrismaService.pet.update).toHaveBeenCalledWith({
+                where: { id: 7 },
+                data: { isMissing: false },
+            });
+        });
+
+        it('should keep the pet missing flag when another alert is still active', async () => {
+            const mockAlert = {
+                id: 1,
+                creator_id: 1,
+                pet_id: 7,
+                status: AlertStatus.ACTIVE,
+                cancelled_at: null,
+                notes: null,
+            };
+
+            mockPrismaService.alert.findUnique.mockResolvedValueOnce(mockAlert);
+            mockPrismaService.alert.update.mockResolvedValueOnce(mockAlert);
+            mockPrismaService.alert.count.mockResolvedValueOnce(1);
+            mockPrismaService.alert.findUnique.mockResolvedValueOnce({ ...mockAlert, sightings: [] });
+
+            await service.cancel(1, 1, {});
+
+            expect(mockPrismaService.pet.update).not.toHaveBeenCalled();
+        });
+
+        it('should throw NotFoundException if alert not found', async () => {
+            mockPrismaService.alert.findUnique.mockResolvedValueOnce(null);
+
+            await expect(service.cancel(999, 1, {})).rejects.toThrow(NotFoundException);
+        });
+
+        it('should throw ForbiddenException if user is not the creator', async () => {
+            mockPrismaService.alert.findUnique.mockResolvedValueOnce({
+                id: 1,
+                creator_id: 2,
+                status: AlertStatus.ACTIVE,
+            });
+
+            await expect(service.cancel(1, 1, {})).rejects.toThrow(ForbiddenException);
+        });
+
+        it.each([AlertStatus.RESOLVED, AlertStatus.EXPIRED, AlertStatus.CANCELLED])(
+            'should throw UnprocessableEntityException for a %s alert',
+            async (status) => {
+                mockPrismaService.alert.findUnique.mockResolvedValueOnce({
+                    id: 1,
+                    creator_id: 1,
+                    status,
+                });
+
+                await expect(service.cancel(1, 1, {})).rejects.toThrow(UnprocessableEntityException);
+                expect(mockPrismaService.alert.update).not.toHaveBeenCalled();
+            },
+        );
+    });
+
     describe('renew', () => {
+        it('should reject renewing a cancelled alert', async () => {
+            mockPrismaService.alert.findUnique.mockResolvedValueOnce({
+                id: 1,
+                creator_id: 1,
+                status: AlertStatus.CANCELLED,
+                renewal_count: 0,
+            });
+
+            await expect(service.renew(1, 1)).rejects.toThrow(UnprocessableEntityException);
+            expect(mockPrismaService.alert.update).not.toHaveBeenCalled();
+        });
+
         it('should renew an alert successfully', async () => {
             const mockAlert = {
                 id: 1,

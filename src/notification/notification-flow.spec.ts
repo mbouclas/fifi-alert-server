@@ -12,6 +12,7 @@
  */
 
 import { Test, TestingModule } from '@nestjs/testing';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { INestApplication } from '@nestjs/common';
 import { getQueueToken } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
@@ -21,6 +22,8 @@ import { NotificationQueueProcessor } from './notification-queue.processor';
 import { LocationService } from '../location/location.service';
 import { FCMService } from './fcm.service';
 import { APNsService } from './apns.service';
+import { WebPushService } from './webpush.service';
+import { AlertEmailService } from './alert-email.service';
 import { NOTIFICATION_QUEUE } from './notification.constants';
 import {
   NotificationConfidence,
@@ -44,6 +47,23 @@ describe('Notification Flow (e2e)', () => {
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
+        {
+          provide: EventEmitter2,
+          useValue: { emit: jest.fn() },
+        },
+        {
+          provide: WebPushService,
+          useValue: {
+            sendNotification: jest.fn(),
+          },
+        },
+        {
+          provide: AlertEmailService,
+          useValue: {
+            isOptedIn: jest.fn().mockResolvedValue(false),
+            sendAlertEmail: jest.fn().mockResolvedValue(true),
+          },
+        },
         NotificationService,
         NotificationQueueProcessor,
         {
@@ -59,6 +79,7 @@ describe('Notification Flow (e2e)', () => {
             notification: {
               create: jest.fn(),
               findUnique: jest.fn(),
+              findFirst: jest.fn(),
               update: jest.fn(),
               count: jest.fn(),
             },
@@ -116,9 +137,18 @@ describe('Notification Flow (e2e)', () => {
 
       await notificationService.queueAlertNotifications(alertId);
 
-      expect(mockQueue.add).toHaveBeenCalledWith('send-alert-notifications', {
-        alertId,
-      });
+      // Three staged waves rather than one blast.
+      expect(mockQueue.add).toHaveBeenCalledTimes(3);
+      expect(mockQueue.add).toHaveBeenCalledWith(
+        'send-alert-notifications',
+        { alertId, wave: 'HIGH' },
+        undefined,
+      );
+      expect(mockQueue.add).toHaveBeenCalledWith(
+        'send-alert-notifications',
+        { alertId, wave: 'LOW' },
+        { delay: 60 * 60 * 1000 },
+      );
     });
 
     it('should process alert and queue individual notifications', async () => {
@@ -156,6 +186,9 @@ describe('Notification Flow (e2e)', () => {
       (prismaService.alert.findUnique as jest.Mock).mockResolvedValue(
         mockAlert,
       );
+      // Fatigue guards clear by default; dedicated tests opt into the blocked cases.
+      (prismaService.notification.findFirst as jest.Mock).mockResolvedValue(null);
+      (prismaService.notification.count as jest.Mock).mockResolvedValue(0);
       (locationService.findDevicesForAlert as jest.Mock).mockResolvedValue(
         mockDevices,
       );
@@ -168,15 +201,22 @@ describe('Notification Flow (e2e)', () => {
         },
       );
 
-      const job = {
+      // Run the HIGH wave, then the MEDIUM wave, as the delayed jobs would.
+      await queueProcessor.process({
         id: 'job-1',
         name: 'send-alert-notifications',
-        data: { alertId },
-      } as any;
+        data: { alertId, wave: 'HIGH' },
+      } as any);
 
-      await queueProcessor.process(job);
+      expect(prismaService.notification.create).toHaveBeenCalledTimes(1);
 
-      // Verify 2 notifications were created
+      await queueProcessor.process({
+        id: 'job-2',
+        name: 'send-alert-notifications',
+        data: { alertId, wave: 'MEDIUM' },
+      } as any);
+
+      // Verify 2 notifications were created across both waves
       expect(prismaService.notification.create).toHaveBeenCalledTimes(2);
 
       // Verify HIGH confidence notification

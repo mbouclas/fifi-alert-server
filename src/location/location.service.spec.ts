@@ -303,6 +303,83 @@ describe('LocationService', () => {
       });
     });
 
+    it('should collapse one user with several devices into a single recipient', async () => {
+      mockPrismaService.alert.findUnique.mockResolvedValue(mockAlert);
+
+      // Same person, phone and laptop. Two pushes for one missing pet reads as
+      // spam, so only the strongest match survives.
+      mockPrismaService.$queryRaw
+        .mockResolvedValueOnce([
+          {
+            device_id: 'device-phone',
+            user_id: 'user-1',
+            push_token: 'token-phone',
+            zone_id: 'zone-1',
+            zone_name: 'Home',
+            zone_radius_km: 2.0,
+            distance_km: 1.0,
+          },
+        ])
+        .mockResolvedValueOnce([]) // alert zones
+        .mockResolvedValueOnce([]) // fresh GPS
+        .mockResolvedValueOnce([
+          {
+            device_id: 'device-laptop',
+            user_id: 'user-1', // same user, weaker match
+            push_token: 'token-laptop',
+            distance_km: 6.0,
+            gps_age_hours: 10.0,
+          },
+        ])
+        .mockResolvedValueOnce([]) // postal codes
+        .mockResolvedValueOnce([]); // IP geo
+
+      const result = await service.findDevicesForAlert(1);
+
+      expect(result).toHaveLength(1);
+      expect(result[0]).toMatchObject({
+        deviceId: 'device-phone',
+        userId: 'user-1',
+        confidence: NotificationConfidence.HIGH,
+      });
+    });
+
+    it('should prefer a reachable device when one user has an equal-priority match without a push token', async () => {
+      mockPrismaService.alert.findUnique.mockResolvedValue(mockAlert);
+
+      mockPrismaService.$queryRaw
+        .mockResolvedValueOnce([
+          {
+            device_id: 'device-no-token',
+            user_id: 'user-1',
+            push_token: null,
+            zone_id: 'zone-1',
+            zone_name: 'Home',
+            zone_radius_km: 2.0,
+            distance_km: 1.0,
+          },
+          {
+            device_id: 'device-with-token',
+            user_id: 'user-1',
+            push_token: 'token-1',
+            zone_id: 'zone-2',
+            zone_name: 'Work',
+            zone_radius_km: 2.0,
+            distance_km: 1.8,
+          },
+        ])
+        .mockResolvedValueOnce([]) // alert zones
+        .mockResolvedValueOnce([]) // fresh GPS
+        .mockResolvedValueOnce([]) // stale GPS
+        .mockResolvedValueOnce([]) // postal codes
+        .mockResolvedValueOnce([]); // IP geo
+
+      const result = await service.findDevicesForAlert(1);
+
+      expect(result).toHaveLength(1);
+      expect(result[0].deviceId).toBe('device-with-token');
+    });
+
     it('should find multiple unique devices from different match types', async () => {
       mockPrismaService.alert.findUnique.mockResolvedValue(mockAlert);
 

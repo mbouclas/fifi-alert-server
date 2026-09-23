@@ -310,6 +310,7 @@ exports.Prisma.AlertScalarFieldEnum = {
   updated_at: 'updated_at',
   expires_at: 'expires_at',
   resolved_at: 'resolved_at',
+  cancelled_at: 'cancelled_at',
   renewal_count: 'renewal_count',
   contact_phone: 'contact_phone',
   contact_email: 'contact_email',
@@ -506,7 +507,8 @@ exports.AlertStatus = exports.$Enums.AlertStatus = {
   DRAFT: 'DRAFT',
   ACTIVE: 'ACTIVE',
   RESOLVED: 'RESOLVED',
-  EXPIRED: 'EXPIRED'
+  EXPIRED: 'EXPIRED',
+  CANCELLED: 'CANCELLED'
 };
 
 exports.DevicePlatform = exports.$Enums.DevicePlatform = {

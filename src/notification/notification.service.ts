@@ -1,9 +1,12 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { PrismaService } from '../services/prisma.service';
-import { NOTIFICATION_QUEUE } from './notification.constants';
+import {
+  NOTIFICATION_QUEUE,
+  ESCALATION_WAVES,
+} from './notification.constants';
 import { NotificationConfidence } from '../generated/prisma';
 import { AUDIT_EVENT_NAMES } from '../audit/audit-event-names';
 import { IAuditEventPayload } from '../audit/interfaces/audit-event-payload.interface';
@@ -23,6 +26,11 @@ export interface NotificationPayload {
  */
 export interface AlertNotificationJob {
   alertId: number;
+  /**
+   * Which escalation wave this job represents. Omitted on legacy jobs, which are
+   * treated as HIGH so an in-flight queue keeps working across deploys.
+   */
+  wave?: 'HIGH' | 'MEDIUM' | 'LOW';
 }
 
 /**
@@ -52,13 +60,19 @@ export class NotificationService {
   async queueAlertNotifications(alertId: number): Promise<void> {
     this.logger.log(`Queuing alert notifications for alert ${alertId}`);
 
-    const job = await this.notificationQueue.add('send-alert-notifications', {
-      alertId,
-    } as AlertNotificationJob);
+    // One delayed job per wave. Each re-checks alert.status before fanning out, so a
+    // pet found in the first ten minutes never triggers the MEDIUM and LOW waves.
+    for (const { wave, delayMs } of ESCALATION_WAVES) {
+      const job = await this.notificationQueue.add(
+        'send-alert-notifications',
+        { alertId, wave } as AlertNotificationJob,
+        delayMs > 0 ? { delay: delayMs } : undefined,
+      );
 
-    this.logger.log(
-      `Queued alert notification job ${job.id} for alert ${alertId}`,
-    );
+      this.logger.log(
+        `Queued ${wave} wave job ${job.id} for alert ${alertId} (delay ${delayMs}ms)`,
+      );
+    }
   }
 
   /**
@@ -182,6 +196,63 @@ export class NotificationService {
     });
 
     this.logger.log(`Notification ${notificationId} marked as delivered`);
+  }
+
+  /**
+   * Record click-time relevance feedback for a delivered notification.
+   *
+   * A service worker cannot read geolocation, so the server can never ask a device
+   * "are you in the radius?" before sending. This is the answer arriving after
+   * delivery instead: the client re-reads its exact position when the user opens the
+   * notification and reports whether it was actually in range. Stored on
+   * Notification.meta so precision can be measured per confidence tier.
+   *
+   * @param notificationId - Notification the user opened
+   * @param userId - Owner of the device, used to prevent cross-user writes
+   * @param feedback - Measured in-range boolean and distance
+   */
+  async recordRelevance(
+    notificationId: number,
+    userId: number,
+    feedback: { inRange: boolean; distanceKm?: number },
+  ): Promise<void> {
+    const notification = await this.prisma.notification.findFirst({
+      where: {
+        id: notificationId,
+        device: { user_id: userId },
+      },
+      select: { id: true, meta: true, opened_at: true },
+    });
+
+    if (!notification) {
+      throw new NotFoundException(`Notification ${notificationId} not found`);
+    }
+
+    const existingMeta =
+      notification.meta && typeof notification.meta === 'object'
+        ? (notification.meta as Record<string, unknown>)
+        : {};
+
+    await this.prisma.notification.update({
+      where: { id: notificationId },
+      data: {
+        status: 'OPENED',
+        // Preserve the first open; repeat opens should not skew timing analytics.
+        opened_at: notification.opened_at ?? new Date(),
+        meta: {
+          ...existingMeta,
+          relevance: {
+            inRange: feedback.inRange,
+            distanceKm: feedback.distanceKm ?? null,
+            reportedAt: new Date().toISOString(),
+          },
+        },
+      },
+    });
+
+    this.logger.log(
+      `Notification ${notificationId} opened; inRange=${feedback.inRange}`,
+    );
   }
 
   /**

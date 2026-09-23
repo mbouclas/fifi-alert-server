@@ -36,7 +36,7 @@ export class DeviceService {
       },
     });
 
-    let deviceId: string;
+    let deviceId: number;
     let isNewDevice = false;
 
     if (existing) {
@@ -47,8 +47,8 @@ export class DeviceService {
         appVersion: existing.app_version,
         pushToken: existing.push_token ? '[REDACTED]' : null,
         location: {
-          gpsLat: existing.gps_latitude,
-          gpsLon: existing.gps_longitude,
+          gpsLat: existing.gps_lat,
+          gpsLon: existing.gps_lon,
         },
       };
 
@@ -65,9 +65,9 @@ export class DeviceService {
             : existing.push_token_updated_at,
           last_app_open: now,
           // Update location data if provided
-          gps_latitude: dto.location?.gps?.latitude ?? existing.gps_latitude,
-          gps_longitude: dto.location?.gps?.longitude ?? existing.gps_longitude,
-          gps_accuracy: dto.location?.gps?.accuracy ?? existing.gps_accuracy,
+          gps_lat: dto.location?.gps?.latitude ?? existing.gps_lat,
+          gps_lon: dto.location?.gps?.longitude ?? existing.gps_lon,
+          gps_accuracy_meters: dto.location?.gps?.accuracy ?? existing.gps_accuracy_meters,
           gps_updated_at: dto.location?.gps ? now : existing.gps_updated_at,
           ip_address: dto.location?.ipAddress ?? existing.ip_address,
           postal_codes: dto.location?.postalCodes ?? existing.postal_codes,
@@ -77,9 +77,9 @@ export class DeviceService {
       // Update GPS geometry if coordinates provided
       if (dto.location?.gps) {
         await this.prisma.$executeRaw`
-          UPDATE devices
+          UPDATE device
           SET gps_point = ST_SetSRID(ST_MakePoint(${dto.location.gps.longitude}, ${dto.location.gps.latitude}), 4326)
-          WHERE id = ${existing.id}::text
+          WHERE id = ${existing.id}
         `;
       }
 
@@ -92,7 +92,7 @@ export class DeviceService {
         const auditPayload: IAuditEventPayload = {
           eventType: 'UPDATE',
           entityType: 'DEVICE',
-          entityId: parseInt(deviceId, 10),
+          entityId: deviceId,
           userId: parseInt(userId, 10),
           action: 'device_updated',
           description: `Updated device ${dto.device_uuid}`,
@@ -113,45 +113,35 @@ export class DeviceService {
     } else {
       isNewDevice = true;
       // Create new device
-      const result = await this.prisma.$queryRaw<Array<{ id: string }>>`
-        INSERT INTO devices (
-          user_id,
-          device_uuid,
-          platform,
-          os_version,
-          app_version,
-          push_token,
-          push_token_updated_at,
-          gps_latitude,
-          gps_longitude,
-          gps_accuracy,
-          gps_point,
-          gps_updated_at,
-          ip_address,
-          postal_codes,
-          last_app_open
-        )
-        VALUES (
-          ${userId}::text,
-          ${dto.device_uuid},
-          ${dto.platform}::"DevicePlatform",
-          ${dto.os_version},
-          ${dto.app_version},
-          ${dto.push_token || null},
-          ${dto.push_token ? now : null},
-          ${dto.location?.gps?.latitude ?? null},
-          ${dto.location?.gps?.longitude ?? null},
-          ${dto.location?.gps?.accuracy ?? null},
-          ${dto.location?.gps ? `ST_SetSRID(ST_MakePoint(${dto.location.gps.longitude}, ${dto.location.gps.latitude}), 4326)` : null},
-          ${dto.location?.gps ? now : null},
-          ${dto.location?.ipAddress || null},
-          ${dto.location?.postalCodes ? JSON.stringify(dto.location.postalCodes) : '[]'}::jsonb,
-          ${now}
-        )
-        RETURNING id
-      `;
+      const created = await this.prisma.device.create({
+        data: {
+          user_id: userId,
+          device_uuid: dto.device_uuid,
+          platform: dto.platform,
+          os_version: dto.os_version,
+          app_version: dto.app_version,
+          push_token: dto.push_token || null,
+          push_token_updated_at: dto.push_token ? now : null,
+          gps_lat: dto.location?.gps?.latitude ?? null,
+          gps_lon: dto.location?.gps?.longitude ?? null,
+          gps_accuracy_meters: dto.location?.gps?.accuracy ?? null,
+          gps_updated_at: dto.location?.gps ? now : null,
+          ip_address: dto.location?.ipAddress || null,
+          postal_codes: dto.location?.postalCodes ?? [],
+          last_app_open: now,
+        },
+      });
 
-      deviceId = result[0].id;
+      deviceId = created.id;
+
+      // gps_point is an Unsupported PostGIS column, so it has to be set with raw SQL
+      if (dto.location?.gps) {
+        await this.prisma.$executeRaw`
+          UPDATE device
+          SET gps_point = ST_SetSRID(ST_MakePoint(${dto.location.gps.longitude}, ${dto.location.gps.latitude}), 4326)
+          WHERE id = ${deviceId}
+        `;
+      }
 
       // TODO: Geocode IP address asynchronously
 
@@ -160,7 +150,7 @@ export class DeviceService {
         const auditPayload: IAuditEventPayload = {
           eventType: 'CREATE',
           entityType: 'DEVICE',
-          entityId: parseInt(deviceId, 10),
+          entityId: deviceId,
           userId: parseInt(userId, 10),
           action: 'device_registered',
           description: `Registered new device ${dto.device_uuid}`,
@@ -195,7 +185,7 @@ export class DeviceService {
    * Update device location (GPS and/or postal codes)
    */
   async updateLocation(
-    deviceId: string,
+    deviceId: number,
     dto: UpdateLocationDto,
     userId: string,
   ): Promise<DeviceResponseDto> {
@@ -215,9 +205,9 @@ export class DeviceService {
 
     // Capture oldValues for audit
     const oldValues = {
-      gpsLatitude: device.gps_latitude,
-      gpsLongitude: device.gps_longitude,
-      gpsAccuracy: device.gps_accuracy,
+      gpsLatitude: device.gps_lat,
+      gpsLongitude: device.gps_lon,
+      gpsAccuracy: device.gps_accuracy_meters,
       postalCodes: device.postal_codes,
     };
 
@@ -227,9 +217,9 @@ export class DeviceService {
     await this.prisma.device.update({
       where: { id: deviceId },
       data: {
-        gps_latitude: dto.gps?.latitude ?? device.gps_latitude,
-        gps_longitude: dto.gps?.longitude ?? device.gps_longitude,
-        gps_accuracy: dto.gps?.accuracy ?? device.gps_accuracy,
+        gps_lat: dto.gps?.latitude ?? device.gps_lat,
+        gps_lon: dto.gps?.longitude ?? device.gps_lon,
+        gps_accuracy_meters: dto.gps?.accuracy ?? device.gps_accuracy_meters,
         gps_updated_at: dto.gps ? now : device.gps_updated_at,
         postal_codes: dto.postal_codes ?? device.postal_codes,
       },
@@ -238,9 +228,9 @@ export class DeviceService {
     // Update GPS geometry if coordinates provided
     if (dto.gps) {
       await this.prisma.$executeRaw`
-        UPDATE devices
+        UPDATE device
         SET gps_point = ST_SetSRID(ST_MakePoint(${dto.gps.longitude}, ${dto.gps.latitude}), 4326)
-        WHERE id = ${deviceId}::text
+        WHERE id = ${deviceId}
       `;
     }
 
@@ -249,7 +239,7 @@ export class DeviceService {
       const auditPayload: IAuditEventPayload = {
         eventType: 'UPDATE',
         entityType: 'LOCATION',
-        entityId: parseInt(deviceId, 10),
+        entityId: deviceId,
         userId: parseInt(userId, 10),
         action: 'location_updated',
         description: `Updated location for device ${deviceId}`,
@@ -285,7 +275,7 @@ export class DeviceService {
    * Update push notification token
    */
   async updatePushToken(
-    deviceId: string,
+    deviceId: number,
     pushToken: string,
     userId: string,
   ): Promise<DeviceResponseDto> {
@@ -326,7 +316,7 @@ export class DeviceService {
       const auditPayload: IAuditEventPayload = {
         eventType: 'UPDATE',
         entityType: 'DEVICE',
-        entityId: parseInt(deviceId, 10),
+        entityId: deviceId,
         userId: parseInt(userId, 10),
         action: 'push_token_updated',
         description: `Updated push notification token for device ${deviceId}`,
@@ -364,9 +354,9 @@ export class DeviceService {
    */
   getLocationStatus(device: Device, savedZoneCount: number): LocationStatusDto {
     const hasGps =
-      device.gps_latitude !== null && device.gps_longitude !== null;
+      device.gps_lat !== null && device.gps_lon !== null;
     const hasIpLocation =
-      device.ip_latitude !== null && device.ip_longitude !== null;
+      device.ip_lat !== null && device.ip_lon !== null;
     const postalCodeCount = device.postal_codes.length;
 
     let gpsAgeHours: number | undefined;
@@ -426,13 +416,13 @@ export class DeviceService {
       platform: device.platform,
       os_version: device.os_version,
       app_version: device.app_version,
-      gps_latitude: device.gps_latitude,
-      gps_longitude: device.gps_longitude,
-      gps_accuracy: device.gps_accuracy,
+      gps_latitude: device.gps_lat,
+      gps_longitude: device.gps_lon,
+      gps_accuracy: device.gps_accuracy_meters,
       gps_updated_at: device.gps_updated_at,
       ip_address: device.ip_address,
-      ip_latitude: device.ip_latitude,
-      ip_longitude: device.ip_longitude,
+      ip_latitude: device.ip_lat,
+      ip_longitude: device.ip_lon,
       postal_codes: device.postal_codes,
       push_token: device.push_token,
       push_token_updated_at: device.push_token_updated_at,

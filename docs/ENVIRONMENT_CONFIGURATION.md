@@ -194,7 +194,7 @@ ALLOWED_ORIGINS=https://staging.yourapp.com,https://staging-admin.yourapp.com
 JWT_SECRET=STAGING_JWT_SECRET_64_CHARS_MIN
 JWT_REFRESH_SECRET=STAGING_REFRESH_SECRET_64_CHARS_MIN
 JWT_ACCESS_EXPIRATION=15m
-JWT_REFRESH_EXPIRATION=7d
+JWT_REFRESH_EXPIRATION=30d
 AUTH_PASSWORD_MIN_LENGTH=8
 
 #########################################
@@ -310,7 +310,8 @@ ALLOWED_ORIGINS=https://app.yourapp.com,https://www.yourapp.com,https://admin.yo
 JWT_SECRET=PRODUCTION_JWT_SECRET_MINIMUM_64_CHARS_ROTATE_ANNUALLY
 JWT_REFRESH_SECRET=PRODUCTION_REFRESH_SECRET_MINIMUM_64_CHARS_ROTATE_ANNUALLY
 JWT_ACCESS_EXPIRATION=15m  # Short-lived for security
-JWT_REFRESH_EXPIRATION=7d
+JWT_REFRESH_EXPIRATION=30d  # Long-lived, rotated on every refresh
+REFRESH_TOKEN_REUSE_GRACE_SECONDS=30  # Reuse of a rotated refresh token beyond this revokes all sessions
 AUTH_PASSWORD_MIN_LENGTH=8
 
 #########################################
