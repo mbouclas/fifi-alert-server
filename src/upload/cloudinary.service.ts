@@ -9,6 +9,23 @@ import {
   UploadApiResponse,
   v2 as cloudinary,
 } from 'cloudinary';
+import { randomUUID } from 'crypto';
+
+/** Longest edge, in pixels, for web-optimised uploads. */
+export const WEB_OPTIMISED_MAX_EDGE = 1600;
+
+export interface CloudinaryUploadOptions {
+  /**
+   * Apply an incoming transformation so the stored asset is a JPEG no larger
+   * than 1600px on its longest edge, auto-oriented from the EXIF flag and with
+   * all metadata (including GPS) stripped. HEIC/HEIF sources are re-encoded.
+   */
+  webOptimise?: boolean;
+  /**
+   * Ignore the user-supplied filename and store under a random UUID public id.
+   */
+  randomPublicId?: boolean;
+}
 
 @Injectable()
 export class CloudinaryService {
@@ -36,11 +53,14 @@ export class CloudinaryService {
     file: Buffer,
     folder: string,
     filename: string,
+    options: CloudinaryUploadOptions = {},
   ): Promise<string> {
     this.ensureConfigured();
 
     const uploadFolder = this.buildFolder(folder);
-    const publicId = this.buildPublicId(filename);
+    const publicId = options.randomPublicId
+      ? randomUUID()
+      : this.buildPublicId(filename);
 
     const result = await new Promise<UploadApiResponse>((resolve, reject) => {
       const uploadStream = cloudinary.uploader.upload_stream(
@@ -50,6 +70,22 @@ export class CloudinaryService {
           resource_type: 'image',
           overwrite: false,
           unique_filename: true,
+          ...(options.webOptimise
+            ? {
+                // Incoming transformation: Cloudinary auto-orients from the
+                // EXIF flag, applies the resize, re-encodes to JPEG and drops
+                // all metadata from the stored derivative.
+                format: 'jpg',
+                transformation: [
+                  {
+                    width: WEB_OPTIMISED_MAX_EDGE,
+                    height: WEB_OPTIMISED_MAX_EDGE,
+                    crop: 'limit',
+                    quality: 'auto:good',
+                  },
+                ],
+              }
+            : {}),
         },
         (
           error: UploadApiErrorResponse | undefined,

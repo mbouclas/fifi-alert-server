@@ -59,7 +59,7 @@
     💙 Help bring {{ alert.petName }} home safely
   </mj-text>
   
-  <mj-button background-color="#007bff" color="#ffffff" href="{{ alert.viewUrl|default('https://fifi-alert.com/alerts') }}" padding="15px 0px">
+  <mj-button background-color="#007bff" color="#ffffff" href="{{ alert.viewUrl|default(appUrl ~ '/alerts') }}" padding="15px 0px">
     View Full Alert
   </mj-button>
   

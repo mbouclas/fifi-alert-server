@@ -80,6 +80,7 @@ REDIS_DB=0
 # APPLICATION
 #########################################
 API_BASE_URL=http://localhost:3000
+WEB_APP_URL=http://localhost:5173   # web frontend; all email links are built from this
 LOG_LEVEL=debug  # Verbose logging for development
 ALLOWED_ORIGINS=http://localhost:3000,http://localhost:3001,http://localhost:5173
 
@@ -184,6 +185,7 @@ REDIS_URL=redis://default:PASSWORD@staging-redis.cache.amazonaws.com:6379
 # APPLICATION
 #########################################
 API_BASE_URL=https://api-staging.yourapp.com
+WEB_APP_URL=https://staging.yourapp.com
 LOG_LEVEL=info  # Less verbose than development
 ALLOWED_ORIGINS=https://staging.yourapp.com,https://staging-admin.yourapp.com
 
@@ -299,6 +301,7 @@ REDIS_URL=rediss://default:STRONG_PASSWORD@prod-redis.cache.amazonaws.com:6379
 # APPLICATION
 #########################################
 API_BASE_URL=https://api.yourapp.com
+WEB_APP_URL=https://yourapp.com
 LOG_LEVEL=info  # Or 'warn' for less verbosity
 ALLOWED_ORIGINS=https://app.yourapp.com,https://www.yourapp.com,https://admin.yourapp.com
 
@@ -394,6 +397,12 @@ MAX_ALERT_RENEWALS=3
 MAX_ALERT_PHOTOS=5
 
 #########################################
+# PET CONFIGURATION
+#########################################
+# Max photos per pet (upload count and stored photos array)
+MAX_PET_PHOTOS=5
+
+#########################################
 # SAVED ZONE CONFIGURATION
 #########################################
 MAX_SAVED_ZONES_PER_DEVICE=5
@@ -420,6 +429,7 @@ const envSchema = z.object({
   JWT_SECRET: z.string().min(32),
   JWT_REFRESH_SECRET: z.string().min(32),
   API_BASE_URL: z.string().url(),
+  WEB_APP_URL: z.string().url(),
   ALLOWED_ORIGINS: z.string(),
 }).refine(data => data.REDIS_HOST || data.REDIS_URL, {
   message: 'Either REDIS_HOST or REDIS_URL must be provided',

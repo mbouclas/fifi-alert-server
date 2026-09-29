@@ -218,15 +218,16 @@ export class AuthService {
       return;
     }
 
-    // Generate reset token (expires in 1 hour)
+    // In the real app better-auth generates the token (src/auth.ts,
+    // `sendResetPassword`) and the link targets the WEB app, never the API.
     const resetToken = this.generateResetToken(user.id, '1h');
 
-    await this.emailService.sendHtml('passwordReset', {
+    await this.emailService.sendHtml('forgotPassword', {
       from: process.env.EMAIL_FROM_EMAIL,
       to: user.email,
       templateData: {
         user: { firstName: user.firstName },
-        resetLink: `${process.env.API_BASE_URL}/auth/reset-password?token=${resetToken}`,
+        resetLink: `${process.env.WEB_APP_URL}/reset-password?token=${resetToken}`,
         expiresIn: '1 hour',
       },
     });

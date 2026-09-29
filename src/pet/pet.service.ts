@@ -5,13 +5,16 @@ import {
   ConflictException,
   UnprocessableEntityException,
   Logger,
+  Inject,
 } from '@nestjs/common';
+import type { ConfigType } from '@nestjs/config';
+import petConfig from '../config/pet.config';
 import { PrismaService } from '../services/prisma.service';
 import { Pet, Prisma, AlertStatus } from '@prisma-lib/client';
 import { customAlphabet } from 'nanoid';
 import { CreatePetDto, UpdatePetDto } from './dto';
 
-import { PetWithType, petWithTypeInclude } from './pet.mapper';
+import { PetWithType, petWithTypeInclude, orderedPetPhotos } from './pet.mapper';
 import { AlertStatusEventPublisher } from '../alert/events/alert-status-event.publisher';
 
 export type { PetWithType };
@@ -28,7 +31,29 @@ export class PetService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly alertStatusEvents: AlertStatusEventPublisher,
+    @Inject(petConfig.KEY)
+    private readonly petCfg: ConfigType<typeof petConfig>,
   ) { }
+
+  /**
+   * Validate the photo set of a pet: enforce the configured max count and
+   * ensure the primary photo (when set) is one of the photos.
+   */
+  private validatePhotos(
+    photos: string[],
+    primaryPhoto: string | null | undefined,
+  ): void {
+    if (photos.length > this.petCfg.maxPhotos) {
+      throw new UnprocessableEntityException(
+        `A pet can have at most ${this.petCfg.maxPhotos} photos`,
+      );
+    }
+    if (primaryPhoto && !photos.includes(primaryPhoto)) {
+      throw new UnprocessableEntityException(
+        'Primary photo must be one of the pet photos',
+      );
+    }
+  }
 
   /**
    * Ensure a pet type exists before creating/updating a pet.
@@ -86,6 +111,7 @@ export class PetService {
   ): Promise<PetWithType> {
     const tagId = await this.generateTagId();
     await this.requirePetType(data.petTypeId);
+    this.validatePhotos(data.photos ?? [], data.primaryPhoto);
 
     const { petTypeId, ...petData } = data;
     const db = tx ?? this.prisma;
@@ -177,24 +203,50 @@ export class PetService {
     tx?: Prisma.TransactionClient,
   ): Promise<PetWithType> {
     // Verify ownership first
-    await this.findOne(id, userId);
+    const existing = await this.findOne(id, userId);
 
     const { petTypeId, ...updateData } = data;
     const updateInput: Prisma.PetUpdateInput = { ...updateData };
+
+    if (data.photos !== undefined || data.primaryPhoto !== undefined) {
+      const photos = data.photos ?? existing.photos;
+      const primaryPhoto =
+        data.primaryPhoto !== undefined
+          ? data.primaryPhoto
+          : existing.primaryPhoto;
+      this.validatePhotos(photos, data.primaryPhoto);
+      // Drop a stored primary that is no longer part of the photo set.
+      if (primaryPhoto && !photos.includes(primaryPhoto)) {
+        updateInput.primaryPhoto = null;
+      }
+    }
 
     if (petTypeId !== undefined) {
       await this.requirePetType(petTypeId);
       updateInput.petType = { connect: { id: petTypeId } };
     }
 
-    const db = tx ?? this.prisma;
+    const snapshotChanged =
+      data.photos !== undefined ||
+      data.primaryPhoto !== undefined ||
+      data.name !== undefined;
 
-    try {
-      return await db.pet.update({
+    // Run the update and the alert snapshot sync in one transaction. When a
+    // caller already holds a transaction client, reuse it instead of nesting.
+    const run = async (client: Prisma.TransactionClient) => {
+      const updated = await client.pet.update({
         where: { id },
         data: updateInput,
         include: petWithTypeInclude,
       });
+      if (snapshotChanged) {
+        await this.syncAlertSnapshots(client, updated);
+      }
+      return updated;
+    };
+
+    try {
+      return await (tx ? run(tx) : this.prisma.$transaction(run));
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
         if (error.code === 'P2025') {
@@ -205,6 +257,33 @@ export class PetService {
         }
       }
       throw error;
+    }
+  }
+
+  /**
+   * Copy the pet's current name and photos (primary first) into the snapshot
+   * of every open alert for this pet, so viewers see the latest pet info after
+   * the alert was created. Closed alerts keep their history untouched.
+   */
+  private async syncAlertSnapshots(
+    tx: Prisma.TransactionClient,
+    pet: Pet,
+  ): Promise<void> {
+    const { count } = await tx.alert.updateMany({
+      where: {
+        pet_id: pet.id,
+        status: { in: [AlertStatus.ACTIVE, AlertStatus.DRAFT] },
+      },
+      data: {
+        pet_name: pet.name,
+        pet_photos: orderedPetPhotos(pet),
+        updated_at: new Date(),
+      },
+    });
+    if (count > 0) {
+      this.logger.log(
+        `Refreshed pet snapshot on ${count} open alert(s) for pet ${pet.id}`,
+      );
     }
   }
 

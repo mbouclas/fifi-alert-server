@@ -16,8 +16,10 @@ import {
   UnprocessableEntityException,
 } from '@nestjs/common';
 import { Gender, Size } from '@prisma-lib/client';
-import { petWithTypeInclude } from './pet.mapper';
+import { petWithTypeInclude, orderedPetPhotos } from './pet.mapper';
+import { AlertStatus } from '@prisma-lib/client';
 import { AlertStatusEventPublisher } from '../alert/events/alert-status-event.publisher';
+import petConfig from '../config/pet.config';
 
 describe('PetService', () => {
   let service: PetService;
@@ -51,6 +53,10 @@ describe('PetService', () => {
     petType: {
       findUnique: jest.fn(),
     },
+    alert: {
+      updateMany: jest.fn(),
+    },
+    $transaction: jest.fn(),
   };
 
   beforeEach(async () => {
@@ -65,6 +71,10 @@ describe('PetService', () => {
           provide: AlertStatusEventPublisher,
           useValue: { resolved: jest.fn() },
         },
+        {
+          provide: petConfig.KEY,
+          useValue: { maxPhotos: 2 },
+        },
       ],
     }).compile();
 
@@ -73,6 +83,10 @@ describe('PetService', () => {
 
     // Clear all mocks before each test
     jest.clearAllMocks();
+    mockPrismaService.$transaction.mockImplementation((fn: any) =>
+      fn(mockPrismaService),
+    );
+    mockPrismaService.alert.updateMany.mockResolvedValue({ count: 0 });
   });
 
   it('should be defined', () => {
@@ -151,6 +165,35 @@ describe('PetService', () => {
       await expect(service.createPet(userId, petData)).rejects.toThrow(
         UnprocessableEntityException,
       );
+      expect(mockPrismaService.pet.create).not.toHaveBeenCalled();
+    });
+
+    it('should reject more photos than MAX_PET_PHOTOS', async () => {
+      mockPrismaService.pet.findUnique.mockResolvedValue(null);
+      mockPrismaService.petType.findUnique.mockResolvedValue(petTypeDog);
+
+      await expect(
+        service.createPet(1, {
+          petTypeId: petTypeDog.id,
+          name: 'Buddy',
+          photos: ['https://cdn/a.jpg', 'https://cdn/b.jpg', 'https://cdn/c.jpg'],
+        }),
+      ).rejects.toThrow(UnprocessableEntityException);
+      expect(mockPrismaService.pet.create).not.toHaveBeenCalled();
+    });
+
+    it('should reject a primary photo that is not in photos', async () => {
+      mockPrismaService.pet.findUnique.mockResolvedValue(null);
+      mockPrismaService.petType.findUnique.mockResolvedValue(petTypeDog);
+
+      await expect(
+        service.createPet(1, {
+          petTypeId: petTypeDog.id,
+          name: 'Buddy',
+          photos: ['https://cdn/a.jpg'],
+          primaryPhoto: 'https://cdn/other.jpg',
+        }),
+      ).rejects.toThrow('Primary photo must be one of the pet photos');
       expect(mockPrismaService.pet.create).not.toHaveBeenCalled();
     });
 
@@ -379,6 +422,89 @@ describe('PetService', () => {
         include: petWithTypeInclude,
       });
     });
+
+    const photoPet = {
+      id: 1,
+      userId: 1,
+      tagId: 'PET123ABC',
+      petTypeId: petTypeDog.id,
+      petType: petTypeDog,
+      name: 'Buddy',
+      gender: null,
+      photos: ['https://cdn/a.jpg', 'https://cdn/b.jpg'],
+      primaryPhoto: 'https://cdn/b.jpg',
+      size: null,
+      isMissing: false,
+      birthday: null,
+      created_at: new Date(),
+      updated_at: new Date(),
+    };
+
+    it('should reset primaryPhoto when it is removed from photos', async () => {
+      mockPrismaService.pet.findUnique.mockResolvedValue(photoPet);
+      mockPrismaService.pet.update.mockResolvedValue(photoPet);
+
+      await service.updatePet(1, 1, { photos: ['https://cdn/a.jpg'] });
+
+      expect(mockPrismaService.pet.update).toHaveBeenCalledWith({
+        where: { id: 1 },
+        data: { photos: ['https://cdn/a.jpg'], primaryPhoto: null },
+        include: petWithTypeInclude,
+      });
+    });
+
+    it('should reject a new primaryPhoto not present in the stored photos', async () => {
+      mockPrismaService.pet.findUnique.mockResolvedValue(photoPet);
+
+      await expect(
+        service.updatePet(1, 1, { primaryPhoto: 'https://cdn/zzz.jpg' }),
+      ).rejects.toThrow(UnprocessableEntityException);
+      expect(mockPrismaService.pet.update).not.toHaveBeenCalled();
+    });
+
+    it('should refresh open alert snapshots with the primary photo first', async () => {
+      const updated = { ...photoPet, primaryPhoto: 'https://cdn/b.jpg' };
+      mockPrismaService.pet.findUnique.mockResolvedValue(photoPet);
+      mockPrismaService.pet.update.mockResolvedValue(updated);
+      mockPrismaService.alert.updateMany.mockResolvedValue({ count: 1 });
+
+      await service.updatePet(1, 1, { primaryPhoto: 'https://cdn/b.jpg' });
+
+      expect(mockPrismaService.$transaction).toHaveBeenCalled();
+      expect(mockPrismaService.alert.updateMany).toHaveBeenCalledWith({
+        where: {
+          pet_id: 1,
+          status: { in: [AlertStatus.ACTIVE, AlertStatus.DRAFT] },
+        },
+        data: expect.objectContaining({
+          pet_name: 'Buddy',
+          pet_photos: ['https://cdn/b.jpg', 'https://cdn/a.jpg'],
+        }),
+      });
+    });
+
+    it('should not touch alert snapshots when photos and name are unchanged', async () => {
+      mockPrismaService.pet.findUnique.mockResolvedValue(photoPet);
+      mockPrismaService.pet.update.mockResolvedValue({
+        ...photoPet,
+        size: Size.LARGE,
+      });
+
+      await service.updatePet(1, 1, { size: Size.LARGE });
+
+      expect(mockPrismaService.alert.updateMany).not.toHaveBeenCalled();
+    });
+
+    it('should reject updating photos beyond MAX_PET_PHOTOS', async () => {
+      mockPrismaService.pet.findUnique.mockResolvedValue(photoPet);
+
+      await expect(
+        service.updatePet(1, 1, {
+          photos: ['https://cdn/a.jpg', 'https://cdn/b.jpg', 'https://cdn/c.jpg'],
+        }),
+      ).rejects.toThrow(UnprocessableEntityException);
+      expect(mockPrismaService.pet.update).not.toHaveBeenCalled();
+    });
   });
 
   describe('deletePet', () => {
@@ -572,5 +698,18 @@ describe('PetService', () => {
         include: petWithTypeInclude,
       });
     });
+  });
+});
+
+describe('orderedPetPhotos', () => {
+  it('puts the primary photo first', () => {
+    expect(
+      orderedPetPhotos({ photos: ['a', 'b', 'c'], primaryPhoto: 'b' }),
+    ).toEqual(['b', 'a', 'c']);
+  });
+
+  it('keeps stored order when there is no valid primary', () => {
+    expect(orderedPetPhotos({ photos: ['a', 'b'], primaryPhoto: null })).toEqual(['a', 'b']);
+    expect(orderedPetPhotos({ photos: ['a', 'b'], primaryPhoto: 'zzz' })).toEqual(['a', 'b']);
   });
 });

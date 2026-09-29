@@ -312,14 +312,15 @@ model Pet {
   user   User   @relation("UserPets", fields: [userId], references: [id], onDelete: Cascade)
 
   // Pet Details
-  petTypeId Int       @map("pet_type_id")
-  petType   PetType   @relation(fields: [petTypeId], references: [id], onDelete: Restrict)
-  name      String    @pg.VarChar(100)
-  gender    Gender?
-  photos    String[]  @default([])
-  size      Size?
-  isMissing Boolean   @default(false) @map("is_missing")
-  birthday  DateTime?
+  petTypeId    Int       @map("pet_type_id")
+  petType      PetType   @relation(fields: [petTypeId], references: [id], onDelete: Restrict)
+  name         String    @pg.VarChar(100)
+  gender       Gender?
+  photos       String[]  @default([])
+  primaryPhoto String?   @map("primary_photo")
+  size         Size?
+  isMissing    Boolean   @default(false) @map("is_missing")
+  birthday     DateTime?
 
   // Timestamps
   created_at DateTime @default(now()) @map("created_at")
@@ -613,8 +614,9 @@ model Sighting {
   location_address String?                              @map("location_address")
 
   // Evidence
-  photo_url  String? @map("photo_url")
-  notes      String? @pg.Text
+  photo_url  String?  @map("photo_url") // Legacy single photo; mirrors photos[0]
+  photos     String[] @default([]) // Public CDN URLs, in upload order
+  notes      String?  @pg.Text
   confidence String? // "CERTAIN", "LIKELY", "UNSURE"
 
   // Context

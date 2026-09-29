@@ -10,6 +10,7 @@ import {
   UserService,
   CreateUserDto,
   UserServiceEventNames,
+  formatExpiresIn,
 } from './user.service';
 import { PrismaService } from '@services/prisma.service';
 import type { IEmailProvider } from '@shared/email/interfaces/email-provider.interface';
@@ -323,13 +324,21 @@ describe('UserService', () => {
         await service.store(dto);
 
         expect(mockPrismaService.role.findFirst).toHaveBeenCalledWith({
-          where: { active: true },
-          orderBy: { level: 'asc' },
+          where: { slug: 'user', active: true },
         });
         expect(mockPrismaService.userRole.createMany).toHaveBeenCalledWith({
           data: [{ user_id: 1, role_id: mockRole.id }],
           skipDuplicates: true,
         });
+      });
+
+      it('should never fall back to a level-ordered role when the "user" slug is missing', async () => {
+        mockPrismaService.role.findFirst.mockResolvedValue(null);
+        const dto = { ...validCreateUserDto, roles: [] };
+
+        await expect(service.store(dto)).rejects.toThrow(NotFoundException);
+        expect(mockPrismaService.role.findFirst).toHaveBeenCalledTimes(1);
+        expect(mockPrismaService.userRole.createMany).not.toHaveBeenCalled();
       });
 
       it('should assign default role when roles array is undefined', async () => {
@@ -519,6 +528,32 @@ describe('UserService', () => {
           NotFoundException,
         );
       });
+    });
+  });
+
+  describe('assignDefaultRole', () => {
+    it('should resolve the "user" role and create the UserRole row', async () => {
+      mockPrismaService.role.findFirst.mockResolvedValue(mockRole);
+      mockPrismaService.userRole.createMany.mockResolvedValue({ count: 1 });
+
+      await service.assignDefaultRole(42);
+
+      expect(mockPrismaService.role.findFirst).toHaveBeenCalledWith({
+        where: { slug: 'user', active: true },
+      });
+      expect(mockPrismaService.userRole.createMany).toHaveBeenCalledWith({
+        data: [{ user_id: 42, role_id: mockRole.id }],
+        skipDuplicates: true,
+      });
+    });
+
+    it('should throw NotFoundException when no active role exists', async () => {
+      mockPrismaService.role.findFirst.mockResolvedValue(null);
+
+      await expect(service.assignDefaultRole(42)).rejects.toThrow(
+        NotFoundException,
+      );
+      expect(mockPrismaService.userRole.createMany).not.toHaveBeenCalled();
     });
   });
 
@@ -902,7 +937,7 @@ describe('UserService', () => {
 
     beforeEach(() => {
       process.env.MAIL_NOTIFICATIONS_FROM = 'noreply@fifi-alert.com';
-      process.env.APP_URL = 'https://fifi-alert.com';
+      process.env.WEB_APP_URL = 'https://fifi-alert.com';
     });
 
     describe('handleUserCreatedEvent', () => {
@@ -957,7 +992,7 @@ describe('UserService', () => {
 
     describe('sendAccountVerificationEmail', () => {
       const verificationUrl =
-        'https://api.fifi-alert.com/api/auth/verify-email?token=test-token&callbackURL=%2F';
+        'https://fifi-alert.com/verify-email?token=test-token&callbackURL=fifi-alert%3A%2F%2Fverify-email';
 
       it('should send account verification email with verification link', async () => {
         const result = await service.sendAccountVerificationEmail(
@@ -989,25 +1024,36 @@ describe('UserService', () => {
     });
 
     describe('sendForgotPasswordEmail', () => {
-      const resetToken = 'test-reset-token-123';
-      const expiresIn = '24 hours';
+      const resetLink =
+        'http://localhost:5173/reset-password?token=test-reset-token-123';
+      const expiresIn = '1 hour';
 
       it('should send forgot password email with reset link', async () => {
         const result = await service.sendForgotPasswordEmail(
           mockUser,
-          resetToken,
+          resetLink,
           expiresIn,
         );
 
         expect(result.success).toBe(true);
         expect(result.message).toContain('Password reset email sent');
         expect(result.message).toContain(mockUser.email);
+      });
+
+      it('should pass the link through untouched', async () => {
+        const emailProvider = (service as any).emailProvider;
+        emailProvider.send.mockClear();
+
+        await service.sendForgotPasswordEmail(mockUser, resetLink);
+
+        const sent = emailProvider.send.mock.calls[0][0];
+        expect(sent.html).toContain(resetLink);
       });
 
       it('should use default expiration if not provided', async () => {
         const result = await service.sendForgotPasswordEmail(
           mockUser,
-          resetToken,
+          resetLink,
         );
 
         expect(result.success).toBe(true);
@@ -1018,34 +1064,17 @@ describe('UserService', () => {
         emailProvider.send.mockRejectedValueOnce(new Error('Send failed'));
 
         await expect(
-          service.sendForgotPasswordEmail(mockUser, resetToken),
+          service.sendForgotPasswordEmail(mockUser, resetLink),
         ).rejects.toThrow('FAILED_TO_SEND_FORGOT_PASSWORD_EMAIL');
       });
     });
 
-    describe('sendPasswordResetEmail', () => {
-      const resetToken = 'test-reset-token-456';
-      const expiresIn = '24 hours';
-
-      it('should send password reset email with reset link', async () => {
-        const result = await service.sendPasswordResetEmail(
-          mockUser,
-          resetToken,
-          expiresIn,
-        );
+    describe('sendPasswordChangedEmail', () => {
+      it('should send the password changed notice', async () => {
+        const result = await service.sendPasswordChangedEmail(mockUser);
 
         expect(result.success).toBe(true);
-        expect(result.message).toContain('Password reset email sent');
         expect(result.message).toContain(mockUser.email);
-      });
-
-      it('should use default expiration if not provided', async () => {
-        const result = await service.sendPasswordResetEmail(
-          mockUser,
-          resetToken,
-        );
-
-        expect(result.success).toBe(true);
       });
 
       it('should throw error when email send fails', async () => {
@@ -1053,8 +1082,190 @@ describe('UserService', () => {
         emailProvider.send.mockRejectedValueOnce(new Error('Send failed'));
 
         await expect(
-          service.sendPasswordResetEmail(mockUser, resetToken),
-        ).rejects.toThrow('FAILED_TO_SEND_PASSWORD_RESET_EMAIL');
+          service.sendPasswordChangedEmail(mockUser),
+        ).rejects.toThrow('FAILED_TO_SEND_PASSWORD_CHANGED_EMAIL');
+      });
+    });
+
+    describe('sendEmailChangeConfirmationEmail', () => {
+      const confirmLink =
+        'http://localhost:5173/verify-email?token=change-token&callbackURL=x';
+
+      it('should send the confirmation to the CURRENT address', async () => {
+        const emailProvider = (service as any).emailProvider;
+        emailProvider.send.mockClear();
+
+        const result = await service.sendEmailChangeConfirmationEmail(
+          mockUser,
+          'new.address@example.com',
+          confirmLink,
+        );
+
+        expect(result.success).toBe(true);
+        const sent = emailProvider.send.mock.calls[0][0];
+        expect(sent.to).toBe(mockUser.email);
+        expect(sent.html).toContain('new.address@example.com');
+        expect(sent.html).toContain(confirmLink);
+      });
+
+      it('should throw error when email send fails', async () => {
+        const emailProvider = (service as any).emailProvider;
+        emailProvider.send.mockRejectedValueOnce(new Error('Send failed'));
+
+        await expect(
+          service.sendEmailChangeConfirmationEmail(
+            mockUser,
+            'new.address@example.com',
+            confirmLink,
+          ),
+        ).rejects.toThrow('FAILED_TO_SEND_EMAIL_CHANGE_CONFIRMATION_EMAIL');
+      });
+    });
+
+    describe('sendAccountDeletionVerificationEmail', () => {
+      const deleteLink =
+        'http://localhost:5173/confirm-delete-account?token=delete-token';
+
+      it('should send the deletion verification link', async () => {
+        const emailProvider = (service as any).emailProvider;
+        emailProvider.send.mockClear();
+
+        const result = await service.sendAccountDeletionVerificationEmail(
+          mockUser,
+          deleteLink,
+        );
+
+        expect(result.success).toBe(true);
+        const sent = emailProvider.send.mock.calls[0][0];
+        expect(sent.to).toBe(mockUser.email);
+        expect(sent.html).toContain(deleteLink);
+      });
+
+      it('should throw error when email send fails', async () => {
+        const emailProvider = (service as any).emailProvider;
+        emailProvider.send.mockRejectedValueOnce(new Error('Send failed'));
+
+        await expect(
+          service.sendAccountDeletionVerificationEmail(mockUser, deleteLink),
+        ).rejects.toThrow('FAILED_TO_SEND_ACCOUNT_DELETION_VERIFICATION_EMAIL');
+      });
+    });
+
+    describe('better-auth hook listeners', () => {
+      it('handlePasswordResetEmailRequested sends the reset email and audits', async () => {
+        const sendSpy = jest
+          .spyOn(service, 'sendForgotPasswordEmail')
+          .mockResolvedValue({ success: true, message: 'ok' });
+        const emitter = (service as any).eventEmitter;
+        emitter.emit.mockClear();
+
+        await service.handlePasswordResetEmailRequested({
+          user: mockUser,
+          resetUrl: 'http://localhost:5173/reset-password?token=abc',
+          token: 'abc',
+          expiresInSeconds: 3600,
+        });
+
+        expect(sendSpy).toHaveBeenCalledWith(
+          mockUser,
+          'http://localhost:5173/reset-password?token=abc',
+          '1 hour',
+        );
+        expect(emitter.emit).toHaveBeenCalledWith(
+          'audit.user.password_reset_requested',
+          expect.objectContaining({ action: 'user_password_reset_requested' }),
+        );
+      });
+
+      it('handlePasswordUpdated loads the user when only an id is given', async () => {
+        const sendSpy = jest
+          .spyOn(service, 'sendPasswordChangedEmail')
+          .mockResolvedValue({ success: true, message: 'ok' });
+        const prisma = (service as any).prisma;
+        prisma.user.findUnique.mockResolvedValueOnce(mockUser);
+
+        await service.handlePasswordUpdated({
+          userId: mockUser.id,
+          source: 'change',
+        });
+
+        expect(prisma.user.findUnique).toHaveBeenCalledWith(
+          expect.objectContaining({ where: { id: mockUser.id } }),
+        );
+        expect(sendSpy).toHaveBeenCalledWith(mockUser);
+      });
+
+      it('handlePasswordUpdated audits a completed reset', async () => {
+        jest
+          .spyOn(service, 'sendPasswordChangedEmail')
+          .mockResolvedValue({ success: true, message: 'ok' });
+        const emitter = (service as any).eventEmitter;
+        emitter.emit.mockClear();
+
+        await service.handlePasswordUpdated({
+          userId: mockUser.id,
+          user: mockUser,
+          source: 'reset',
+        });
+
+        expect(emitter.emit).toHaveBeenCalledWith(
+          'audit.user.password_reset_completed',
+          expect.objectContaining({ action: 'user_password_reset_completed' }),
+        );
+      });
+
+      it('handlePasswordUpdated never throws when sending fails', async () => {
+        jest
+          .spyOn(service, 'sendPasswordChangedEmail')
+          .mockRejectedValue(new Error('boom'));
+
+        await expect(
+          service.handlePasswordUpdated({
+            userId: mockUser.id,
+            user: mockUser,
+            source: 'reset',
+          }),
+        ).resolves.toBeUndefined();
+      });
+
+      it('handleEmailVerified emits the audit event only', async () => {
+        const emitter = (service as any).eventEmitter;
+        emitter.emit.mockClear();
+
+        service.handleEmailVerified({ user: mockUser });
+
+        expect(emitter.emit).toHaveBeenCalledTimes(1);
+        expect(emitter.emit).toHaveBeenCalledWith(
+          'audit.user.email_verified',
+          expect.objectContaining({ entityId: mockUser.id }),
+        );
+      });
+
+      it('handleAccountDeleted emits the audit event with old values', async () => {
+        const emitter = (service as any).eventEmitter;
+        emitter.emit.mockClear();
+
+        service.handleAccountDeleted({ user: mockUser });
+
+        expect(emitter.emit).toHaveBeenCalledWith(
+          'audit.user.deleted',
+          expect.objectContaining({
+            eventType: 'DELETE',
+            oldValues: expect.objectContaining({ email: mockUser.email }),
+          }),
+        );
+      });
+    });
+
+    describe('formatExpiresIn', () => {
+      it('formats whole hours', () => {
+        expect(formatExpiresIn(3600)).toBe('1 hour');
+        expect(formatExpiresIn(86400)).toBe('24 hours');
+      });
+
+      it('formats minutes otherwise', () => {
+        expect(formatExpiresIn(900)).toBe('15 minutes');
+        expect(formatExpiresIn(60)).toBe('1 minute');
       });
     });
 

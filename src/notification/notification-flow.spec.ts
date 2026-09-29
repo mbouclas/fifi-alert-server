@@ -80,6 +80,7 @@ describe('Notification Flow (e2e)', () => {
               create: jest.fn(),
               findUnique: jest.fn(),
               findFirst: jest.fn(),
+              findMany: jest.fn(),
               update: jest.fn(),
               count: jest.fn(),
             },
@@ -119,6 +120,7 @@ describe('Notification Flow (e2e)', () => {
     await app.init();
 
     prismaService = module.get<PrismaService>(PrismaService);
+    (prismaService.notification.findMany as jest.Mock).mockResolvedValue([]);
     notificationService = module.get<NotificationService>(NotificationService);
     locationService = module.get<LocationService>(LocationService);
     queueProcessor = module.get<NotificationQueueProcessor>(
@@ -188,6 +190,7 @@ describe('Notification Flow (e2e)', () => {
       );
       // Fatigue guards clear by default; dedicated tests opt into the blocked cases.
       (prismaService.notification.findFirst as jest.Mock).mockResolvedValue(null);
+      (prismaService.notification.findMany as jest.Mock).mockResolvedValue([]);
       (prismaService.notification.count as jest.Mock).mockResolvedValue(0);
       (locationService.findDevicesForAlert as jest.Mock).mockResolvedValue(
         mockDevices,
@@ -404,10 +407,8 @@ describe('Notification Flow (e2e)', () => {
         data: { notificationId: 400 },
       } as any;
 
-      // Expect the processor to throw an error after marking as failed
-      await expect(queueProcessor.process(job)).rejects.toThrow(
-        'Failed to send push notification: INVALID_TOKEN',
-      );
+      // An invalid token is terminal: mark failed, do not retry.
+      await expect(queueProcessor.process(job)).resolves.toBeUndefined();
 
       expect(prismaService.notification.update).toHaveBeenCalledWith({
         where: { id: 400 },

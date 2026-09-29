@@ -57,8 +57,6 @@ async function testAlertZoneQuery(
     INNER JOIN "user" u ON az.user_id = u.id
     INNER JOIN device d ON d.user_id = u.id
     WHERE az.is_active = true
-      AND d.push_token IS NOT NULL
-      AND d.push_enabled = true
       AND u.banned = false
       AND ST_DWithin(
         az.location_point::geography,
@@ -97,8 +95,6 @@ async function getQueryPlan(
     INNER JOIN "user" u ON az.user_id = u.id
     INNER JOIN device d ON d.user_id = u.id
     WHERE az.is_active = true
-      AND d.push_token IS NOT NULL
-      AND d.push_enabled = true
       AND u.banned = false
       AND ST_DWithin(
         az.location_point::geography,

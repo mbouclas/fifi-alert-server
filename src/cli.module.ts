@@ -4,7 +4,7 @@ import { SharedModule } from './shared/shared.module.js';
 import { CommandsModule } from './commands/commands.module.js';
 import { UserModule } from './user/user.module.js';
 import { SimulationModule } from './simulation/simulation.module.js';
-import { authConfig } from './config/index.js';
+import { authConfig, petConfig } from './config/index.js';
 
 /**
  * CLI Application Module
@@ -21,7 +21,7 @@ import { authConfig } from './config/index.js';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      load: [authConfig],
+      load: [authConfig, petConfig],
       cache: true,
     }),
     SharedModule,

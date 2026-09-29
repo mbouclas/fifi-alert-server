@@ -6,6 +6,11 @@ import {
   Logger,
   Inject,
 } from '@nestjs/common';
+import { getWebAppUrl } from '@config/web-app.config';
+import {
+  getMaxSightingPhotos,
+  getSightingPhotoUploadWindowHours,
+} from '@config/sighting.config';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { PrismaService } from '../services/prisma.service';
 import { NotificationService } from '../notification/notification.service';
@@ -38,6 +43,13 @@ const sightingServiceEmailTemplates: Record<string, IEmailTemplate> = {
   },
 };
 
+/**
+ * Prisma `Sighting` row without the PostGIS `location_point` column.
+ * Prisma omits `Unsupported` fields from query results, so this is what
+ * findUnique / findMany / update actually return.
+ */
+type SightingRow = Omit<Sighting, 'location_point'>;
+
 @Injectable()
 export class SightingService {
   private readonly logger = new Logger(SightingService.name);
@@ -47,15 +59,20 @@ export class SightingService {
     private readonly notificationService: NotificationService,
     private readonly eventEmitter: EventEmitter2,
     @Inject('IEmailProvider') private readonly emailProvider: IEmailProvider,
-  ) { }
+  ) {}
 
   /**
    * Create a new sighting report
-   * Validates alert exists and is ACTIVE, inserts with PostGIS geometry
+   * Validates alert exists and is ACTIVE, inserts with PostGIS geometry.
+   *
+   * The `sighting.location_point` column is a PostGIS geometry that Prisma
+   * cannot write through the client API, so the INSERT is a raw query. The
+   * plain `sighting_lat` / `sighting_lon` columns are populated alongside it
+   * so reads never need PostGIS.
    */
   async create(
     dto: CreateSightingDto,
-    reporterId: string,
+    reporterId: number,
   ): Promise<SightingResponseDto> {
     // Verify alert exists and is ACTIVE
     const alert = await this.prisma.alert.findUnique({
@@ -73,42 +90,56 @@ export class SightingService {
       );
     }
 
-    // Insert sighting using PostGIS for geometry
-    const result = await this.prisma.$queryRaw<Array<{ id: string }>>`
-      INSERT INTO sightings (
+    const result = await this.prisma.$queryRaw<Array<{ id: number }>>`
+      INSERT INTO sighting (
         alert_id,
-        reported_by,
+        reporter_id,
+        sighting_lat,
+        sighting_lon,
         location_point,
-        address,
-        photo,
+        location_address,
+        photo_url,
+        photos,
         notes,
         confidence,
         sighting_time,
-        direction
+        direction,
+        dismissed,
+        created_at,
+        updated_at
       )
       VALUES (
-        ${dto.alert_id}::text,
-        ${reporterId}::text,
+        ${dto.alert_id},
+        ${reporterId},
+        ${dto.location.latitude},
+        ${dto.location.longitude},
         ST_SetSRID(ST_MakePoint(${dto.location.longitude}, ${dto.location.latitude}), 4326),
         ${dto.location.address},
         ${dto.photo || null},
+        CASE
+          WHEN ${dto.photo || null}::text IS NULL THEN ARRAY[]::text[]
+          ELSE ARRAY[${dto.photo || null}::text]
+        END,
         ${dto.notes || null},
-        ${dto.confidence}::"NotificationConfidence",
+        ${dto.confidence},
         ${new Date(dto.sighting_time)},
-        ${dto.direction || null}
+        ${dto.direction || null},
+        false,
+        NOW(),
+        NOW()
       )
       RETURNING id
     `;
 
-    const sightingId = result[0].id;
+    const sightingId = Number(result[0].id);
 
     // Emit audit event
     try {
       const auditPayload: IAuditEventPayload = {
         eventType: 'CREATE',
         entityType: 'SIGHTING',
-        entityId: parseInt(sightingId, 10),
-        userId: parseInt(reporterId, 10),
+        entityId: sightingId,
+        userId: reporterId,
         action: 'sighting_reported',
         description: `Sighting reported for alert #${dto.alert_id}`,
         newValues: {
@@ -147,18 +178,20 @@ export class SightingService {
       where: { id: sightingId },
     });
 
-    const sightingResponse = this.mapToResponseDto(sighting!);
+    if (!sighting) {
+      throw new NotFoundException(
+        `Sighting with ID ${sightingId} not found after creation`,
+      );
+    }
 
-    // Enrich with coordinates for email
-    const enrichedSightings = await this.enrichWithCoordinates([sightingResponse]);
-    const enrichedSighting = enrichedSightings[0];
+    const sightingResponse = this.mapToResponseDto(sighting);
 
     // Send sighting reported email to alert creator (non-blocking)
     try {
       await this.sendSightingReportedEmail(
         alert.creator_id,
         dto.alert_id,
-        enrichedSighting,
+        sightingResponse,
       );
     } catch (error) {
       this.logger.error(
@@ -167,7 +200,18 @@ export class SightingService {
       );
     }
 
-    return enrichedSighting;
+    return sightingResponse;
+  }
+
+  /**
+   * Find a single sighting by ID, or null if it does not exist
+   */
+  async findOne(sightingId: number): Promise<SightingResponseDto | null> {
+    const sighting = await this.prisma.sighting.findUnique({
+      where: { id: sightingId },
+    });
+
+    return sighting ? this.mapToResponseDto(sighting) : null;
   }
 
   /**
@@ -175,8 +219,8 @@ export class SightingService {
    * Filters dismissed sightings unless requester is alert creator
    */
   async findByAlert(
-    alertId: string,
-    requesterId?: string,
+    alertId: number,
+    requesterId?: number,
   ): Promise<SightingResponseDto[]> {
     // Verify alert exists
     const alert = await this.prisma.alert.findUnique({
@@ -188,7 +232,8 @@ export class SightingService {
       throw new NotFoundException(`Alert with ID ${alertId} not found`);
     }
 
-    const isCreator = requesterId === alert.creator_id;
+    const isCreator =
+      requesterId !== undefined && requesterId === alert.creator_id;
 
     // Build query with conditional filtering
     const whereClause: Prisma.SightingWhereInput = {
@@ -212,9 +257,9 @@ export class SightingService {
    * Dismiss a sighting (only by alert creator)
    */
   async dismiss(
-    sightingId: string,
+    sightingId: number,
     dto: DismissSightingDto,
-    requesterId: string,
+    requesterId: number,
   ): Promise<SightingResponseDto> {
     // Fetch sighting with alert info
     const sighting = await this.prisma.sighting.findUnique({
@@ -231,7 +276,7 @@ export class SightingService {
     }
 
     // Verify requester is alert creator
-    if (sighting.alert.creator_id !== parseInt(requesterId, 10)) {
+    if (sighting.alert.creator_id !== requesterId) {
       throw new ForbiddenException(
         'Only the alert creator can dismiss sightings',
       );
@@ -264,8 +309,8 @@ export class SightingService {
       const auditPayload: IAuditEventPayload = {
         eventType: 'UPDATE',
         entityType: 'SIGHTING',
-        entityId: parseInt(sightingId, 10),
-        userId: parseInt(requesterId, 10),
+        entityId: sightingId,
+        userId: requesterId,
         action: 'sighting_dismissed',
         description: `Dismissed sighting #${sightingId}: ${dto.reason}`,
         oldValues,
@@ -287,20 +332,20 @@ export class SightingService {
   }
 
   /**
-   * Map Prisma Sighting to response DTO
-   * Extracts lat/lon from PostGIS geometry
+   * Map Prisma Sighting row to the public response DTO.
+   * Coordinates come from the plain `sighting_lat` / `sighting_lon` columns,
+   * which are always written together with the PostGIS point.
    */
-  private mapToResponseDto(sighting: Sighting): SightingResponseDto {
-    // Extract coordinates from PostGIS point
-    // Note: Prisma returns Unsupported type as Buffer, need to query separately for coordinates
+  private mapToResponseDto(sighting: SightingRow): SightingResponseDto {
     return {
       id: sighting.id,
       alert_id: sighting.alert_id,
-      reported_by: sighting.reported_by,
-      latitude: 0, // Will be populated by controller using raw query
-      longitude: 0, // Will be populated by controller using raw query
-      address: sighting.address,
-      photo: sighting.photo,
+      reported_by: sighting.reporter_id,
+      latitude: sighting.sighting_lat,
+      longitude: sighting.sighting_lon,
+      address: sighting.location_address,
+      photo: sighting.photo_url ?? sighting.photos?.[0] ?? null,
+      photos: sighting.photos ?? [],
       notes: sighting.notes,
       confidence: sighting.confidence,
       sighting_time: sighting.sighting_time,
@@ -314,49 +359,13 @@ export class SightingService {
   }
 
   /**
-   * Helper to extract coordinates from PostGIS geometry
-   */
-  async enrichWithCoordinates(
-    sightings: SightingResponseDto[],
-  ): Promise<SightingResponseDto[]> {
-    if (sightings.length === 0) return sightings;
-
-    const ids = sightings.map((s) => s.id);
-
-    // Fetch coordinates using PostGIS functions
-    const coords = await this.prisma.$queryRaw<
-      Array<{ id: string; latitude: number; longitude: number }>
-    >`
-      SELECT
-        id,
-        ST_Y(location_point) as latitude,
-        ST_X(location_point) as longitude
-      FROM sighting
-      WHERE id = ANY(${ids}::text[])
-    `;
-
-    // Create lookup map
-    const coordMap = new Map(coords.map((c) => [c.id, c]));
-
-    // Enrich sightings with coordinates
-    return sightings.map((sighting) => {
-      const coord = coordMap.get(sighting.id);
-      return {
-        ...sighting,
-        latitude: coord?.latitude || 0,
-        longitude: coord?.longitude || 0,
-      };
-    });
-  }
-
-  /**
    * Queue notification to alert creator about new sighting
    * Task 3.6
    */
   private async notifyCreatorOfSighting(
     creatorId: number,
     alertId: number,
-    sightingId: string,
+    sightingId: number,
     sightingData: CreateSightingDto,
   ): Promise<void> {
     this.logger.log(
@@ -413,47 +422,124 @@ export class SightingService {
   }
 
   /**
-   * Update sighting photo URL
-   * Task 7.7
+   * Check that `requesterId` may attach `incomingCount` more photos to a
+   * sighting. Call this before uploading so rejected requests never hit the
+   * CDN.
+   *
+   * - 404 when the sighting does not exist
+   * - 403 when the caller is not the reporter, the upload window
+   *   (`SIGHTING_PHOTO_UPLOAD_WINDOW_HOURS` after `created_at`) has closed,
+   *   or the parent alert is no longer ACTIVE
+   * - 400 when no files were sent or the total would exceed
+   *   `MAX_SIGHTING_PHOTOS`
    */
-  async updatePhoto(
-    sightingId: string,
-    photoUrl: string,
-    userId?: number,
+  async authorizePhotoUpload(
+    sightingId: number,
+    requesterId: number,
+    incomingCount: number,
   ): Promise<void> {
-    // Get old photo for audit
     const sighting = await this.prisma.sighting.findUnique({
       where: { id: sightingId },
-      select: { photo_url: true, reported_by: true },
+      select: {
+        reporter_id: true,
+        created_at: true,
+        photos: true,
+        alert: { select: { status: true } },
+      },
     });
 
-    const oldPhotoUrl = sighting?.photo_url;
+    if (!sighting) {
+      throw new NotFoundException(`Sighting with ID ${sightingId} not found`);
+    }
+
+    if (sighting.reporter_id !== requesterId) {
+      throw new ForbiddenException(
+        'Only the reporter of a sighting can add photos to it',
+      );
+    }
+
+    if (sighting.alert.status !== AlertStatus.ACTIVE) {
+      throw new ForbiddenException(
+        'Photos can only be added while the alert is active',
+      );
+    }
+
+    const windowHours = getSightingPhotoUploadWindowHours();
+    const windowEnd =
+      sighting.created_at.getTime() + windowHours * 60 * 60 * 1000;
+    if (Date.now() > windowEnd) {
+      throw new ForbiddenException(
+        `Photos can only be added within ${windowHours} hours of reporting the sighting`,
+      );
+    }
+
+    if (!Number.isInteger(incomingCount) || incomingCount < 1) {
+      throw new BadRequestException('At least one photo file is required');
+    }
+
+    const maxPhotos = getMaxSightingPhotos();
+    const existingCount = sighting.photos?.length ?? 0;
+    if (existingCount + incomingCount > maxPhotos) {
+      const remaining = Math.max(maxPhotos - existingCount, 0);
+      throw new BadRequestException(
+        `A sighting can have at most ${maxPhotos} photos; ${remaining} more can be added`,
+      );
+    }
+  }
+
+  /**
+   * Persist already-uploaded photo URLs on a sighting.
+   *
+   * URLs are appended in the order given. The legacy `photo_url` column is
+   * kept equal to the first entry so older clients keep working. Returns the
+   * full photo list after the update.
+   */
+  async appendPhotos(
+    sightingId: number,
+    photoUrls: string[],
+    userId: number,
+  ): Promise<string[]> {
+    const sighting = await this.prisma.sighting.findUnique({
+      where: { id: sightingId },
+      select: { photo_url: true, photos: true },
+    });
+
+    if (!sighting) {
+      throw new NotFoundException(`Sighting with ID ${sightingId} not found`);
+    }
+
+    const previous = sighting.photos ?? [];
+    const photos = [...previous, ...photoUrls];
+    const photoUrl = photos[0] ?? null;
 
     await this.prisma.sighting.update({
       where: { id: sightingId },
-      data: { photo_url: photoUrl },
+      data: { photos, photo_url: photoUrl },
     });
 
-    this.logger.log(`Updated photo for sighting ${sightingId}`);
+    this.logger.log(
+      `Added ${photoUrls.length} photo(s) to sighting ${sightingId} (now ${photos.length})`,
+    );
 
     // Emit audit event
     try {
       const auditPayload: IAuditEventPayload = {
         eventType: 'UPDATE',
         entityType: 'SIGHTING',
-        entityId: parseInt(sightingId, 10),
-        userId:
-          userId || (sighting ? parseInt(sighting.reported_by, 10) : undefined),
-        action: 'sighting_photo_updated',
-        description: `Updated photo for sighting #${sightingId}`,
-        oldValues: { photoUrl: oldPhotoUrl },
-        newValues: { photoUrl },
+        entityId: sightingId,
+        userId,
+        action: 'sighting_photos_added',
+        description: `Added ${photoUrls.length} photo(s) to sighting #${sightingId}`,
+        oldValues: { photoUrl: sighting.photo_url, photos: previous },
+        newValues: { photoUrl, photos },
         success: true,
       };
       this.eventEmitter.emit(AUDIT_EVENT_NAMES.ENTITY.UPDATED, auditPayload);
     } catch (error) {
       this.logger.error('Failed to emit audit event for photo update:', error);
     }
+
+    return photos;
   }
 
   // ============================================================
@@ -469,7 +555,7 @@ export class SightingService {
    */
   async sendSightingReportedEmail(
     alertCreatorId: number,
-    alertId: string,
+    alertId: number,
     sighting: SightingResponseDto,
   ): Promise<{ success: boolean; message: string }> {
     this.logger.log(`Sending sighting reported email for alert ${alertId}`);
@@ -492,12 +578,16 @@ export class SightingService {
     ]);
 
     if (!user) {
-      this.logger.warn(`Cannot send sighting email - user ${alertCreatorId} not found`);
+      this.logger.warn(
+        `Cannot send sighting email - user ${alertCreatorId} not found`,
+      );
       throw new Error('USER_NOT_FOUND');
     }
 
     if (!alert) {
-      this.logger.warn(`Cannot send sighting email - alert ${alertId} not found`);
+      this.logger.warn(
+        `Cannot send sighting email - alert ${alertId} not found`,
+      );
       throw new Error('ALERT_NOT_FOUND');
     }
 
@@ -536,18 +626,23 @@ export class SightingService {
             notes: sighting.notes,
             direction: sighting.direction,
           },
-          appUrl: process.env.APP_URL || 'https://fifi-alert.com',
+          appUrl: getWebAppUrl(),
         },
       });
 
-      this.logger.log(`Sighting reported email sent successfully for alert ${alertId}`);
+      this.logger.log(
+        `Sighting reported email sent successfully for alert ${alertId}`,
+      );
 
       return {
         success: true,
         message: `Sighting email sent to ${user.email}`,
       };
     } catch (error) {
-      this.logger.error(`Failed to send sighting reported email for alert ${alertId}:`, error);
+      this.logger.error(
+        `Failed to send sighting reported email for alert ${alertId}:`,
+        error,
+      );
       throw new Error('FAILED_TO_SEND_SIGHTING_REPORTED_EMAIL');
     }
   }
@@ -562,11 +657,13 @@ export class SightingService {
    */
   async sendSightingDismissedEmail(
     reporterId: number,
-    alertId: string,
+    alertId: number,
     sighting: SightingResponseDto,
     dismissReason: string,
   ): Promise<{ success: boolean; message: string }> {
-    this.logger.log(`Sending sighting dismissed email for sighting ${sighting.id}`);
+    this.logger.log(
+      `Sending sighting dismissed email for sighting ${sighting.id}`,
+    );
 
     // Get reporter and alert information
     const [user, alert] = await Promise.all([
@@ -584,12 +681,16 @@ export class SightingService {
     ]);
 
     if (!user) {
-      this.logger.warn(`Cannot send dismissal email - user ${reporterId} not found`);
+      this.logger.warn(
+        `Cannot send dismissal email - user ${reporterId} not found`,
+      );
       throw new Error('USER_NOT_FOUND');
     }
 
     if (!alert) {
-      this.logger.warn(`Cannot send dismissal email - alert ${alertId} not found`);
+      this.logger.warn(
+        `Cannot send dismissal email - alert ${alertId} not found`,
+      );
       throw new Error('ALERT_NOT_FOUND');
     }
 
@@ -623,18 +724,23 @@ export class SightingService {
             sightingTime: sighting.sighting_time,
           },
           dismissReason,
-          appUrl: process.env.APP_URL || 'https://fifi-alert.com',
+          appUrl: getWebAppUrl(),
         },
       });
 
-      this.logger.log(`Sighting dismissed email sent successfully for sighting ${sighting.id}`);
+      this.logger.log(
+        `Sighting dismissed email sent successfully for sighting ${sighting.id}`,
+      );
 
       return {
         success: true,
         message: `Dismissal email sent to ${user.email}`,
       };
     } catch (error) {
-      this.logger.error(`Failed to send sighting dismissed email for sighting ${sighting.id}:`, error);
+      this.logger.error(
+        `Failed to send sighting dismissed email for sighting ${sighting.id}:`,
+        error,
+      );
       throw new Error('FAILED_TO_SEND_SIGHTING_DISMISSED_EMAIL');
     }
   }

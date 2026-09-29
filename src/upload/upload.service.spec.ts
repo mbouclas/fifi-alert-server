@@ -79,6 +79,7 @@ describe('UploadService', () => {
         file.buffer,
         'alerts',
         'dog.jpg',
+        {},
       );
     });
 
@@ -96,6 +97,60 @@ describe('UploadService', () => {
         file.buffer,
         'sightings',
         'cat.png',
+        {},
+      );
+    });
+
+    it('should accept HEIC bytes sent with an empty content type (Android pickers)', async () => {
+      const file = createMockFile(1024, '', 'IMG_0001');
+      file.buffer.writeUInt32BE(24, 0);
+      file.buffer.write('ftypheic', 4, 'ascii');
+      mockCloudinaryService.uploadImage.mockResolvedValue(
+        'https://res.cloudinary.com/demo/image/upload/v1/fifi-alert/sightings/1/x.jpg',
+      );
+
+      await expect(
+        service.uploadImage(file, 'sightings/1'),
+      ).resolves.toBeDefined();
+      expect(mockCloudinaryService.uploadImage).toHaveBeenCalled();
+    });
+
+    it('should trust the sniffed bytes over the content-type header', async () => {
+      // PNG bytes labelled as JPEG: accepted, because the bytes are an allowed type.
+      const png = createMockFile(1024, 'image/jpeg', 'x.jpg');
+      Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]).copy(
+        png.buffer,
+      );
+      mockCloudinaryService.uploadImage.mockResolvedValue('url');
+
+      await expect(service.uploadImage(png, 'alerts')).resolves.toBe('url');
+    });
+
+    it('should fall back to the header only when the bytes are not a recognised image', async () => {
+      // Unrecognised bytes with a disallowed header: rejected.
+      const exe = createMockFile(1024, 'application/octet-stream', 'setup.exe');
+      exe.buffer.write('MZ', 0, 'ascii');
+
+      await expect(service.uploadImage(exe, 'alerts')).rejects.toThrow(
+        BadRequestException,
+      );
+      expect(mockCloudinaryService.uploadImage).not.toHaveBeenCalled();
+    });
+
+    it('should pass processing options through to Cloudinary', async () => {
+      const file = createMockFile(1024, 'image/jpeg', 'dog.jpg');
+      mockCloudinaryService.uploadImage.mockResolvedValue('url');
+
+      await service.uploadImage(file, 'sightings/7', {
+        webOptimise: true,
+        randomPublicId: true,
+      });
+
+      expect(mockCloudinaryService.uploadImage).toHaveBeenCalledWith(
+        file.buffer,
+        'sightings/7',
+        'dog.jpg',
+        { webOptimise: true, randomPublicId: true },
       );
     });
 
@@ -276,6 +331,20 @@ describe('UploadService', () => {
       );
 
       expect(mockCloudinaryService.uploadImage).not.toHaveBeenCalled();
+    });
+
+    it('should honour a caller-supplied maxFiles limit', async () => {
+      const files = createMockFiles(3);
+
+      await expect(service.uploadImages(files, 'pets/1', 2)).rejects.toThrow(
+        'Maximum 2 images allowed per upload',
+      );
+      expect(mockCloudinaryService.uploadImage).not.toHaveBeenCalled();
+
+      mockCloudinaryService.uploadImage.mockResolvedValue('https://cdn/x.jpg');
+      await expect(
+        service.uploadImages(files, 'pets/1', 3),
+      ).resolves.toHaveLength(3);
     });
 
     it('should reject batch if any file is invalid type', async () => {

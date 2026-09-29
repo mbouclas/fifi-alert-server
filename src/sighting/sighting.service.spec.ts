@@ -79,7 +79,7 @@ describe('SightingService', () => {
 
   describe('create', () => {
     const validDto: CreateSightingDto = {
-      alert_id: 'alert-123',
+      alert_id: 123,
       location: {
         latitude: 37.7749,
         longitude: -122.4194,
@@ -92,26 +92,28 @@ describe('SightingService', () => {
       direction: 'Heading north',
     };
 
-    const reporterId = 'user-456';
+    const reporterId = 456;
 
     it('should create a sighting successfully', async () => {
       // Mock alert lookup
       prisma.alert.findUnique.mockResolvedValue({
-        id: 'alert-123',
+        id: 123,
         status: AlertStatus.ACTIVE,
-        creator_id: 'user-789',
+        creator_id: 789,
       } as any);
 
       // Mock insert query
-      prisma.$queryRaw.mockResolvedValue([{ id: 'sighting-999' }]);
+      prisma.$queryRaw.mockResolvedValue([{ id: 999 }]);
 
       // Mock sighting fetch
       prisma.sighting.findUnique.mockResolvedValue({
-        id: 'sighting-999',
-        alert_id: 'alert-123',
-        reported_by: reporterId,
-        address: validDto.location.address,
-        photo: validDto.photo,
+        id: 999,
+        alert_id: 123,
+        reporter_id: reporterId,
+        sighting_lat: 37.7749,
+        sighting_lon: -122.4194,
+        location_address: validDto.location.address,
+        photo_url: validDto.photo,
         notes: validDto.notes,
         confidence: validDto.confidence,
         sighting_time: new Date(validDto.sighting_time),
@@ -125,11 +127,11 @@ describe('SightingService', () => {
 
       const result = await service.create(validDto, reporterId);
 
-      expect(result.id).toBe('sighting-999');
-      expect(result.alert_id).toBe('alert-123');
+      expect(result.id).toBe(999);
+      expect(result.alert_id).toBe(123);
       expect(result.reported_by).toBe(reporterId);
       expect(prisma.alert.findUnique).toHaveBeenCalledWith({
-        where: { id: 'alert-123' },
+        where: { id: 123 },
         select: { id: true, status: true, creator_id: true },
       });
       expect(prisma.$queryRaw).toHaveBeenCalled();
@@ -142,15 +144,15 @@ describe('SightingService', () => {
         NotFoundException,
       );
       await expect(service.create(validDto, reporterId)).rejects.toThrow(
-        'Alert with ID alert-123 not found',
+        'Alert with ID 123 not found',
       );
     });
 
     it('should throw BadRequestException if alert is not ACTIVE', async () => {
       prisma.alert.findUnique.mockResolvedValue({
-        id: 'alert-123',
+        id: 123,
         status: AlertStatus.RESOLVED,
-        creator_id: 'user-789',
+        creator_id: 789,
       } as any);
 
       await expect(service.create(validDto, reporterId)).rejects.toThrow(
@@ -163,7 +165,7 @@ describe('SightingService', () => {
 
     it('should handle optional fields (photo, notes, direction)', async () => {
       const minimalDto: CreateSightingDto = {
-        alert_id: 'alert-123',
+        alert_id: 123,
         location: {
           latitude: 37.7749,
           longitude: -122.4194,
@@ -174,19 +176,21 @@ describe('SightingService', () => {
       };
 
       prisma.alert.findUnique.mockResolvedValue({
-        id: 'alert-123',
+        id: 123,
         status: AlertStatus.ACTIVE,
-        creator_id: 'user-789',
+        creator_id: 789,
       } as any);
 
-      prisma.$queryRaw.mockResolvedValue([{ id: 'sighting-999' }]);
+      prisma.$queryRaw.mockResolvedValue([{ id: 999 }]);
 
       prisma.sighting.findUnique.mockResolvedValue({
-        id: 'sighting-999',
-        alert_id: 'alert-123',
-        reported_by: reporterId,
-        address: minimalDto.location.address,
-        photo: null,
+        id: 999,
+        alert_id: 123,
+        reporter_id: reporterId,
+        sighting_lat: 37.7749,
+        sighting_lon: -122.4194,
+        location_address: minimalDto.location.address,
+        photo_url: null,
         notes: null,
         confidence: minimalDto.confidence,
         sighting_time: new Date(minimalDto.sighting_time),
@@ -207,17 +211,19 @@ describe('SightingService', () => {
   });
 
   describe('findByAlert', () => {
-    const alertId = 'alert-123';
-    const creatorId = 'user-creator';
-    const otherId = 'user-other';
+    const alertId = 123;
+    const creatorId = 11;
+    const otherId = 22;
 
     const mockSightings = [
       {
-        id: 'sighting-1',
+        id: 1,
         alert_id: alertId,
-        reported_by: 'user-reporter-1',
-        address: '123 Main St',
-        photo: null,
+        reporter_id: 31,
+        sighting_lat: 37.7749,
+        sighting_lon: -122.4194,
+        location_address: '123 Main St',
+        photo_url: null,
         notes: 'Saw the pet',
         confidence: NotificationConfidence.HIGH,
         sighting_time: new Date('2026-02-05T14:30:00Z'),
@@ -229,11 +235,13 @@ describe('SightingService', () => {
         updated_at: new Date(),
       },
       {
-        id: 'sighting-2',
+        id: 2,
         alert_id: alertId,
-        reported_by: 'user-reporter-2',
-        address: '456 Oak Ave',
-        photo: null,
+        reporter_id: 32,
+        sighting_lat: 37.7749,
+        sighting_lon: -122.4194,
+        location_address: '456 Oak Ave',
+        photo_url: null,
         notes: 'Another sighting',
         confidence: NotificationConfidence.MEDIUM,
         sighting_time: new Date('2026-02-04T10:00:00Z'),
@@ -288,7 +296,7 @@ describe('SightingService', () => {
         NotFoundException,
       );
       await expect(service.findByAlert(alertId, creatorId)).rejects.toThrow(
-        'Alert with ID alert-123 not found',
+        'Alert with ID 123 not found',
       );
     });
 
@@ -311,19 +319,21 @@ describe('SightingService', () => {
   });
 
   describe('dismiss', () => {
-    const sightingId = 'sighting-123';
-    const creatorId = 'user-creator';
-    const otherId = 'user-other';
+    const sightingId = 123;
+    const creatorId = 11;
+    const otherId = 22;
     const dismissDto: DismissSightingDto = {
       reason: 'This is not my pet',
     };
 
     const mockSighting = {
       id: sightingId,
-      alert_id: 'alert-123',
-      reported_by: 'user-reporter',
-      address: '123 Main St',
-      photo: null,
+      alert_id: 123,
+      reporter_id: 33,
+      sighting_lat: 37.7749,
+      sighting_lon: -122.4194,
+      location_address: '123 Main St',
+      photo_url: null,
       notes: 'Sighting notes',
       confidence: NotificationConfidence.MEDIUM,
       sighting_time: new Date(),
@@ -371,7 +381,7 @@ describe('SightingService', () => {
       ).rejects.toThrow(NotFoundException);
       await expect(
         service.dismiss(sightingId, dismissDto, creatorId),
-      ).rejects.toThrow('Sighting with ID sighting-123 not found');
+      ).rejects.toThrow('Sighting with ID 123 not found');
     });
 
     it('should throw ForbiddenException if requester is not alert creator', async () => {
@@ -403,66 +413,251 @@ describe('SightingService', () => {
     });
   });
 
-  describe('enrichWithCoordinates', () => {
-    it('should enrich sightings with coordinates from PostGIS', async () => {
-      const sightings = [
-        {
-          id: 'sighting-1',
-          alert_id: 'alert-123',
-          reported_by: 'user-1',
-          latitude: 0,
-          longitude: 0,
-          address: '123 Main St',
-          photo: null,
-          notes: null,
-          confidence: NotificationConfidence.HIGH,
-          sighting_time: new Date(),
-          direction: null,
-          dismissed: false,
-          dismissed_at: null,
-          dismissed_reason: null,
-          created_at: new Date(),
-          updated_at: new Date(),
-        },
-        {
-          id: 'sighting-2',
-          alert_id: 'alert-123',
-          reported_by: 'user-2',
-          latitude: 0,
-          longitude: 0,
-          address: '456 Oak Ave',
-          photo: null,
-          notes: null,
-          confidence: NotificationConfidence.MEDIUM,
-          sighting_time: new Date(),
-          direction: null,
-          dismissed: false,
-          dismissed_at: null,
-          dismissed_reason: null,
-          created_at: new Date(),
-          updated_at: new Date(),
-        },
-      ];
+  describe('findOne', () => {
+    it('should return mapped sighting with coordinates from lat/lon columns', async () => {
+      prisma.sighting.findUnique.mockResolvedValue({
+        id: 1,
+        alert_id: 123,
+        reporter_id: 1,
+        sighting_lat: 37.7749,
+        sighting_lon: -122.4194,
+        location_address: '123 Main St',
+        photo_url: null,
+        notes: null,
+        confidence: NotificationConfidence.HIGH,
+        sighting_time: new Date(),
+        direction: null,
+        dismissed: false,
+        dismissed_at: null,
+        dismissed_reason: null,
+        created_at: new Date(),
+        updated_at: new Date(),
+      } as any);
 
-      const mockCoords = [
-        { id: 'sighting-1', latitude: 37.7749, longitude: -122.4194 },
-        { id: 'sighting-2', latitude: 37.7849, longitude: -122.4094 },
-      ];
+      const result = await service.findOne(1);
 
-      prisma.$queryRaw.mockResolvedValue(mockCoords);
-
-      const result = await service.enrichWithCoordinates(sightings);
-
-      expect(result[0].latitude).toBe(37.7749);
-      expect(result[0].longitude).toBe(-122.4194);
-      expect(result[1].latitude).toBe(37.7849);
-      expect(result[1].longitude).toBe(-122.4094);
+      expect(result).not.toBeNull();
+      expect(result!.id).toBe(1);
+      expect(result!.reported_by).toBe(1);
+      expect(result!.latitude).toBe(37.7749);
+      expect(result!.longitude).toBe(-122.4194);
+      expect(result!.address).toBe('123 Main St');
+      expect(prisma.sighting.findUnique).toHaveBeenCalledWith({
+        where: { id: 1 },
+      });
     });
 
-    it('should return empty array if input is empty', async () => {
-      const result = await service.enrichWithCoordinates([]);
-      expect(result).toEqual([]);
-      expect(prisma.$queryRaw).not.toHaveBeenCalled();
+    it('should return null if sighting does not exist', async () => {
+      prisma.sighting.findUnique.mockResolvedValue(null);
+      const result = await service.findOne(999);
+      expect(result).toBeNull();
+    });
+
+    it('should expose photos[] and keep photo as the first entry', async () => {
+      prisma.sighting.findUnique.mockResolvedValue({
+        id: 1,
+        alert_id: 123,
+        reporter_id: 1,
+        sighting_lat: 0,
+        sighting_lon: 0,
+        location_address: null,
+        photo_url: null,
+        photos: ['https://cdn/a.jpg', 'https://cdn/b.jpg'],
+        notes: null,
+        confidence: null,
+        sighting_time: new Date(),
+        direction: null,
+        dismissed: false,
+        dismissed_at: null,
+        dismissed_reason: null,
+        created_at: new Date(),
+        updated_at: new Date(),
+      } as any);
+
+      const result = await service.findOne(1);
+
+      expect(result!.photos).toEqual([
+        'https://cdn/a.jpg',
+        'https://cdn/b.jpg',
+      ]);
+      expect(result!.photo).toBe('https://cdn/a.jpg');
+    });
+
+    it('should return an empty photos array and null photo when there are none', async () => {
+      prisma.sighting.findUnique.mockResolvedValue({
+        id: 1,
+        alert_id: 123,
+        reporter_id: 1,
+        sighting_lat: 0,
+        sighting_lon: 0,
+        photo_url: null,
+        photos: [],
+        sighting_time: new Date(),
+        dismissed: false,
+        created_at: new Date(),
+        updated_at: new Date(),
+      } as any);
+
+      const result = await service.findOne(1);
+
+      expect(result!.photos).toEqual([]);
+      expect(result!.photo).toBeNull();
+    });
+  });
+
+  describe('authorizePhotoUpload', () => {
+    const reporterId = 7;
+    const freshSighting = (overrides: Record<string, unknown> = {}) => ({
+      reporter_id: reporterId,
+      created_at: new Date(),
+      photos: [],
+      alert: { status: AlertStatus.ACTIVE },
+      ...overrides,
+    });
+
+    beforeEach(() => {
+      delete process.env.MAX_SIGHTING_PHOTOS;
+      delete process.env.SIGHTING_PHOTO_UPLOAD_WINDOW_HOURS;
+    });
+
+    it('should allow the reporter to upload within the window on an active alert', async () => {
+      prisma.sighting.findUnique.mockResolvedValue(freshSighting() as any);
+
+      await expect(
+        service.authorizePhotoUpload(1, reporterId, 2),
+      ).resolves.toBeUndefined();
+    });
+
+    it('should throw NotFoundException when the sighting does not exist', async () => {
+      prisma.sighting.findUnique.mockResolvedValue(null);
+
+      await expect(
+        service.authorizePhotoUpload(999, reporterId, 1),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('should throw ForbiddenException when the caller is not the reporter', async () => {
+      prisma.sighting.findUnique.mockResolvedValue(freshSighting() as any);
+
+      await expect(service.authorizePhotoUpload(1, 99, 1)).rejects.toThrow(
+        ForbiddenException,
+      );
+    });
+
+    it('should throw ForbiddenException when the alert is no longer active', async () => {
+      prisma.sighting.findUnique.mockResolvedValue(
+        freshSighting({ alert: { status: AlertStatus.RESOLVED } }) as any,
+      );
+
+      await expect(
+        service.authorizePhotoUpload(1, reporterId, 1),
+      ).rejects.toThrow(ForbiddenException);
+    });
+
+    it('should throw ForbiddenException after the upload window has closed', async () => {
+      const twoDaysAgo = new Date(Date.now() - 48 * 60 * 60 * 1000);
+      prisma.sighting.findUnique.mockResolvedValue(
+        freshSighting({ created_at: twoDaysAgo }) as any,
+      );
+
+      await expect(
+        service.authorizePhotoUpload(1, reporterId, 1),
+      ).rejects.toThrow(ForbiddenException);
+    });
+
+    it('should honour SIGHTING_PHOTO_UPLOAD_WINDOW_HOURS', async () => {
+      process.env.SIGHTING_PHOTO_UPLOAD_WINDOW_HOURS = '72';
+      const twoDaysAgo = new Date(Date.now() - 48 * 60 * 60 * 1000);
+      prisma.sighting.findUnique.mockResolvedValue(
+        freshSighting({ created_at: twoDaysAgo }) as any,
+      );
+
+      await expect(
+        service.authorizePhotoUpload(1, reporterId, 1),
+      ).resolves.toBeUndefined();
+    });
+
+    it('should throw BadRequestException when no files are sent', async () => {
+      prisma.sighting.findUnique.mockResolvedValue(freshSighting() as any);
+
+      await expect(
+        service.authorizePhotoUpload(1, reporterId, 0),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('should throw BadRequestException when the total would exceed MAX_SIGHTING_PHOTOS', async () => {
+      prisma.sighting.findUnique.mockResolvedValue(
+        freshSighting({ photos: ['a', 'b'] }) as any,
+      );
+
+      // default max is 3: 2 existing + 2 incoming = 4
+      await expect(
+        service.authorizePhotoUpload(1, reporterId, 2),
+      ).rejects.toThrow(BadRequestException);
+      // 2 existing + 1 incoming = 3 is fine
+      await expect(
+        service.authorizePhotoUpload(1, reporterId, 1),
+      ).resolves.toBeUndefined();
+    });
+  });
+
+  describe('appendPhotos', () => {
+    it('should append URLs in order and mirror the first one into photo_url', async () => {
+      prisma.sighting.findUnique.mockResolvedValue({
+        photo_url: null,
+        photos: [],
+      } as any);
+      prisma.sighting.update.mockResolvedValue({} as any);
+
+      const result = await service.appendPhotos(
+        1,
+        ['https://cdn/a.jpg', 'https://cdn/b.jpg'],
+        7,
+      );
+
+      expect(result).toEqual(['https://cdn/a.jpg', 'https://cdn/b.jpg']);
+      expect(prisma.sighting.update).toHaveBeenCalledWith({
+        where: { id: 1 },
+        data: {
+          photos: ['https://cdn/a.jpg', 'https://cdn/b.jpg'],
+          photo_url: 'https://cdn/a.jpg',
+        },
+      });
+      expect(mockEventEmitter.emit).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({
+          action: 'sighting_photos_added',
+          entityId: 1,
+          userId: 7,
+        }),
+      );
+    });
+
+    it('should keep existing photos first when appending', async () => {
+      prisma.sighting.findUnique.mockResolvedValue({
+        photo_url: 'https://cdn/old.jpg',
+        photos: ['https://cdn/old.jpg'],
+      } as any);
+      prisma.sighting.update.mockResolvedValue({} as any);
+
+      const result = await service.appendPhotos(1, ['https://cdn/new.jpg'], 7);
+
+      expect(result).toEqual(['https://cdn/old.jpg', 'https://cdn/new.jpg']);
+      expect(prisma.sighting.update).toHaveBeenCalledWith({
+        where: { id: 1 },
+        data: {
+          photos: ['https://cdn/old.jpg', 'https://cdn/new.jpg'],
+          photo_url: 'https://cdn/old.jpg',
+        },
+      });
+    });
+
+    it('should throw NotFoundException when the sighting does not exist', async () => {
+      prisma.sighting.findUnique.mockResolvedValue(null);
+
+      await expect(service.appendPhotos(999, ['x'], 7)).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 
@@ -485,7 +680,7 @@ describe('SightingService', () => {
     };
 
     const mockAlert = {
-      id: 'alert-123',
+      id: 123,
       pet_name: 'Max',
       pet_species: 'DOG',
       last_seen_lat: 37.7749,
@@ -493,9 +688,9 @@ describe('SightingService', () => {
     };
 
     const mockSighting = {
-      id: 'sighting-999',
-      alert_id: 'alert-123',
-      reported_by: '2',
+      id: 999,
+      alert_id: 123,
+      reported_by: 2,
       latitude: 37.7749,
       longitude: -122.4194,
       address: '123 Main St, San Francisco, CA',
@@ -513,7 +708,7 @@ describe('SightingService', () => {
 
     beforeEach(() => {
       process.env.MAIL_NOTIFICATIONS_FROM = 'noreply@fifi-alert.com';
-      process.env.APP_URL = 'https://fifi-alert.com';
+      process.env.WEB_APP_URL = 'https://fifi-alert.com';
     });
 
     describe('sendSightingReportedEmail', () => {
@@ -590,7 +785,10 @@ describe('SightingService', () => {
       const dismissReason = 'Not the right pet - different markings';
 
       it('should send sighting dismissed email successfully', async () => {
-        prisma.user.findUnique.mockResolvedValueOnce({ ...mockUser, id: reporterId });
+        prisma.user.findUnique.mockResolvedValueOnce({
+          ...mockUser,
+          id: reporterId,
+        });
         prisma.alert.findUnique.mockResolvedValueOnce(mockAlert as any);
 
         const result = await service.sendSightingDismissedEmail(
@@ -622,7 +820,10 @@ describe('SightingService', () => {
       });
 
       it('should throw error when alert not found', async () => {
-        prisma.user.findUnique.mockResolvedValueOnce({ ...mockUser, id: reporterId });
+        prisma.user.findUnique.mockResolvedValueOnce({
+          ...mockUser,
+          id: reporterId,
+        });
         prisma.alert.findUnique.mockResolvedValueOnce(null);
 
         await expect(
@@ -636,7 +837,10 @@ describe('SightingService', () => {
       });
 
       it('should throw error when email send fails', async () => {
-        prisma.user.findUnique.mockResolvedValueOnce({ ...mockUser, id: reporterId });
+        prisma.user.findUnique.mockResolvedValueOnce({
+          ...mockUser,
+          id: reporterId,
+        });
         prisma.alert.findUnique.mockResolvedValueOnce(mockAlert as any);
         mockEmailProvider.send.mockRejectedValueOnce(new Error('Send failed'));
 

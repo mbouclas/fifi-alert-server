@@ -20,7 +20,7 @@ import { AuthModule } from '@thallesp/nestjs-better-auth';
 import { auth } from './auth';
 import { UserModule } from './user/user.module';
 import { AuthEndpointsModule } from './auth/auth.module';
-import { authConfig } from './config';
+import { authConfig, petConfig } from './config';
 import { BearerTokenGuard } from './auth/guards/bearer-token.guard';
 import { GateModule } from './gate/gate.module';
 import { AdminModule } from './admin/admin.module';
@@ -44,7 +44,7 @@ import { I18nModule } from './i18n/i18n.module';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      load: [authConfig],
+      load: [authConfig, petConfig],
       cache: true,
     }),
     CacheModule.registerAsync({

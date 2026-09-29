@@ -84,7 +84,10 @@ async function bootstrap() {
   const config = new DocumentBuilder()
     .setTitle('FiFi Alert API')
     .setDescription(
-      'Geolocation-based missing pet notification system - API documentation for alerts, sightings, devices, and push notifications',
+      'Geolocation-based missing pet notification system - API documentation for alerts, sightings, devices, and push notifications.\n\n' +
+        '**Email links:** every link inside emails sent by this API points at the web app (`WEB_APP_URL`), ' +
+        'not at this API. The web app serves `/verify-email`, `/reset-password`, `/accept-invite` and `/alerts/:id` ' +
+        'and calls back into this API. See `docs/WEB_APP_EMAIL_LINKS.md`.',
     )
     .setVersion('1.0.0')
     .addBearerAuth({

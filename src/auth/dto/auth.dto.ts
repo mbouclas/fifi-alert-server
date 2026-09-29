@@ -81,8 +81,11 @@ export class SignupDto {
   image?: string;
 
   @ApiPropertyOptional({
-    description: 'Callback URL after signup',
-    example: 'https://example.com/welcome',
+    description:
+      'Optional URL carried as `callbackURL` on the verification link in the signup email. ' +
+      'Defaults to the mobile deep link (`fifi-alert://verify-email`). ' +
+      'Must be an allowed origin. The web app can use it to hand off to the mobile app after verifying.',
+    example: 'fifi-alert://verify-email',
   })
   @IsOptional()
   @IsString()
@@ -102,8 +105,10 @@ export class RequestPasswordResetDto {
   email: string;
 
   @ApiPropertyOptional({
-    description: 'URL to redirect to for password reset',
-    example: 'https://example.com/reset-password',
+    description:
+      'Web app page that receives the reset token, e.g. `{WEB_APP_URL}/reset-password`. ' +
+      'The page then calls POST /auth/reset-password with the token.',
+    example: 'http://localhost:5173/reset-password',
   })
   @IsOptional()
   @IsString()
@@ -127,6 +132,55 @@ export class ResetPasswordDto {
   @ApiProperty({
     description: 'Password reset token from email',
     example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
+  })
+  @IsString()
+  token: string;
+}
+
+/**
+ * DTO for requesting an email address change (authenticated user)
+ */
+export class ChangeEmailDto {
+  @ApiProperty({
+    description:
+      'The new email address. A confirmation link is sent to the CURRENT address first; ' +
+      'once approved, a verification link is sent to the new address.',
+    example: 'new.address@example.com',
+  })
+  @IsEmail()
+  newEmail: string;
+
+  @ApiPropertyOptional({
+    description:
+      'Where the web app should land after the change is confirmed. Defaults to the mobile deep link.',
+    example: 'fifi-alert://verify-email',
+  })
+  @IsOptional()
+  @IsString()
+  callbackURL?: string;
+}
+
+/**
+ * DTO for requesting account deletion (authenticated user)
+ */
+export class DeleteAccountRequestDto {
+  @ApiPropertyOptional({
+    description:
+      'Where the web app should land after deletion completes. Defaults to the web app root.',
+    example: 'https://fifi-alert.com/goodbye',
+  })
+  @IsOptional()
+  @IsString()
+  callbackURL?: string;
+}
+
+/**
+ * DTO for confirming account deletion with the emailed token
+ */
+export class DeleteAccountConfirmDto {
+  @ApiProperty({
+    description: 'Deletion token from the verification email',
+    example: 'k3j4h5g6f7d8s9a0b1c2d3e4f5g6h7i8',
   })
   @IsString()
   token: string;

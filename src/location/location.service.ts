@@ -162,6 +162,9 @@ export class LocationService {
 
     /**
      * Step 1: Find devices with saved zones within range (HIGH confidence)
+     *
+     * Token-less devices are included on purpose: zones are explicit user intent,
+     * and the processor falls back to email for users with no push channel.
      */
     private async findSavedZoneMatches(
         alertLat: number,
@@ -194,7 +197,6 @@ export class LocationService {
       FROM saved_zone sz
       INNER JOIN device d ON sz.device_id = d.id
       WHERE sz.is_active = true
-        AND d.push_token IS NOT NULL
         AND ST_DWithin(
           sz.location_point::geography,
           ST_SetSRID(ST_MakePoint(${alertLon}, ${alertLat}), 4326)::geography,
@@ -223,7 +225,8 @@ export class LocationService {
      * Step 1: Find alert zone matches (HIGH confidence)
      *
      * Single PostGIS query: ST_DWithin on the GIST-indexed alert_zone.location_point,
-     * joined to the zone owner's push-enabled devices. One row per (zone, device);
+     * joined to every device of the zone owner, including devices with no push
+     * token (the processor emails those users instead). One row per (zone, device);
      * the highest-priority (then nearest) zone is kept per device.
      *
      * Rejected: iterating cached zones and calling GeospatialService.calculateDistance
@@ -256,8 +259,6 @@ export class LocationService {
       INNER JOIN "user" u ON az.user_id = u.id
       INNER JOIN device d ON d.user_id = u.id
       WHERE az.is_active = true
-        AND d.push_token IS NOT NULL
-        AND d.push_enabled = true
         AND u.banned = false
         AND ST_DWithin(
           az.location_point::geography,

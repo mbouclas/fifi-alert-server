@@ -42,6 +42,7 @@ import { UploadService } from '../upload/upload.service';
 import { Lang } from '../i18n/decorators/lang.decorator';
 import { LanguageService } from '../i18n/language.service';
 import { PetWithType, toPetResponse } from './pet.mapper';
+import { getMaxPetPhotos } from '../config/pet.config';
 
 /**
  * Pet endpoints.
@@ -204,21 +205,24 @@ export class PetController {
   }
 
   @Post(':id/photos')
-  @UseInterceptors(FilesInterceptor('photos', 5))
+  @UseInterceptors(FilesInterceptor('photos', getMaxPetPhotos()))
   @ApiConsumes('multipart/form-data')
   @ApiBody({ type: UploadPetPhotosDto })
   @ApiParam({ name: 'id', description: 'Pet ID' })
   @ApiOperation({
     summary: 'Upload photos for a pet',
     description:
-      'Upload image files for a pet owned by the authenticated user. Use the returned public URLs in the photos array when creating or updating pet details.',
+      `Upload image files for a pet owned by the authenticated user. At most ${getMaxPetPhotos()} files per request (MAX_PET_PHOTOS). Use the returned public URLs in the photos array when creating or updating pet details, and optionally pick one as primaryPhoto.`,
   })
   @ApiResponse({
     status: 201,
     description: 'Photos uploaded successfully',
     type: PetPhotoUploadResponseDto,
   })
-  @ApiResponse({ status: 400, description: 'Invalid file type or size' })
+  @ApiResponse({
+    status: 400,
+    description: 'Invalid file type or size, or too many files',
+  })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden - not your pet' })
   @ApiResponse({ status: 404, description: 'Pet not found' })
@@ -233,6 +237,7 @@ export class PetController {
     const photoUrls = await this.uploadService.uploadImages(
       files,
       `pets/${id}`,
+      getMaxPetPhotos(),
     );
 
     return { photoUrls };

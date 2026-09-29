@@ -337,8 +337,7 @@ The module comes with 6 pre-built templates:
 | Template | Subject | Use Case |
 |----------|---------|----------|
 | `welcome` | "Welcome to FiFi Alert!" | User registration |
-| `passwordReset` | "Reset Your Password" | Password reset flow |
-| `forgotPassword` | "Forgot Your Password?" | Forgot password flow |
+| `forgotPassword` | "Forgot Your Password?" | Password reset link (better-auth `sendResetPassword`) |
 | `invite` | "You're Invited!" | User invitations |
 | `newAlert` | "New Pet Alert Near You" | Alert notifications |
 | `alertResolved` | "Pet Alert Resolved" | Alert resolution |
@@ -468,7 +467,7 @@ async sendWelcomeEmail(user: User): Promise<{ success: boolean; message: string 
       to: user.email,
       templateData: {
         user: { ...user, password: undefined }, // Sanitize sensitive data
-        appUrl: process.env.APP_URL,
+        appUrl: getWebAppUrl(), // from '@config/web-app.config' (WEB_APP_URL)
       },
     });
 
@@ -569,24 +568,24 @@ export class UserService {
 
 ### Example 2: Send Password Reset Email
 
+The real flow is driven by better-auth: `src/auth.ts` configures `sendResetPassword`, which emits
+`PASSWORD_RESET_EMAIL_REQUESTED`; `UserService.handlePasswordResetEmailRequested` sends the
+`forgotPassword` template. Links always point at the web app (`buildWebAppUrl`), never at the API.
+
 ```typescript
 @Injectable()
 export class AuthService {
   constructor(private readonly emailService: EmailService) {}
 
-  async requestPasswordReset(email: string) {
-    const user = await this.findUserByEmail(email);
-    if (!user) return; // Don't reveal if user exists
-
-    // Generate reset token (expires in 1 hour)
-    const resetToken = await this.generateResetToken(user.id);
-
-    await this.emailService.sendHtml('passwordReset', {
+  async sendResetLink(user: User, resetLink: string) {
+    // resetLink comes from buildWebResetPasswordUrl() in src/auth.ts,
+    // e.g. `${WEB_APP_URL}/reset-password?token=…`
+    await this.emailService.sendHtml('forgotPassword', {
       from: process.env.EMAIL_FROM_EMAIL,
       to: user.email,
       templateData: {
         user: { firstName: user.firstName },
-        resetLink: `${process.env.API_BASE_URL}/auth/reset-password?token=${resetToken}`,
+        resetLink,
         expiresIn: '1 hour',
       },
     });

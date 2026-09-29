@@ -26,6 +26,20 @@ export function toPetResponse(
         gender: rest.gender ?? undefined,
         size: rest.size ?? undefined,
         birthday: rest.birthday ?? undefined,
+        primaryPhoto: rest.primaryPhoto ?? rest.photos[0] ?? undefined,
         petType: toPetTypeResponse(petType, lang, defaultLang),
     };
+}
+
+/**
+ * Photo URLs ordered for display: the primary photo first, then the rest in
+ * stored order. Used when copying pet photos into alert snapshots.
+ */
+export function orderedPetPhotos(pet: {
+    photos: string[];
+    primaryPhoto: string | null;
+}): string[] {
+    const primary = pet.primaryPhoto;
+    if (!primary || !pet.photos.includes(primary)) return [...pet.photos];
+    return [primary, ...pet.photos.filter((p) => p !== primary)];
 }
