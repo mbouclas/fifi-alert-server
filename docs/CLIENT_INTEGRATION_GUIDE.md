@@ -190,6 +190,9 @@ class TokenService {
 | `/users/:userId/pets/:petId` | PUT | Update user's pet | Bearer token | - |
 | `/users/:userId/pets/:petId` | DELETE | Delete user's pet | Bearer token | - |
 
+> `GET /pets` returns personal pets only. Pets listed for adoption are managed under `/adoptions`
+> and require an `X-Client-Key` header for browsing. See [Adoption Board — Client Integration Guide](clients/adoption-board.md).
+
 #### Pet Registration Example
 
 ```typescript

@@ -289,6 +289,20 @@ exports.Prisma.PetScalarFieldEnum = {
   updated_at: 'updated_at'
 };
 
+exports.Prisma.AdoptionListingScalarFieldEnum = {
+  id: 'id',
+  petId: 'petId',
+  userId: 'userId',
+  status: 'status',
+  lat: 'lat',
+  lon: 'lon',
+  locationAddress: 'locationAddress',
+  description: 'description',
+  adoptedAt: 'adoptedAt',
+  created_at: 'created_at',
+  updated_at: 'updated_at'
+};
+
 exports.Prisma.AlertScalarFieldEnum = {
   id: 'id',
   creator_id: 'creator_id',
@@ -495,6 +509,12 @@ exports.Size = exports.$Enums.Size = {
   LARGE: 'LARGE'
 };
 
+exports.AdoptionStatus = exports.$Enums.AdoptionStatus = {
+  AVAILABLE: 'AVAILABLE',
+  ADOPTED: 'ADOPTED',
+  WITHDRAWN: 'WITHDRAWN'
+};
+
 exports.PetSpecies = exports.$Enums.PetSpecies = {
   DOG: 'DOG',
   CAT: 'CAT',
@@ -546,6 +566,7 @@ exports.Prisma.ModelName = {
   PetType: 'PetType',
   PetTypeTranslation: 'PetTypeTranslation',
   Pet: 'Pet',
+  AdoptionListing: 'AdoptionListing',
   Alert: 'Alert',
   Device: 'Device',
   SavedZone: 'SavedZone',

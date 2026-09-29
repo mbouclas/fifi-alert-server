@@ -82,14 +82,16 @@ export class PetService {
   async createPet(
     userId: number,
     data: CreatePetDto,
+    tx?: Prisma.TransactionClient,
   ): Promise<PetWithType> {
     const tagId = await this.generateTagId();
     await this.requirePetType(data.petTypeId);
 
     const { petTypeId, ...petData } = data;
+    const db = tx ?? this.prisma;
 
     try {
-      return await this.prisma.pet.create({
+      return await db.pet.create({
         data: {
           ...petData,
           tagId,
@@ -113,11 +115,12 @@ export class PetService {
   }
 
   /**
-   * Find all pets for a specific user
+   * Find all personal pets for a specific user.
+   * Pets listed for adoption are excluded; see AdoptionService.findMine.
    */
   async findAllByUser(userId: number): Promise<PetWithType[]> {
     return this.prisma.pet.findMany({
-      where: { userId },
+      where: { userId, adoptionListing: null },
       orderBy: { created_at: 'desc' },
       include: petWithTypeInclude,
     });
@@ -171,6 +174,7 @@ export class PetService {
     id: number,
     userId: number,
     data: UpdatePetDto,
+    tx?: Prisma.TransactionClient,
   ): Promise<PetWithType> {
     // Verify ownership first
     await this.findOne(id, userId);
@@ -183,8 +187,10 @@ export class PetService {
       updateInput.petType = { connect: { id: petTypeId } };
     }
 
+    const db = tx ?? this.prisma;
+
     try {
-      return await this.prisma.pet.update({
+      return await db.pet.update({
         where: { id },
         data: updateInput,
         include: petWithTypeInclude,

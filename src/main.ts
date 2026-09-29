@@ -93,11 +93,22 @@ async function bootstrap() {
       bearerFormat: 'JWT',
       description: 'Enter your bearer token from authentication',
     })
+    .addApiKey(
+      {
+        type: 'apiKey',
+        in: 'header',
+        name: 'X-Client-Key',
+        description:
+          'Static client app key (CLIENT_API_KEYS). Lets client apps read the adoption board without a logged-in user.',
+      },
+      'client-key',
+    )
     .addTag('alerts', 'Missing pet alert management')
     .addTag('Authentication', 'User authentication and session management')
     .addTag('Users', 'User profile and account management')
     .addTag('Pets', 'Pet profile management')
     .addTag('Pet Types', 'Pet type management (localised via lang / Accept-Language)')
+    .addTag('Adoptions', 'Pet adoption board (public browse with X-Client-Key, owner management with bearer)')
     .addTag('Languages', 'Available languages and the default language')
     .addTag('Sightings', 'Pet sighting reports')
     .addTag('Devices', 'Device registration and location management')
@@ -142,6 +153,7 @@ async function bootstrap() {
       'X-Request-ID', // Request correlation
       'X-Idempotency-Key', // Idempotency support
       'X-Session-ID', // Session tracking
+      'X-Client-Key', // Static client app key for user-less endpoints
     ],
     exposedHeaders: [
       'X-Request-ID', // Allow clients to read request ID

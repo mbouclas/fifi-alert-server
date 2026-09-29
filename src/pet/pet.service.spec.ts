@@ -1,4 +1,12 @@
 import { Test, TestingModule } from '@nestjs/testing';
+
+// nanoid ships ESM only; Jest (CommonJS) cannot parse it without a transform.
+jest.mock('nanoid', () => {
+  let counter = 0;
+  return {
+    customAlphabet: () => () => `TAG${String(counter++).padStart(6, '0')}`,
+  };
+});
 import { PetService } from './pet.service';
 import { PrismaService } from '../services/prisma.service';
 import {
@@ -115,6 +123,21 @@ describe('PetService', () => {
       });
     });
 
+    it('should create through the transaction client when one is provided', async () => {
+      const userId = 1;
+      const petData = { petTypeId: petTypeDog.id, name: 'Buddy' };
+      const tx = { pet: { create: jest.fn().mockResolvedValue({ id: 7 }) } } as any;
+
+      mockPrismaService.pet.findUnique.mockResolvedValue(null);
+      mockPrismaService.petType.findUnique.mockResolvedValue(petTypeDog);
+
+      const result = await service.createPet(userId, petData, tx);
+
+      expect(result).toEqual({ id: 7 });
+      expect(tx.pet.create).toHaveBeenCalledTimes(1);
+      expect(mockPrismaService.pet.create).not.toHaveBeenCalled();
+    });
+
     it('should throw UnprocessableEntityException when pet type is missing', async () => {
       const userId = 1;
       const petData = {
@@ -208,7 +231,7 @@ describe('PetService', () => {
 
       expect(result).toEqual(mockPets);
       expect(mockPrismaService.pet.findMany).toHaveBeenCalledWith({
-        where: { userId },
+        where: { userId, adoptionListing: null },
         orderBy: { created_at: 'desc' },
         include: petWithTypeInclude,
       });

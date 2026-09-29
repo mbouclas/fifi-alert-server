@@ -36,6 +36,7 @@ model User {
   auditLogs          AuditLog[]
   pets               Pet[]       @relation("UserPets")
   alert_zones        AlertZone[] @relation("UserAlertZones")
+  adoptionListings   AdoptionListing[] @relation("UserAdoptionListings")
 
   @@index([email])
   @@index([banned])
@@ -325,13 +326,50 @@ model Pet {
   updated_at DateTime @updatedAt @map("updated_at")
 
   // Relations
-  alerts Alert[] @relation("PetAlerts")
+  alerts          Alert[]          @relation("PetAlerts")
+  adoptionListing AdoptionListing? @relation("PetAdoptionListing")
 
   @@index([userId])
   @@index([tagId])
   @@index([petTypeId])
   @@index([isMissing])
   @@map("pet")
+}
+
+// Adoption Listing Status Enum
+enum AdoptionStatus {
+  AVAILABLE
+  ADOPTED
+  WITHDRAWN
+}
+
+// Adoption Listing Model - a pet offered for adoption (1:1 with Pet)
+model AdoptionListing {
+  id     Int  @id @default(autoincrement())
+  petId  Int  @unique @map("pet_id")
+  pet    Pet  @relation("PetAdoptionListing", fields: [petId], references: [id], onDelete: Cascade)
+  userId Int  @map("user_id")
+  user   User @relation("UserAdoptionListings", fields: [userId], references: [id], onDelete: Cascade)
+
+  status AdoptionStatus @default(AVAILABLE)
+
+  // Location (PostGIS geometry)
+  lat             Float
+  lon             Float
+  location_point  Unsupported("geometry(Point, 4326)") @map("location_point") // PostGIS POINT
+  locationAddress String?                              @map("location_address") @pg.VarChar(255)
+
+  description String?   @pg.Text
+  adoptedAt   DateTime? @map("adopted_at")
+
+  // Timestamps
+  created_at DateTime @default(now()) @map("created_at")
+  updated_at DateTime @updatedAt @map("updated_at")
+
+  @@index([userId])
+  @@index([status])
+  @@index([location_point], type: Gist, name: "adoption_listing_location_gist_idx") // Spatial index
+  @@map("adoption_listing")
 }
 
 // Alert Status Enum

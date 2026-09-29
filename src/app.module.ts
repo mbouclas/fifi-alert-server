@@ -35,6 +35,7 @@ import { RequestIdMiddleware } from './shared/middleware/request-id.middleware';
 import { LoggingInterceptor } from './shared/interceptors/logging.interceptor';
 import { AuditModule } from './audit/audit.module';
 import { PetModule } from './pet/pet.module';
+import { AdoptionModule } from './adoption/adoption.module';
 import { AlertZoneCacheService } from './user/alert-zone-cache.service';
 import { PetTypesModule } from './pet-types/pet-types.module';
 import { I18nModule } from './i18n/i18n.module';
@@ -100,6 +101,7 @@ import { I18nModule } from './i18n/i18n.module';
     HealthModule,
     AuditModule,
     PetModule,
+    AdoptionModule,
     PetTypesModule,
   ],
   controllers: [AppController],
