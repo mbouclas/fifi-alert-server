@@ -6,6 +6,7 @@ import {
   Logger,
   Inject,
 } from '@nestjs/common';
+import { getWebAppUrl } from '@config/web-app.config';
 import { ConfigService } from '@nestjs/config';
 import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
 import { PrismaService } from '@services/prisma.service';
@@ -20,8 +21,27 @@ import {
   sanitizeUpdateData,
 } from '@shared/helpers/prisma-model-fields.helper';
 import { hashPassword } from 'better-auth/crypto';
-import { auth, getEmailVerificationCallbackURL } from '../auth';
+import {
+  auth,
+  getEmailVerificationCallbackURL,
+  AUTH_PASSWORD_RESET_TOKEN_EXPIRES_IN,
+  AUTH_EMAIL_VERIFICATION_EXPIRES_IN,
+  AUTH_DELETE_ACCOUNT_TOKEN_EXPIRES_IN,
+} from '../auth';
+import type {
+  IAccountDeletionPayload,
+  IAccountDeletionVerificationRequestedPayload,
+  IAuthEventUser,
+  IEmailChangeConfirmationRequestedPayload,
+  IEmailVerifiedPayload,
+  IPasswordResetEmailRequestedPayload,
+  IPasswordUpdatedPayload,
+} from '../auth/auth-events';
 import { SharedModule } from '@shared/shared.module';
+
+/** The subset of a user record the email templates need. */
+export type IEmailRecipient = Pick<IAuthEventUser, 'id' | 'email'> &
+  Partial<Pick<IAuthEventUser, 'firstName' | 'lastName' | 'name'>>;
 import { AUDIT_EVENT_NAMES } from '../audit/audit-event-names';
 import { IAuditEventPayload } from '../audit/interfaces/audit-event-payload.interface';
 import { EmailService, IEmailTemplate } from '@shared/email/email.service';
@@ -52,9 +72,17 @@ export enum UserServiceEventNames {
   UPDATED = 'UPDATED',
   DELETED = 'DELETED',
   CREATED = 'CREATED',
-  ACCOUNT_VERIFICATION_EMAIL_REQUESTED = 'ACCOUNT_VERIFICATION_EMAIL_REQUESTED',
   IMPORTED_VIA_EXELSYS = 'IMPORTED_VIA_EXELSYS',
+  // The following mirror AUTH_EVENT_NAMES (src/auth/auth-events.ts); they are
+  // emitted by the better-auth hooks in src/auth.ts and handled below.
+  ACCOUNT_VERIFICATION_EMAIL_REQUESTED = 'ACCOUNT_VERIFICATION_EMAIL_REQUESTED',
+  PASSWORD_RESET_EMAIL_REQUESTED = 'PASSWORD_RESET_EMAIL_REQUESTED',
   PASSWORD_UPDATED = 'PASSWORD_UPDATED',
+  EMAIL_VERIFIED = 'EMAIL_VERIFIED',
+  EMAIL_CHANGE_CONFIRMATION_REQUESTED = 'EMAIL_CHANGE_CONFIRMATION_REQUESTED',
+  ACCOUNT_DELETION_VERIFICATION_REQUESTED = 'ACCOUNT_DELETION_VERIFICATION_REQUESTED',
+  ACCOUNT_DELETION_STARTED = 'ACCOUNT_DELETION_STARTED',
+  ACCOUNT_DELETED = 'ACCOUNT_DELETED',
 }
 
 const userServiceEmailTemplateNames: Record<string, IEmailTemplate> = {
@@ -62,28 +90,49 @@ const userServiceEmailTemplateNames: Record<string, IEmailTemplate> = {
     subject: 'Welcome to Our Service!',
     file: `notifications/email/user/welcome.njk`,
   },
-  passwordReset: {
-    subject: 'Password Reset Request',
-    file: `notifications/email/user/passwordReset.njk`,
-  },
   invite: {
     subject: 'Invitation to Join Our Service',
     file: `notifications/email/user/invite.njk`,
   },
   forgotPassword: {
-    subject: 'Forgot Your Password?',
+    subject: 'Reset Your FiFi Alert Password',
     file: `notifications/email/user/forgotPassword.njk`,
+  },
+  passwordChanged: {
+    subject: 'Your FiFi Alert Password Has Been Changed',
+    file: `notifications/email/auth/passwordChanged.njk`,
   },
   accountVerification: {
     subject: 'Verify Your FiFi Alert Account',
     file: `notifications/email/user/emailVerification.njk`,
   },
+  emailChangeConfirmation: {
+    subject: 'Confirm Your FiFi Alert Email Change',
+    file: `notifications/email/user/emailChangeConfirmation.njk`,
+  },
+  accountDeletionVerification: {
+    subject: 'Confirm Deletion of Your FiFi Alert Account',
+    file: `notifications/email/user/accountDeletionVerification.njk`,
+  },
 };
+
+/** Human-readable token lifetime for email copy, e.g. "1 hour", "24 hours". */
+export function formatExpiresIn(seconds: number): string {
+  if (seconds % 3600 === 0) {
+    const hours = seconds / 3600;
+    return `${hours} hour${hours === 1 ? '' : 's'}`;
+  }
+  const minutes = Math.max(1, Math.round(seconds / 60));
+  return `${minutes} minute${minutes === 1 ? '' : 's'}`;
+}
 
 /**
  * UserService handles user management operations including
  * creating users with Better Auth and assigning roles via Prisma.
  */
+/** Slug of the role granted to every self-registered account. */
+export const DEFAULT_ROLE_SLUG = 'user';
+
 @Injectable()
 export class UserService {
   private readonly logger = new Logger(UserService.name);
@@ -398,6 +447,15 @@ export class UserService {
         AUDIT_EVENT_NAMES.USER.PASSWORD_CHANGED,
         auditPayload,
       );
+      // Triggers the "password changed" security email (see handlePasswordUpdated).
+      const passwordUpdated: IPasswordUpdatedPayload = {
+        userId,
+        source: 'admin',
+      };
+      this.eventEmitter.emit(
+        UserServiceEventNames.PASSWORD_UPDATED,
+        passwordUpdated,
+      );
     } catch (error) {
       this.logger.error(
         'Failed to emit audit event for password change:',
@@ -569,23 +627,39 @@ export class UserService {
   }
 
   /**
+   * Assigns the default (`user`) role to an existing user.
+   * Idempotent: already-assigned roles are skipped.
+   * Used by the public signup flow, which creates the account via Better Auth
+   * directly and therefore bypasses `store()`.
+   *
+   * @param userId - The user's ID
+   */
+  async assignDefaultRole(userId: number): Promise<void> {
+    const roles = await this.resolveRoles([]);
+    await this.assignRolesToUser(userId, roles);
+  }
+
+  /**
    * Resolves the roles to assign to the user.
-   * If no roles are provided, fetches the default role (lowest level).
+   * If no roles are provided, fetches the default role (`user`, least privileged).
    *
    * @param roleSlugs - Array of role slugs to resolve
    * @returns Array of Role records
    */
   private async resolveRoles(roleSlugs: string[]) {
     if (roleSlugs.length === 0) {
-      // Get the default role (lowest level, active)
+      // Resolve the default role by slug only. Do NOT fall back to
+      // "lowest/highest level": the meaning of `level` is inconsistent
+      // (seed and MinUserLevelGuard treat lower = more privilege, the live
+      // DB has admin=10 / user=1), so a level-ordered fallback could silently
+      // hand out admin. Failing loudly is safer.
       const defaultRole = await this.prisma.role.findFirst({
-        where: { active: true },
-        orderBy: { level: 'asc' },
+        where: { slug: DEFAULT_ROLE_SLUG, active: true },
       });
 
       if (!defaultRole) {
         throw new NotFoundException(
-          'No active roles found in the system. Please create at least one role.',
+          `Default role "${DEFAULT_ROLE_SLUG}" not found or inactive. Please create it.`,
         );
       }
 
@@ -961,6 +1035,196 @@ export class UserService {
     }
   }
 
+  // ------------------------------------------------------------------
+  // better-auth hook listeners (emitted from src/auth.ts)
+  // ------------------------------------------------------------------
+
+  @OnEvent(UserServiceEventNames.PASSWORD_RESET_EMAIL_REQUESTED, {
+    async: true,
+  })
+  async handlePasswordResetEmailRequested(
+    payload: IPasswordResetEmailRequestedPayload,
+  ): Promise<void> {
+    const userId = Number(payload.user.id);
+    try {
+      await this.sendForgotPasswordEmail(
+        payload.user,
+        payload.resetUrl,
+        formatExpiresIn(payload.expiresInSeconds),
+      );
+      this.emitAudit(AUDIT_EVENT_NAMES.USER.PASSWORD_RESET_REQUESTED, {
+        eventType: 'UPDATE',
+        entityType: 'USER',
+        entityId: userId,
+        userId,
+        action: 'user_password_reset_requested',
+        description: `Password reset link sent to ${payload.user.email}`,
+        success: true,
+      });
+    } catch (error) {
+      this.logger.error(
+        `Password reset email send failed for user ${userId}:`,
+        error,
+      );
+    }
+  }
+
+  @OnEvent(UserServiceEventNames.PASSWORD_UPDATED, { async: true })
+  async handlePasswordUpdated(payload: IPasswordUpdatedPayload): Promise<void> {
+    try {
+      const user =
+        payload.user ??
+        (await this.prisma.user.findUnique({
+          where: { id: payload.userId },
+          select: {
+            id: true,
+            email: true,
+            firstName: true,
+            lastName: true,
+            name: true,
+          },
+        }));
+
+      if (!user) {
+        this.logger.warn(
+          `Password updated for unknown user ${payload.userId}; no email sent`,
+        );
+        return;
+      }
+
+      await this.sendPasswordChangedEmail(user);
+
+      if (payload.source === 'reset') {
+        this.emitAudit(AUDIT_EVENT_NAMES.USER.PASSWORD_RESET_COMPLETED, {
+          eventType: 'UPDATE',
+          entityType: 'USER',
+          entityId: payload.userId,
+          userId: payload.userId,
+          action: 'user_password_reset_completed',
+          description: `Password reset completed for ${user.email}`,
+          success: true,
+        });
+      }
+    } catch (error) {
+      this.logger.error(
+        `Password changed email send failed for user ${payload.userId}:`,
+        error,
+      );
+    }
+  }
+
+  @OnEvent(UserServiceEventNames.EMAIL_VERIFIED, { async: true })
+  handleEmailVerified(payload: IEmailVerifiedPayload): void {
+    const userId = Number(payload.user.id);
+    this.logger.log(`Email verified for user ${userId}: ${payload.user.email}`);
+    this.emitAudit(AUDIT_EVENT_NAMES.USER.EMAIL_VERIFIED, {
+      eventType: 'UPDATE',
+      entityType: 'USER',
+      entityId: userId,
+      userId,
+      action: 'user_email_verified',
+      description: `Email address verified: ${payload.user.email}`,
+      success: true,
+    });
+  }
+
+  @OnEvent(UserServiceEventNames.EMAIL_CHANGE_CONFIRMATION_REQUESTED, {
+    async: true,
+  })
+  async handleEmailChangeConfirmationRequested(
+    payload: IEmailChangeConfirmationRequestedPayload,
+  ): Promise<void> {
+    const userId = Number(payload.user.id);
+    try {
+      await this.sendEmailChangeConfirmationEmail(
+        payload.user,
+        payload.newEmail,
+        payload.confirmUrl,
+        formatExpiresIn(payload.expiresInSeconds),
+      );
+      this.emitAudit(AUDIT_EVENT_NAMES.USER.UPDATED, {
+        eventType: 'UPDATE',
+        entityType: 'USER',
+        entityId: userId,
+        userId,
+        action: 'user_email_change_requested',
+        description: `Email change requested: ${payload.user.email} -> ${payload.newEmail}`,
+        newValues: { email: payload.newEmail },
+        success: true,
+      });
+    } catch (error) {
+      this.logger.error(
+        `Email change confirmation send failed for user ${userId}:`,
+        error,
+      );
+    }
+  }
+
+  @OnEvent(UserServiceEventNames.ACCOUNT_DELETION_VERIFICATION_REQUESTED, {
+    async: true,
+  })
+  async handleAccountDeletionVerificationRequested(
+    payload: IAccountDeletionVerificationRequestedPayload,
+  ): Promise<void> {
+    const userId = Number(payload.user.id);
+    try {
+      await this.sendAccountDeletionVerificationEmail(
+        payload.user,
+        payload.deleteUrl,
+        formatExpiresIn(payload.expiresInSeconds),
+      );
+      this.emitAudit(AUDIT_EVENT_NAMES.USER.UPDATED, {
+        eventType: 'UPDATE',
+        entityType: 'USER',
+        entityId: userId,
+        userId,
+        action: 'user_account_deletion_requested',
+        description: `Account deletion verification sent to ${payload.user.email}`,
+        success: true,
+      });
+    } catch (error) {
+      this.logger.error(
+        `Account deletion verification send failed for user ${userId}:`,
+        error,
+      );
+    }
+  }
+
+  @OnEvent(UserServiceEventNames.ACCOUNT_DELETION_STARTED, { async: true })
+  handleAccountDeletionStarted(payload: IAccountDeletionPayload): void {
+    this.logger.warn(
+      `Deleting account ${payload.user.id} (${payload.user.email}) via better-auth`,
+    );
+  }
+
+  @OnEvent(UserServiceEventNames.ACCOUNT_DELETED, { async: true })
+  handleAccountDeleted(payload: IAccountDeletionPayload): void {
+    const userId = Number(payload.user.id);
+    this.logger.log(`Account ${userId} (${payload.user.email}) deleted`);
+    this.emitAudit(AUDIT_EVENT_NAMES.USER.DELETED, {
+      eventType: 'DELETE',
+      entityType: 'USER',
+      entityId: userId,
+      userId,
+      action: 'user_account_deleted',
+      description: `User account deleted by owner: ${payload.user.email}`,
+      oldValues: {
+        email: payload.user.email,
+        firstName: payload.user.firstName,
+        lastName: payload.user.lastName,
+      },
+      success: true,
+    });
+  }
+
+  private emitAudit(event: string, payload: IAuditEventPayload): void {
+    try {
+      this.eventEmitter.emit(event, payload);
+    } catch (error) {
+      this.logger.error(`Failed to emit audit event ${event}:`, error);
+    }
+  }
+
   async sendAccountVerificationEmail(
     user: Pick<User, 'id' | 'email' | 'firstName' | 'lastName' | 'name'>,
     verificationUrl: string,
@@ -989,7 +1253,7 @@ export class UserService {
           },
           verificationUrl,
           expirationHours: 24,
-          appUrl: process.env.APP_URL || 'https://fifi-alert.com',
+          appUrl: getWebAppUrl(),
         },
       });
 
@@ -1039,7 +1303,7 @@ export class UserService {
             lastName: user.lastName,
             name: user.name,
           },
-          appUrl: process.env.APP_URL || 'https://fifi-alert.com',
+          appUrl: getWebAppUrl(),
         },
       });
 
@@ -1059,45 +1323,36 @@ export class UserService {
   }
 
   /**
-   * Send forgot password email with reset link
+   * Send forgot password email with reset link.
+   *
+   * The link is built by `buildWebResetPasswordUrl` in src/auth.ts from the
+   * token better-auth generated; this method never sees the raw token.
+   *
    * @param user User requesting password reset
-   * @param resetToken Password reset token
-   * @param expiresIn Token expiration duration (e.g., "24 hours")
+   * @param resetLink Absolute web-app URL carrying the reset token
+   * @param expiresIn Token expiration duration (e.g., "1 hour")
    * @returns Success message
    */
   async sendForgotPasswordEmail(
-    user: User,
-    resetToken: string,
-    expiresIn: string = '24 hours',
+    user: IEmailRecipient,
+    resetLink: string,
+    expiresIn: string = formatExpiresIn(AUTH_PASSWORD_RESET_TOKEN_EXPIRES_IN),
   ): Promise<{ success: boolean; message: string }> {
     this.logger.log(
       `Sending forgot password email to user ${user.id}: ${user.email}`,
     );
 
-    const appUrl = process.env.APP_URL || 'https://fifi-alert.com';
-    const resetLink = `${appUrl}/reset-password?token=${resetToken}`;
-
-    // Instantiate EmailService with local templates
-    const emailService = new EmailService(
-      this.emailProvider,
-      this.eventEmitter,
-      userServiceEmailTemplateNames,
-    );
+    const emailService = this.createEmailService();
 
     try {
       await emailService.sendHtml('forgotPassword', {
         from: String(process.env.MAIL_NOTIFICATIONS_FROM),
         to: user.email,
         templateData: {
-          user: {
-            id: user.id,
-            email: user.email,
-            firstName: user.firstName,
-            lastName: user.lastName,
-            name: user.name,
-          },
+          user: this.toTemplateUser(user),
           resetLink,
           expiresIn,
+          appUrl: getWebAppUrl(),
         },
       });
 
@@ -1119,63 +1374,159 @@ export class UserService {
   }
 
   /**
-   * Send password reset confirmation email
-   * @param user User whose password was reset
-   * @param resetToken Password reset token
-   * @param expiresIn Token expiration duration (e.g., "24 hours")
-   * @returns Success message
+   * Send the "your password has been changed" security notice.
+   * @param user User whose password was changed
    */
-  async sendPasswordResetEmail(
-    user: User,
-    resetToken: string,
-    expiresIn: string = '24 hours',
+  async sendPasswordChangedEmail(
+    user: IEmailRecipient,
   ): Promise<{ success: boolean; message: string }> {
     this.logger.log(
-      `Sending password reset email to user ${user.id}: ${user.email}`,
+      `Sending password changed email to user ${user.id}: ${user.email}`,
     );
 
-    const appUrl = process.env.APP_URL || 'https://fifi-alert.com';
-    const resetLink = `${appUrl}/reset-password?token=${resetToken}`;
-
-    // Instantiate EmailService with local templates
-    const emailService = new EmailService(
-      this.emailProvider,
-      this.eventEmitter,
-      userServiceEmailTemplateNames,
-    );
+    const emailService = this.createEmailService();
 
     try {
-      await emailService.sendHtml('passwordReset', {
+      const timestamp = new Date();
+      await emailService.sendHtml('passwordChanged', {
         from: String(process.env.MAIL_NOTIFICATIONS_FROM),
         to: user.email,
         templateData: {
-          user: {
-            id: user.id,
-            email: user.email,
-            firstName: user.firstName,
-            lastName: user.lastName,
-            name: user.name,
-          },
-          resetLink,
+          user: this.toTemplateUser(user),
+          timestamp,
+          timestampFormatted: timestamp.toLocaleString('en-US', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            hour: 'numeric',
+            minute: 'numeric',
+            second: 'numeric',
+            hour12: true,
+          }),
+          appUrl: getWebAppUrl(),
+        },
+      });
+
+      this.logger.log(`Password changed email sent to user ${user.id}`);
+
+      return {
+        success: true,
+        message: `Password change confirmation sent to ${user.email}`,
+      };
+    } catch (error) {
+      this.logger.error(
+        `Failed to send password changed email to user ${user.id}:`,
+        error,
+      );
+      throw new Error('FAILED_TO_SEND_PASSWORD_CHANGED_EMAIL');
+    }
+  }
+
+  /**
+   * Send the email-change confirmation to the user's CURRENT address.
+   * Approving it makes better-auth send a verification email to the new one.
+   */
+  async sendEmailChangeConfirmationEmail(
+    user: IEmailRecipient,
+    newEmail: string,
+    confirmLink: string,
+    expiresIn: string = formatExpiresIn(AUTH_EMAIL_VERIFICATION_EXPIRES_IN),
+  ): Promise<{ success: boolean; message: string }> {
+    this.logger.log(
+      `Sending email change confirmation to user ${user.id}: ${user.email} -> ${newEmail}`,
+    );
+
+    const emailService = this.createEmailService();
+
+    try {
+      await emailService.sendHtml('emailChangeConfirmation', {
+        from: String(process.env.MAIL_NOTIFICATIONS_FROM),
+        to: user.email,
+        templateData: {
+          user: this.toTemplateUser(user),
+          newEmail,
+          confirmLink,
           expiresIn,
+          appUrl: getWebAppUrl(),
         },
       });
 
       this.logger.log(
-        `Password reset email sent successfully to user ${user.id}`,
+        `Email change confirmation sent successfully to user ${user.id}`,
       );
 
       return {
         success: true,
-        message: `Password reset email sent to ${user.email}`,
+        message: `Email change confirmation sent to ${user.email}`,
       };
     } catch (error) {
       this.logger.error(
-        `Failed to send password reset email to user ${user.id}:`,
+        `Failed to send email change confirmation to user ${user.id}:`,
         error,
       );
-      throw new Error('FAILED_TO_SEND_PASSWORD_RESET_EMAIL');
+      throw new Error('FAILED_TO_SEND_EMAIL_CHANGE_CONFIRMATION_EMAIL');
     }
+  }
+
+  /**
+   * Send the account-deletion verification link.
+   */
+  async sendAccountDeletionVerificationEmail(
+    user: IEmailRecipient,
+    deleteLink: string,
+    expiresIn: string = formatExpiresIn(AUTH_DELETE_ACCOUNT_TOKEN_EXPIRES_IN),
+  ): Promise<{ success: boolean; message: string }> {
+    this.logger.log(
+      `Sending account deletion verification to user ${user.id}: ${user.email}`,
+    );
+
+    const emailService = this.createEmailService();
+
+    try {
+      await emailService.sendHtml('accountDeletionVerification', {
+        from: String(process.env.MAIL_NOTIFICATIONS_FROM),
+        to: user.email,
+        templateData: {
+          user: this.toTemplateUser(user),
+          deleteLink,
+          expiresIn,
+          appUrl: getWebAppUrl(),
+        },
+      });
+
+      this.logger.log(
+        `Account deletion verification sent successfully to user ${user.id}`,
+      );
+
+      return {
+        success: true,
+        message: `Account deletion verification sent to ${user.email}`,
+      };
+    } catch (error) {
+      this.logger.error(
+        `Failed to send account deletion verification to user ${user.id}:`,
+        error,
+      );
+      throw new Error('FAILED_TO_SEND_ACCOUNT_DELETION_VERIFICATION_EMAIL');
+    }
+  }
+
+  private createEmailService(): EmailService {
+    return new EmailService(
+      this.emailProvider,
+      this.eventEmitter,
+      userServiceEmailTemplateNames,
+    );
+  }
+
+  private toTemplateUser(user: IEmailRecipient) {
+    return {
+      id: user.id,
+      email: user.email,
+      firstName: user.firstName ?? '',
+      lastName: user.lastName ?? '',
+      name: user.name ?? '',
+    };
   }
 
   /**
@@ -1194,7 +1545,7 @@ export class UserService {
   ): Promise<{ success: boolean; message: string }> {
     this.logger.log(`Sending invite email to user ${user.id}: ${user.email}`);
 
-    const appUrl = process.env.APP_URL || 'https://fifi-alert.com';
+    const appUrl = getWebAppUrl();
     const inviteLink = `${appUrl}/accept-invite?token=${inviteToken}`;
 
     // Instantiate EmailService with local templates

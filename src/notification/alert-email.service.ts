@@ -1,4 +1,5 @@
 import { Injectable, Logger, Inject } from '@nestjs/common';
+import { buildWebAppUrl, getWebAppUrl } from '@config/web-app.config';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { EmailService, IEmailTemplate } from '@shared/email/email.service';
 import type { IEmailProvider } from '@shared/email/interfaces/email-provider.interface';
@@ -99,10 +100,12 @@ export class AlertEmailService {
             description: payload.petDescription,
             location: payload.locationAddress ?? '',
             photoUrl: payload.petPhotoUrl ?? '',
-            reportSightingUrl: `${process.env.APP_URL}/alerts/${payload.alertId}`,
+            // Web-app routes: /alerts/:id shows the alert, /alerts/:id/sighting reports one.
+            viewUrl: buildWebAppUrl(`/alerts/${payload.alertId}`),
+            reportSightingUrl: buildWebAppUrl(`/alerts/${payload.alertId}/sighting`),
           },
           distanceKm: payload.distanceKm,
-          appUrl: process.env.APP_URL,
+          appUrl: getWebAppUrl(),
         },
       });
 

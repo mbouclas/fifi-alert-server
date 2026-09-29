@@ -3,6 +3,7 @@ import {
   IsEnum,
   IsOptional,
   IsArray,
+  ArrayMaxSize,
   IsUrl,
   IsDate,
   Length,
@@ -13,6 +14,7 @@ import {
 import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Gender, Size } from '@prisma-lib/client';
+import { getMaxPetPhotos } from '../../config/pet.config';
 
 export class CreatePetDto {
   @ApiProperty({
@@ -46,6 +48,7 @@ export class CreatePetDto {
     description:
       'Array of backend-hosted public photo URLs returned by POST /pets/{id}/photos',
     type: [String],
+    maxItems: getMaxPetPhotos(),
     example: [
       'https://res.cloudinary.com/demo/image/upload/v1714074520/fifi-alert/pets/123/buddy.jpg',
       'https://res.cloudinary.com/demo/image/upload/v1714074521/fifi-alert/pets/123/buddy-side.jpg',
@@ -53,8 +56,21 @@ export class CreatePetDto {
   })
   @IsOptional()
   @IsArray()
+  @ArrayMaxSize(getMaxPetPhotos(), {
+    message: `A pet can have at most ${getMaxPetPhotos()} photos`,
+  })
   @IsUrl({}, { each: true, message: 'Each photo must be a valid URL' })
   photos?: string[];
+
+  @ApiPropertyOptional({
+    description:
+      'URL of the primary photo. Must be one of the entries in photos. Defaults to the first photo when omitted.',
+    example:
+      'https://res.cloudinary.com/demo/image/upload/v1714074520/fifi-alert/pets/123/buddy.jpg',
+  })
+  @IsOptional()
+  @IsUrl({}, { message: 'Primary photo must be a valid URL' })
+  primaryPhoto?: string;
 
   @ApiPropertyOptional({
     description: 'Size of the pet',

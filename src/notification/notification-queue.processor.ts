@@ -21,7 +21,18 @@ import {
   EXCLUSION_REASONS,
 } from './notification.constants';
 import { NOTIFICATION_QUEUE } from './notification.constants';
-import { NotificationStatus } from '../generated/prisma';
+import {
+  LocationSource,
+  NotificationConfidence,
+  NotificationStatus,
+} from '../generated/prisma';
+
+/** Push errors that a BullMQ retry can never fix. */
+const TERMINAL_PUSH_ERRORS = new Set([
+  'FCM_NOT_INITIALIZED',
+  'APNS_NOT_INITIALIZED',
+  'WEB_PUSH_NOT_INITIALIZED',
+]);
 import { AUDIT_EVENT_NAMES } from '../audit/audit-event-names';
 import { IAuditEventPayload } from '../audit/interfaces/audit-event-payload.interface';
 
@@ -80,8 +91,10 @@ export class NotificationQueueProcessor extends WorkerHost {
           pet_name: true,
           pet_species: true,
           pet_description: true,
+          pet_photos: true,
           location_address: true,
           status: true,
+          creator_id: true,
         },
       });
 
@@ -105,8 +118,11 @@ export class NotificationQueueProcessor extends WorkerHost {
 
       // Each wave only handles its own confidence tier. HIGH goes out immediately;
       // MEDIUM and LOW arrive later, and only if the alert is still unresolved.
+      // The reporter's own devices and zones match by definition; they never get
+      // "a pet is missing near you" for their own pet.
+      const creatorId = String(alert.creator_id);
       const deviceMatches = allMatches.filter(
-        (match) => match.confidence === wave,
+        (match) => match.confidence === wave && match.userId !== creatorId,
       );
 
       this.logger.log(
@@ -127,29 +143,16 @@ export class NotificationQueueProcessor extends WorkerHost {
         `Confidence breakdown: ${JSON.stringify(confidenceBreakdown)}`,
       );
 
-      // Create notification records and queue push jobs
+      // Pass 1: push to every device with a push channel.
       let queuedCount = 0;
       const inQuietHours = this.isQuietHours();
+      const pushedUserIds = new Set<string>();
 
-      for (const match of deviceMatches) {
+      const pushMatches = deviceMatches.filter((match) => match.pushToken);
+      const tokenlessMatches = deviceMatches.filter((match) => !match.pushToken);
+
+      for (const match of pushMatches) {
         const deviceId = parseInt(match.deviceId);
-
-        // No push channel. On iOS this is the common case: the user never added
-        // FiFi to their Home Screen, so they cannot be subscribed at all.
-        if (!match.pushToken) {
-          await this.notificationService.trackExclusion(
-            alertId,
-            deviceId,
-            EXCLUSION_REASONS.PUSH_TOKEN_MISSING,
-          );
-
-          // Fall back to email, but only for the wave that justifies it.
-          if (wave === 'HIGH') {
-            await this.sendFallbackEmail(alert, match);
-          }
-
-          continue;
-        }
 
         // A missing pet 400m away is worth waking someone for; a LOW-confidence
         // city-level match at 3am is not.
@@ -163,7 +166,10 @@ export class NotificationQueueProcessor extends WorkerHost {
         }
 
         // A later wave must not re-notify someone an earlier wave already reached.
-        if (await this.hasBeenNotified(alertId, match.userId)) {
+        if (
+          pushedUserIds.has(match.userId) ||
+          (await this.hasBeenNotified(alertId, match.userId, 'PUSH'))
+        ) {
           await this.notificationService.trackExclusion(
             alertId,
             deviceId,
@@ -198,8 +204,48 @@ export class NotificationQueueProcessor extends WorkerHost {
           notificationId: notification.id,
         } as PushNotificationJob);
 
+        pushedUserIds.add(match.userId);
         queuedCount++;
       }
+
+      // Pass 2: email. Push is best-effort (iOS users who never added FiFi to
+      // their Home Screen cannot be subscribed at all), so every HIGH-wave user
+      // also gets one email. Lower waves are push-only: "a pet is missing
+      // somewhere in your city" is not worth an email.
+      for (const match of tokenlessMatches) {
+        await this.notificationService.trackExclusion(
+          alertId,
+          parseInt(match.deviceId),
+          EXCLUSION_REASONS.PUSH_TOKEN_MISSING,
+        );
+      }
+
+      let emailedCount = 0;
+
+      if (wave === 'HIGH') {
+        // Matches are ordered by priority then distance, so the first one per
+        // user carries the most relevant distance for the email.
+        const emailCandidates = new Map<string, (typeof deviceMatches)[number]>();
+        for (const match of deviceMatches) {
+          if (!emailCandidates.has(match.userId)) {
+            emailCandidates.set(match.userId, match);
+          }
+        }
+
+        for (const [userId, match] of emailCandidates) {
+          if (await this.hasBeenNotified(alertId, userId, 'EMAIL')) continue;
+
+          const sent = await this.sendFallbackEmail(alert, match);
+          // null = nothing attempted (opted out); no row to record.
+          if (sent === null) continue;
+          await this.recordEmailNotification(alertId, match, sent);
+          if (sent) emailedCount++;
+        }
+      }
+
+      this.logger.log(
+        `Wave ${wave}: emailed ${emailedCount} users for alert ${alertId}`,
+      );
 
       this.logger.log(
         `Wave ${wave}: queued ${queuedCount} push notifications for alert ${alertId}`,
@@ -382,6 +428,10 @@ export class NotificationQueueProcessor extends WorkerHost {
           );
         }
 
+        const terminal =
+          Boolean(sendResult.invalidToken) ||
+          TERMINAL_PUSH_ERRORS.has(sendResult.error ?? '');
+
         // Emit audit event for failed send
         try {
           const auditPayload: IAuditEventPayload = {
@@ -405,6 +455,12 @@ export class NotificationQueueProcessor extends WorkerHost {
           );
         } catch (error) {
           // Silent fail for audit events
+        }
+
+        // Retrying a dead token or a missing provider config cannot succeed.
+        // The HIGH wave already emailed this user, so just let the job complete.
+        if (terminal) {
+          return;
         }
 
         throw new Error(
@@ -451,8 +507,9 @@ export class NotificationQueueProcessor extends WorkerHost {
   }
 
   /**
-   * Degraded delivery for a match with no push channel. Failures are logged and
-   * swallowed: a fallback email must never fail the whole alert fan-out.
+   * Email channel for a match. Returns null when nothing was attempted (user
+   * opted out), otherwise whether the send succeeded. Failures are logged and
+   * swallowed: an email must never fail the whole alert fan-out.
    */
   private async sendFallbackEmail(
     alert: {
@@ -464,14 +521,14 @@ export class NotificationQueueProcessor extends WorkerHost {
       pet_photos?: string[] | null;
     },
     match: { userId: string; distanceKm: number },
-  ): Promise<void> {
+  ): Promise<boolean | null> {
     try {
       const userId = parseInt(match.userId);
 
-      if (!Number.isFinite(userId)) return;
-      if (!(await this.alertEmailService.isOptedIn(userId))) return;
+      if (!Number.isFinite(userId)) return null;
+      if (!(await this.alertEmailService.isOptedIn(userId))) return null;
 
-      await this.alertEmailService.sendAlertEmail(userId, {
+      return await this.alertEmailService.sendAlertEmail(userId, {
         alertId: alert.id,
         petName: alert.pet_name,
         petSpecies: alert.pet_species,
@@ -482,6 +539,42 @@ export class NotificationQueueProcessor extends WorkerHost {
       });
     } catch (error) {
       this.logger.error('Fallback email failed:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Persist a fallback email as a notification row so it shows up alongside
+   * pushes and so hasBeenNotified() dedupes the user across later waves.
+   * Never throws: bookkeeping must not fail the fan-out.
+   */
+  private async recordEmailNotification(
+    alertId: number,
+    match: {
+      deviceId: string;
+      confidence: NotificationConfidence;
+      matchReason: LocationSource;
+      distanceKm: number;
+    },
+    sent: boolean,
+  ): Promise<void> {
+    try {
+      await this.prisma.notification.create({
+        data: {
+          alert_id: alertId,
+          device_id: parseInt(match.deviceId),
+          confidence: match.confidence,
+          match_reason: match.matchReason,
+          distance_km: match.distanceKm,
+          status: sent ? NotificationStatus.SENT : NotificationStatus.FAILED,
+          sent_at: sent ? new Date() : undefined,
+          failed_at: sent ? undefined : new Date(),
+          failure_reason: sent ? undefined : 'EMAIL_FALLBACK_NOT_SENT',
+          meta: { channel: 'EMAIL' },
+        },
+      });
+    } catch (error) {
+      this.logger.error('Failed to record email notification:', error);
     }
   }
 
@@ -494,23 +587,31 @@ export class NotificationQueueProcessor extends WorkerHost {
   }
 
   /**
-   * Whether any device belonging to this user has already been queued or sent a
-   * notification for this alert. Guards against later waves and alert renewals.
+   * Whether this user has already been reached on the given channel for this
+   * alert. Guards against later waves and alert renewals. Push and email are
+   * independent channels, so an email row never blocks a push or vice versa.
+   * Failed pushes are not deliveries and do not count.
    */
   private async hasBeenNotified(
     alertId: number,
     userId: string,
+    channel: 'PUSH' | 'EMAIL',
   ): Promise<boolean> {
-    const existing = await this.prisma.notification.findFirst({
+    const rows = await this.prisma.notification.findMany({
       where: {
         alert_id: alertId,
         excluded: false,
+        status: { not: NotificationStatus.FAILED },
         device: { user_id: parseInt(userId) },
       },
-      select: { id: true },
+      select: { meta: true },
     });
 
-    return Boolean(existing);
+    return rows.some((row) => {
+      const meta = row.meta as { channel?: string } | null;
+      const rowChannel = meta?.channel === 'EMAIL' ? 'EMAIL' : 'PUSH';
+      return rowChannel === channel;
+    });
   }
 
   /**

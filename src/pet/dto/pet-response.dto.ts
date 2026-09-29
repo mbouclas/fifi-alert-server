@@ -1,5 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Gender, Size } from '@prisma-lib/client';
+import { getMaxPetPhotos } from '../../config/pet.config';
 import { PetTypeResponseDto } from '../../pet-types/dto/pet-type-response.dto';
 
 export { PetTypeResponseDto };
@@ -52,11 +53,20 @@ export class PetResponseDto {
   @ApiPropertyOptional({
     description: 'Backend-hosted public photo URLs for the pet',
     type: [String],
+    maxItems: getMaxPetPhotos(),
     example: [
       'https://res.cloudinary.com/demo/image/upload/v1714074520/fifi-alert/pets/123/buddy.jpg',
     ],
   })
   photos?: string[];
+
+  @ApiPropertyOptional({
+    description:
+      'Primary photo URL. Resolves to the explicitly chosen primary, or the first photo when none is set.',
+    example:
+      'https://res.cloudinary.com/demo/image/upload/v1714074520/fifi-alert/pets/123/buddy.jpg',
+  })
+  primaryPhoto?: string;
 
   @ApiPropertyOptional({
     description: 'Size of the pet',

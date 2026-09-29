@@ -205,13 +205,14 @@ const response = await fetch('http://localhost:3000/pets', {
     name: 'Max',
     gender: 'MALE', // MALE, FEMALE (optional)
     size: 'MEDIUM', // SMALL, MEDIUM, LARGE (optional)
-    photos: ['https://example.com/photo1.jpg'], // optional
+    photos: ['https://example.com/photo1.jpg'], // optional, max MAX_PET_PHOTOS (default 5)
+    primaryPhoto: 'https://example.com/photo1.jpg', // optional, must be one of photos; defaults to photos[0]
     birthday: '2020-05-15T00:00:00.000Z', // optional
   }),
 });
 
 const pet = await response.json();
-// Response includes: id, tagId, type, name, gender, size, photos, isMissing, userId, etc.
+// Response includes: id, tagId, type, name, gender, size, photos, primaryPhoto, isMissing, userId, etc.
 // tagId is auto-generated (9 chars, e.g., "PET7K9X2A")
 ```
 
@@ -706,12 +707,11 @@ Many API endpoints automatically trigger email notifications to users. Understan
 |----------|--------|------------|----------|------------|
 | `/auth/signup` | POST | Welcome Email | `welcome` | New user |
 | `/users` | POST | Welcome Email + Invite | `welcome`, `invite` | New user |
-| `/auth/verify-email` | POST | Email Verification | `emailVerification` | Requesting user |
-| `/auth/activate` | POST | Account Activation | `accountActivation` | Requesting user |
-| `/auth/forgot-password` | POST | Forgot Password | `forgotPassword` | User (if exists) |
-| `/auth/reset-password` | POST | Password Reset Confirmation | `passwordReset` | User |
-| `/auth/change-password` | POST | Password Changed Alert | `passwordChanged` | User |
-| `/auth/login` | POST | Login Notification (optional) | `loginNotification` | User |
+| `/auth/signup`, `/auth/login` (unverified user) | POST | Email Verification (link to `{WEB_APP_URL}/verify-email`, see `WEB_APP_EMAIL_LINKS.md`) | `emailVerification` | Requesting user |
+| `/auth/request-password-reset` | POST | Password reset link (`{WEB_APP_URL}/reset-password?token=…`) | `forgotPassword` | User (if exists) |
+| `/auth/reset-password`, `/auth/update-password` | POST | Password Changed Alert | `passwordChanged` | User |
+| `/auth/change-email` | POST | Email-change confirmation (to the current address), then verification (to the new address) | `emailChangeConfirmation`, `emailVerification` | User |
+| `/auth/delete-account` | POST | Account deletion verification (`{WEB_APP_URL}/confirm-delete-account?token=…`) | `accountDeletionVerification` | User |
 | `/alerts` | POST | Alert Created Confirmation | `alertCreated` | Alert creator |
 | `/alerts/:id/publish` | POST | Alert Published Notification | `alertPublished` | Alert creator + nearby users |
 | `/alerts/:id/resolve` | POST | Alert Resolved Confirmation | `alertResolved` | Alert creator |

@@ -8,6 +8,7 @@ import {
   Logger,
   Inject,
 } from '@nestjs/common';
+import { getWebAppUrl } from '@config/web-app.config';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Prisma, AlertStatus, PetSpecies } from '../generated/prisma';
@@ -724,42 +725,15 @@ export class AlertService {
    * Map database alert to response DTO
    */
   private mapToResponseDto(alert: any, requesterId?: number): AlertResponseDto {
-    const isCreator = requesterId === alert.creatorId;
+    // Prisma rows use the snake_case column names, same as the raw geo query.
+    const isCreator = requesterId === alert.creator_id;
 
     return {
-      id: alert.id,
-      creatorId: alert.creatorId,
-      petId: alert.petId,
-      petName: alert.petName,
-      petSpecies: alert.petSpecies,
-      petBreed: alert.petBreed,
-      petDescription: alert.petDescription,
-      petColor: alert.petColor,
-      petAgeYears: alert.petAgeYears,
-      petPhotos: alert.petPhotos,
-      lastSeenLat: alert.lastSeenLat,
-      lastSeenLon: alert.lastSeenLon,
-      locationAddress: alert.locationAddress,
-      alertRadiusKm: alert.alertRadiusKm,
-      status: alert.status,
-      timeLastSeen: alert.timeLastSeen,
-      createdAt: alert.createdAt,
-      updatedAt: alert.updatedAt,
-      expiresAt: alert.expiresAt,
-      resolvedAt: alert.resolvedAt,
-      cancelledAt: alert.cancelled_at,
-      renewalCount: alert.renewalCount,
-      // Contact info visibility
+      ...this.mapRawToResponseDto(alert),
+      // Contact info visibility: the creator always sees their own details.
       contactPhone:
-        isCreator || alert.isPhonePublic ? alert.contactPhone : undefined,
-      contactEmail: isCreator ? alert.contactEmail : undefined,
-      isPhonePublic: alert.isPhonePublic,
-      affectedPostalCodes: alert.affectedPostalCodes,
-      notes: alert.notes,
-      rewardOffered: alert.rewardOffered,
-      rewardAmount: alert.rewardAmount
-        ? parseFloat(alert.rewardAmount)
-        : undefined,
+        isCreator || alert.is_phone_public ? alert.contact_phone : undefined,
+      contactEmail: isCreator ? alert.contact_email : undefined,
       sightingCount: alert.sightings?.length || 0,
     };
   }
@@ -996,7 +970,7 @@ export class AlertService {
             radiusKm: alert.location.radiusKm,
             status: alert.status,
           },
-          appUrl: process.env.APP_URL || 'https://fifi-alert.com',
+          appUrl: getWebAppUrl(),
         },
       });
 
@@ -1060,7 +1034,7 @@ export class AlertService {
             outcome,
             resolvedAt: alert.resolvedAt,
           },
-          appUrl: process.env.APP_URL || 'https://fifi-alert.com',
+          appUrl: getWebAppUrl(),
         },
       });
 
@@ -1134,7 +1108,7 @@ export class AlertService {
               rewardOffered: alert.reward?.offered,
               rewardAmount: alert.reward?.amount,
             },
-            appUrl: process.env.APP_URL || 'https://fifi-alert.com',
+            appUrl: getWebAppUrl(),
           },
         });
         successCount++;

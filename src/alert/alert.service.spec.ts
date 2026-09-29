@@ -280,6 +280,69 @@ describe('AlertService', () => {
             expect(result!.contactEmail).toBeUndefined();
             expect(result!.contactPhone).toBeUndefined(); // Phone is not public
         });
+
+        it('should map every column and show contact details to the creator', async () => {
+            const timeLastSeen = new Date('2026-09-25T17:09:00.000Z');
+            const mockAlert = {
+                id: 14,
+                creator_id: 7,
+                pet_id: 10,
+                pet_name: 'Bobos',
+                pet_species: PetSpecies.DOG,
+                pet_breed: null,
+                pet_description: 'Dog · male · small',
+                pet_color: null,
+                pet_age_years: null,
+                pet_photos: ['a.jpg'],
+                last_seen_lat: 35.1725,
+                last_seen_lon: 33.3653,
+                location_address: null,
+                alert_radius_km: 5.0,
+                status: AlertStatus.ACTIVE,
+                time_last_seen: timeLastSeen,
+                created_at: new Date(),
+                updated_at: new Date(),
+                expires_at: new Date(),
+                resolved_at: null,
+                cancelled_at: null,
+                renewal_count: 1,
+                contact_phone: '+35799000000',
+                contact_email: 'owner@example.com',
+                is_phone_public: false,
+                affected_postal_codes: ['1010'],
+                notes: 'I miss him',
+                reward_offered: true,
+                reward_amount: '50.00',
+                sightings: [{ id: 1 }, { id: 2 }],
+            };
+
+            mockPrismaService.alert.findUnique.mockResolvedValueOnce(mockAlert);
+
+            const result = await service.findById(14, 7); // Creator
+
+            expect(result).toMatchObject({
+                id: 14,
+                creatorId: 7,
+                petId: 10,
+                petName: 'Bobos',
+                petSpecies: PetSpecies.DOG,
+                petPhotos: ['a.jpg'],
+                lastSeenLat: 35.1725,
+                lastSeenLon: 33.3653,
+                alertRadiusKm: 5.0,
+                status: AlertStatus.ACTIVE,
+                timeLastSeen,
+                renewalCount: 1,
+                contactPhone: '+35799000000',
+                contactEmail: 'owner@example.com',
+                isPhonePublic: false,
+                affectedPostalCodes: ['1010'],
+                notes: 'I miss him',
+                rewardOffered: true,
+                rewardAmount: 50,
+                sightingCount: 2,
+            });
+        });
     });
 
     describe('update', () => {
@@ -750,7 +813,7 @@ describe('AlertService', () => {
 
         beforeEach(() => {
             process.env.MAIL_NOTIFICATIONS_FROM = 'noreply@fifi-alert.com';
-            process.env.APP_URL = 'https://fifi-alert.com';
+            process.env.WEB_APP_URL = 'https://fifi-alert.com';
         });
 
         describe('sendAlertCreatedEmail', () => {

@@ -74,6 +74,7 @@ JWT_REFRESH_TOKEN_EXPIRY=7d
 # Better Auth
 BETTER_AUTH_SECRET=<64+ character base64 string>
 BETTER_AUTH_URL=https://api.yourdomain.com
+WEB_APP_URL=https://app.yourdomain.com
 
 # Logging
 LOG_LEVEL=info

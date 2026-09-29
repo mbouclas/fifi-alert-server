@@ -47,12 +47,12 @@
     <a href="{{ activationLink }}" style="color: #007bff;">{{ activationLink }}</a>
   </mj-text>
   {% else %}
-  <mj-button background-color="#007bff" color="#ffffff" href="https://fifi-alert.com/app" padding="15px 0px">
+  <mj-button background-color="#007bff" color="#ffffff" href="{{ appUrl }}/app" padding="15px 0px">
     Open FiFi Alert
   </mj-button>
   {% endif %}
   
   <mj-text padding-top="30px" font-size="13px" color="#666666">
-    Have questions? Check out our <a href="https://fifi-alert.com/help" style="color: #007bff;">Help Center</a> or reply to this email.
+    Have questions? Check out our <a href="{{ appUrl }}/help" style="color: #007bff;">Help Center</a> or reply to this email.
   </mj-text>
 {% endblock %}

@@ -44,6 +44,9 @@ import {
   RequestPasswordResetDto,
   ResetPasswordDto,
   UpdatePasswordDto,
+  ChangeEmailDto,
+  DeleteAccountRequestDto,
+  DeleteAccountConfirmDto,
   AuthResponseDto,
   MeResponseDto,
   RefreshTokenDto,
@@ -53,6 +56,8 @@ import {
 } from '../dto';
 import { AUDIT_EVENT_NAMES } from '../../audit/audit-event-names';
 import { IAuditEventPayload } from '../../audit/interfaces/audit-event-payload.interface';
+import { AUTH_EVENT_NAMES, type IPasswordUpdatedPayload } from '../auth-events';
+import { withTemporaryBetterAuthSession } from '../services/better-auth-session.helper';
 
 /**
  * Auth Controller
@@ -81,6 +86,57 @@ export class AuthController {
     if (!header) return undefined;
     const [scheme, token] = header.split(' ');
     return scheme?.toLowerCase() === 'bearer' && token ? token : undefined;
+  }
+
+  /**
+   * Identify the caller. Bearer token first — better-auth has no bearer
+   * plugin configured, so it only understands its own session COOKIE and
+   * cannot authenticate a JWT client on its own. Falls back to the cookie.
+   *
+   * @throws UnauthorizedException when neither yields a user
+   */
+  private async resolveCallerUserId(
+    req: Request,
+  ): Promise<{ userId: number; accessToken?: string }> {
+    const accessToken = this.bearerFromRequest(req);
+
+    if (accessToken) {
+      try {
+        const decoded =
+          await this.tokenService.validateAccessToken(accessToken);
+        return { userId: decoded.id, accessToken };
+      } catch {
+        throw new UnauthorizedException('Invalid or expired access token');
+      }
+    }
+
+    if (req.headers.cookie) {
+      const headers = new Headers();
+      headers.set('Cookie', req.headers.cookie);
+      const session = await auth.api.getSession({ headers });
+      if (session?.user?.id) {
+        return { userId: Number(session.user.id) };
+      }
+    }
+
+    throw new UnauthorizedException('Not authenticated');
+  }
+
+  /**
+   * Run a better-auth endpoint that requires an authenticated session on
+   * behalf of a JWT caller. Cookie callers are forwarded as-is.
+   */
+  private async callBetterAuthAs<T>(
+    req: Request,
+    userId: number,
+    fn: (headers: Headers) => Promise<T>,
+  ): Promise<T> {
+    if (!this.bearerFromRequest(req) && req.headers.cookie) {
+      const headers = new Headers();
+      headers.set('Cookie', req.headers.cookie);
+      return fn(headers);
+    }
+    return withTemporaryBetterAuthSession(userId, fn);
   }
 
   /**
@@ -563,7 +619,15 @@ export class AuthController {
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({
     summary: 'User signup',
-    description: 'Registers a new user with email and password credentials.',
+    description:
+      'Registers a new user with email and password credentials. ' +
+      'A verification email is sent containing a link to the web app: ' +
+      '`{WEB_APP_URL}/verify-email?token=<jwt>&callbackURL=<optional>`. ' +
+      'The web page must then call `GET /api/auth/verify-email?token=<jwt>` on this API. ' +
+      'That endpoint returns `{ status: true, user }` on success or `401` with ' +
+      '`token_expired` / `invalid_token` / `user_not_found`. ' +
+      'If `callbackURL` is forwarded to it, it redirects (302) instead of returning JSON. ' +
+      'Tokens expire after 24 hours. See docs/WEB_APP_EMAIL_LINKS.md.',
   })
   @ApiBody({ type: SignupDto })
   @ApiResponse({
@@ -608,6 +672,10 @@ export class AuthController {
           meta: { firstTime: true },
         },
       );
+
+      // Better Auth only creates the user row; grant the default role so the
+      // account has permissions once the email is verified.
+      await this.userService.assignDefaultRole(Number(result.user.id));
 
       await this.requestVerificationEmail(
         signupDto.email.toLowerCase(),
@@ -673,6 +741,7 @@ export class AuthController {
    */
   @Post('request-password-reset')
   @AllowAnonymous()
+  @Throttle({ default: { limit: 3, ttl: 3600000 } }) // 3 reset requests per hour
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Request password reset',
@@ -764,6 +833,18 @@ export class AuthController {
         },
       });
 
+      // better-auth calls `deleteVerificationValue(id)` after a successful
+      // reset, but with `generateId: 'serial'` and the uuid-keyed
+      // `verification` table that delete does not remove the row, leaving the
+      // token reusable until it expires. Consume it here.
+      await this.prisma.verification
+        .deleteMany({
+          where: { identifier: `reset-password:${resetDto.token}` },
+        })
+        .catch((cleanupError) => {
+          this.logger.warn(`Could not consume reset token: ${cleanupError}`);
+        });
+
       // A password reset implies the old credential may be compromised:
       // sign the user out everywhere.
       if (userId !== undefined) {
@@ -812,33 +893,8 @@ export class AuthController {
     @Req() req: Request,
   ): Promise<{ message: string; revokedSessions: number }> {
     try {
-      // Identify the caller. Bearer token first — better-auth has no bearer
-      // plugin configured, so it only understands its own session COOKIE and
-      // cannot authenticate a JWT client on its own.
-      const currentAccessToken = this.bearerFromRequest(req);
-      let userId: number | undefined;
-
-      if (currentAccessToken) {
-        try {
-          const decoded =
-            await this.tokenService.validateAccessToken(currentAccessToken);
-          userId = decoded.id;
-        } catch {
-          throw new UnauthorizedException('Invalid or expired access token');
-        }
-      } else if (req.headers.cookie) {
-        // Cookie client: resolve the user through better-auth's session.
-        const headers = new Headers();
-        headers.set('Cookie', req.headers.cookie);
-        const session = await auth.api.getSession({ headers });
-        if (session?.user?.id) {
-          userId = Number(session.user.id);
-        }
-      }
-
-      if (userId === undefined) {
-        throw new UnauthorizedException('Not authenticated');
-      }
+      const { userId, accessToken: currentAccessToken } =
+        await this.resolveCallerUserId(req);
 
       // Verify the current password and write the new one directly against
       // the credential account. This mirrors the verification done in login()
@@ -877,7 +933,17 @@ export class AuthController {
       );
 
       this.logger.log(
-        `Password updated successfully${userId ? ` for user ${userId}` : ''}; revoked ${revokedSessions} other tokens`,
+        `Password updated successfully for user ${userId}; revoked ${revokedSessions} other tokens`,
+      );
+
+      // Security notice email + audit (UserService.handlePasswordUpdated).
+      const passwordUpdated: IPasswordUpdatedPayload = {
+        userId,
+        source: 'change',
+      };
+      this.eventEmitter.emit(
+        AUTH_EVENT_NAMES.PASSWORD_UPDATED,
+        passwordUpdated,
       );
 
       return {
@@ -894,6 +960,169 @@ export class AuthController {
 
       this.logger.error(`Password update failed: ${error}`);
       throw new BadRequestException('Failed to update password');
+    }
+  }
+
+  /**
+   * Change email (authenticated user)
+   */
+  @Post('change-email')
+  @HttpCode(HttpStatus.OK)
+  @Throttle({ default: { limit: 3, ttl: 3600000 } }) // 3 change requests per hour
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Change email address',
+    description:
+      'Starts an email change. A confirmation link is sent to the CURRENT address; ' +
+      'approving it sends a verification link to the NEW address, which completes the change. ' +
+      'Both links resolve through `GET /api/auth/verify-email`, handled by the web app `/verify-email` page.',
+  })
+  @ApiBody({ type: ChangeEmailDto })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Confirmation email sent to the current address',
+  })
+  @ApiResponse({
+    status: HttpStatus.UNAUTHORIZED,
+    description: 'Not authenticated',
+  })
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    description: 'Email unchanged, already in use, or account not verified',
+  })
+  async changeEmail(
+    @Body() changeDto: ChangeEmailDto,
+    @Req() req: Request,
+  ): Promise<{ message: string }> {
+    const { userId } = await this.resolveCallerUserId(req);
+    const newEmail = changeDto.newEmail.toLowerCase();
+
+    try {
+      await this.callBetterAuthAs(req, userId, (headers) =>
+        auth.api.changeEmail({
+          headers,
+          body: {
+            newEmail,
+            callbackURL:
+              changeDto.callbackURL ?? getEmailVerificationCallbackURL(),
+          },
+        }),
+      );
+
+      this.logger.log(`Email change requested for user ${userId}`);
+
+      return {
+        message:
+          'A confirmation link has been sent to your current email address.',
+      };
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : 'Failed to change email';
+      this.logger.warn(`Email change failed for user ${userId}: ${message}`);
+      throw new BadRequestException(message);
+    }
+  }
+
+  /**
+   * Request account deletion (authenticated user)
+   */
+  @Post('delete-account')
+  @HttpCode(HttpStatus.OK)
+  @Throttle({ default: { limit: 3, ttl: 3600000 } }) // 3 deletion requests per hour
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Request account deletion',
+    description:
+      'Sends a verification email with a deletion link. The web app `/confirm-delete-account` page ' +
+      'collects the token and calls `POST /auth/delete-account/confirm` with the same bearer token.',
+  })
+  @ApiBody({ type: DeleteAccountRequestDto, required: false })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Verification email sent',
+  })
+  @ApiResponse({
+    status: HttpStatus.UNAUTHORIZED,
+    description: 'Not authenticated',
+  })
+  async requestAccountDeletion(
+    @Body() deleteDto: DeleteAccountRequestDto,
+    @Req() req: Request,
+  ): Promise<{ message: string }> {
+    const { userId } = await this.resolveCallerUserId(req);
+
+    try {
+      await this.callBetterAuthAs(req, userId, (headers) =>
+        auth.api.deleteUser({
+          headers,
+          body: { callbackURL: deleteDto?.callbackURL },
+        }),
+      );
+
+      this.logger.log(`Account deletion requested for user ${userId}`);
+
+      return {
+        message:
+          'A confirmation link has been sent to your email address. Your account will not be deleted until you confirm.',
+      };
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : 'Failed to request account deletion';
+      this.logger.warn(
+        `Account deletion request failed for user ${userId}: ${message}`,
+      );
+      throw new BadRequestException(message);
+    }
+  }
+
+  /**
+   * Confirm account deletion with the emailed token (authenticated user)
+   */
+  @Post('delete-account/confirm')
+  @HttpCode(HttpStatus.OK)
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Confirm account deletion',
+    description:
+      'Permanently deletes the authenticated user using the token from the verification email. ' +
+      'All sessions and tokens are revoked. This cannot be undone.',
+  })
+  @ApiBody({ type: DeleteAccountConfirmDto })
+  @ApiResponse({ status: HttpStatus.OK, description: 'Account deleted' })
+  @ApiResponse({
+    status: HttpStatus.UNAUTHORIZED,
+    description: 'Not authenticated',
+  })
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    description: 'Invalid or expired token',
+  })
+  async confirmAccountDeletion(
+    @Body() confirmDto: DeleteAccountConfirmDto,
+    @Req() req: Request,
+  ): Promise<{ message: string }> {
+    const { userId } = await this.resolveCallerUserId(req);
+
+    try {
+      await this.callBetterAuthAs(req, userId, (headers) =>
+        auth.api.deleteUser({
+          headers,
+          body: { token: confirmDto.token },
+        }),
+      );
+
+      // Prisma cascades already removed the session rows with the user;
+      // this is a belt-and-braces sweep in case anything survived.
+      await this.tokenService.revokeAllUserTokens(userId).catch(() => 0);
+
+      this.logger.log(`Account ${userId} deleted`);
+
+      return { message: 'Your account has been deleted.' };
+    } catch (error) {
+      this.logger.error(`Account deletion failed for user ${userId}: ${error}`);
+      throw new BadRequestException('Invalid or expired deletion token');
     }
   }
 

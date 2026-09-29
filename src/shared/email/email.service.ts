@@ -1,4 +1,5 @@
 import { Injectable, Logger, Optional } from '@nestjs/common';
+import { getWebAppUrl } from '@config/web-app.config';
 import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
 import * as path from 'path';
 import * as fs from 'fs';
@@ -55,17 +56,13 @@ export interface IEmailSendResult extends IEmailProviderSendResult { }
  * AlertService maintains alertServiceEmailTemplates, etc.
  * 
  * This keeps each service's templates isolated and maintainable.
- * See UserService, AlertService, SightingService, and AuthEmailService
+ * See UserService, AlertService, and SightingService
  * for implementation examples.
  */
 export const baseEmailTemplateNames: Record<string, IEmailTemplate> = {
   welcome: {
     subject: 'Welcome to FiFi Alert!',
     file: 'notifications/email/user/welcome.njk',
-  },
-  passwordReset: {
-    subject: 'Reset Your Password',
-    file: 'notifications/email/user/passwordReset.njk',
   },
   forgotPassword: {
     subject: 'Forgot Your Password?',
@@ -337,8 +334,12 @@ export class EmailService {
       templatePath,
     );
 
-    // Render template with Nunjucks
-    const mjmlOutput = nunjucks.render(relativeTemplatePath, data);
+    // Render template with Nunjucks. Every template can rely on `appUrl`
+    // (the web app origin) for links; callers may still override it.
+    const mjmlOutput = nunjucks.render(relativeTemplatePath, {
+      appUrl: getWebAppUrl(),
+      ...data,
+    });
 
     // Compile MJML to responsive HTML
     const htmlOutput = mjml2html(mjmlOutput, {

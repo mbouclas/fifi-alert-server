@@ -17131,6 +17131,7 @@ export namespace Prisma {
     petTypeId: number | null
     name: string | null
     gender: $Enums.Gender | null
+    primaryPhoto: string | null
     size: $Enums.Size | null
     isMissing: boolean | null
     birthday: Date | null
@@ -17145,6 +17146,7 @@ export namespace Prisma {
     petTypeId: number | null
     name: string | null
     gender: $Enums.Gender | null
+    primaryPhoto: string | null
     size: $Enums.Size | null
     isMissing: boolean | null
     birthday: Date | null
@@ -17160,6 +17162,7 @@ export namespace Prisma {
     name: number
     gender: number
     photos: number
+    primaryPhoto: number
     size: number
     isMissing: number
     birthday: number
@@ -17188,6 +17191,7 @@ export namespace Prisma {
     petTypeId?: true
     name?: true
     gender?: true
+    primaryPhoto?: true
     size?: true
     isMissing?: true
     birthday?: true
@@ -17202,6 +17206,7 @@ export namespace Prisma {
     petTypeId?: true
     name?: true
     gender?: true
+    primaryPhoto?: true
     size?: true
     isMissing?: true
     birthday?: true
@@ -17217,6 +17222,7 @@ export namespace Prisma {
     name?: true
     gender?: true
     photos?: true
+    primaryPhoto?: true
     size?: true
     isMissing?: true
     birthday?: true
@@ -17319,6 +17325,7 @@ export namespace Prisma {
     name: string
     gender: $Enums.Gender | null
     photos: string[]
+    primaryPhoto: string | null
     size: $Enums.Size | null
     isMissing: boolean
     birthday: Date | null
@@ -17353,6 +17360,7 @@ export namespace Prisma {
     name?: boolean
     gender?: boolean
     photos?: boolean
+    primaryPhoto?: boolean
     size?: boolean
     isMissing?: boolean
     birthday?: boolean
@@ -17372,6 +17380,7 @@ export namespace Prisma {
     name?: boolean
     gender?: boolean
     photos?: boolean
+    primaryPhoto?: boolean
     size?: boolean
     isMissing?: boolean
     birthday?: boolean
@@ -17389,6 +17398,7 @@ export namespace Prisma {
     name?: boolean
     gender?: boolean
     photos?: boolean
+    primaryPhoto?: boolean
     size?: boolean
     isMissing?: boolean
     birthday?: boolean
@@ -17406,6 +17416,7 @@ export namespace Prisma {
     name?: boolean
     gender?: boolean
     photos?: boolean
+    primaryPhoto?: boolean
     size?: boolean
     isMissing?: boolean
     birthday?: boolean
@@ -17413,7 +17424,7 @@ export namespace Prisma {
     updated_at?: boolean
   }
 
-  export type PetOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "tagId" | "userId" | "petTypeId" | "name" | "gender" | "photos" | "size" | "isMissing" | "birthday" | "created_at" | "updated_at", ExtArgs["result"]["pet"]>
+  export type PetOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "tagId" | "userId" | "petTypeId" | "name" | "gender" | "photos" | "primaryPhoto" | "size" | "isMissing" | "birthday" | "created_at" | "updated_at", ExtArgs["result"]["pet"]>
   export type PetInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     user?: boolean | UserDefaultArgs<ExtArgs>
     petType?: boolean | PetTypeDefaultArgs<ExtArgs>
@@ -17444,6 +17455,7 @@ export namespace Prisma {
       name: string
       gender: $Enums.Gender | null
       photos: string[]
+      primaryPhoto: string | null
       size: $Enums.Size | null
       isMissing: boolean
       birthday: Date | null
@@ -17882,6 +17894,7 @@ export namespace Prisma {
     readonly name: FieldRef<"Pet", 'String'>
     readonly gender: FieldRef<"Pet", 'Gender'>
     readonly photos: FieldRef<"Pet", 'String[]'>
+    readonly primaryPhoto: FieldRef<"Pet", 'String'>
     readonly size: FieldRef<"Pet", 'Size'>
     readonly isMissing: FieldRef<"Pet", 'Boolean'>
     readonly birthday: FieldRef<"Pet", 'DateTime'>
@@ -23146,6 +23159,7 @@ export namespace Prisma {
     sighting_lon: number
     location_address: number
     photo_url: number
+    photos: number
     notes: number
     confidence: number
     sighting_time: number
@@ -23223,6 +23237,7 @@ export namespace Prisma {
     sighting_lon?: true
     location_address?: true
     photo_url?: true
+    photos?: true
     notes?: true
     confidence?: true
     sighting_time?: true
@@ -23331,6 +23346,7 @@ export namespace Prisma {
     sighting_lon: number
     location_address: string | null
     photo_url: string | null
+    photos: string[]
     notes: string | null
     confidence: string | null
     sighting_time: Date
@@ -23371,6 +23387,7 @@ export namespace Prisma {
     sighting_lon?: boolean
     location_address?: boolean
     photo_url?: boolean
+    photos?: boolean
     notes?: boolean
     confidence?: boolean
     sighting_time?: boolean
@@ -23395,6 +23412,7 @@ export namespace Prisma {
     sighting_lon?: boolean
     location_address?: boolean
     photo_url?: boolean
+    photos?: boolean
     notes?: boolean
     confidence?: boolean
     sighting_time?: boolean
@@ -23418,6 +23436,7 @@ export namespace Prisma {
     sighting_lon?: boolean
     location_address?: boolean
     photo_url?: boolean
+    photos?: boolean
     notes?: boolean
     confidence?: boolean
     sighting_time?: boolean
@@ -23431,7 +23450,7 @@ export namespace Prisma {
     updated_at?: boolean
   }
 
-  export type SightingOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "alert_id" | "reporter_id" | "sighting_lat" | "sighting_lon" | "location_address" | "photo_url" | "notes" | "confidence" | "sighting_time" | "direction" | "dismissed" | "dismissed_at" | "dismissed_reason" | "meta" | "settings" | "created_at" | "updated_at", ExtArgs["result"]["sighting"]>
+  export type SightingOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "alert_id" | "reporter_id" | "sighting_lat" | "sighting_lon" | "location_address" | "photo_url" | "photos" | "notes" | "confidence" | "sighting_time" | "direction" | "dismissed" | "dismissed_at" | "dismissed_reason" | "meta" | "settings" | "created_at" | "updated_at", ExtArgs["result"]["sighting"]>
   export type SightingInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     alert?: boolean | AlertDefaultArgs<ExtArgs>
     reporter?: boolean | UserDefaultArgs<ExtArgs>
@@ -23455,6 +23474,7 @@ export namespace Prisma {
       sighting_lon: number
       location_address: string | null
       photo_url: string | null
+      photos: string[]
       notes: string | null
       confidence: string | null
       sighting_time: Date
@@ -23827,6 +23847,7 @@ export namespace Prisma {
     readonly sighting_lon: FieldRef<"Sighting", 'Float'>
     readonly location_address: FieldRef<"Sighting", 'String'>
     readonly photo_url: FieldRef<"Sighting", 'String'>
+    readonly photos: FieldRef<"Sighting", 'String[]'>
     readonly notes: FieldRef<"Sighting", 'String'>
     readonly confidence: FieldRef<"Sighting", 'String'>
     readonly sighting_time: FieldRef<"Sighting", 'DateTime'>
@@ -25686,6 +25707,7 @@ export namespace Prisma {
     name: 'name',
     gender: 'gender',
     photos: 'photos',
+    primaryPhoto: 'primaryPhoto',
     size: 'size',
     isMissing: 'isMissing',
     birthday: 'birthday',
@@ -25802,6 +25824,7 @@ export namespace Prisma {
     sighting_lon: 'sighting_lon',
     location_address: 'location_address',
     photo_url: 'photo_url',
+    photos: 'photos',
     notes: 'notes',
     confidence: 'confidence',
     sighting_time: 'sighting_time',
@@ -27133,6 +27156,7 @@ export namespace Prisma {
     name?: StringFilter<"Pet"> | string
     gender?: EnumGenderNullableFilter<"Pet"> | $Enums.Gender | null
     photos?: StringNullableListFilter<"Pet">
+    primaryPhoto?: StringNullableFilter<"Pet"> | string | null
     size?: EnumSizeNullableFilter<"Pet"> | $Enums.Size | null
     isMissing?: BoolFilter<"Pet"> | boolean
     birthday?: DateTimeNullableFilter<"Pet"> | Date | string | null
@@ -27151,6 +27175,7 @@ export namespace Prisma {
     name?: SortOrder
     gender?: SortOrderInput | SortOrder
     photos?: SortOrder
+    primaryPhoto?: SortOrderInput | SortOrder
     size?: SortOrderInput | SortOrder
     isMissing?: SortOrder
     birthday?: SortOrderInput | SortOrder
@@ -27172,6 +27197,7 @@ export namespace Prisma {
     name?: StringFilter<"Pet"> | string
     gender?: EnumGenderNullableFilter<"Pet"> | $Enums.Gender | null
     photos?: StringNullableListFilter<"Pet">
+    primaryPhoto?: StringNullableFilter<"Pet"> | string | null
     size?: EnumSizeNullableFilter<"Pet"> | $Enums.Size | null
     isMissing?: BoolFilter<"Pet"> | boolean
     birthday?: DateTimeNullableFilter<"Pet"> | Date | string | null
@@ -27190,6 +27216,7 @@ export namespace Prisma {
     name?: SortOrder
     gender?: SortOrderInput | SortOrder
     photos?: SortOrder
+    primaryPhoto?: SortOrderInput | SortOrder
     size?: SortOrderInput | SortOrder
     isMissing?: SortOrder
     birthday?: SortOrderInput | SortOrder
@@ -27213,6 +27240,7 @@ export namespace Prisma {
     name?: StringWithAggregatesFilter<"Pet"> | string
     gender?: EnumGenderNullableWithAggregatesFilter<"Pet"> | $Enums.Gender | null
     photos?: StringNullableListFilter<"Pet">
+    primaryPhoto?: StringNullableWithAggregatesFilter<"Pet"> | string | null
     size?: EnumSizeNullableWithAggregatesFilter<"Pet"> | $Enums.Size | null
     isMissing?: BoolWithAggregatesFilter<"Pet"> | boolean
     birthday?: DateTimeNullableWithAggregatesFilter<"Pet"> | Date | string | null
@@ -27744,6 +27772,7 @@ export namespace Prisma {
     sighting_lon?: FloatFilter<"Sighting"> | number
     location_address?: StringNullableFilter<"Sighting"> | string | null
     photo_url?: StringNullableFilter<"Sighting"> | string | null
+    photos?: StringNullableListFilter<"Sighting">
     notes?: StringNullableFilter<"Sighting"> | string | null
     confidence?: StringNullableFilter<"Sighting"> | string | null
     sighting_time?: DateTimeFilter<"Sighting"> | Date | string
@@ -27767,6 +27796,7 @@ export namespace Prisma {
     sighting_lon?: SortOrder
     location_address?: SortOrderInput | SortOrder
     photo_url?: SortOrderInput | SortOrder
+    photos?: SortOrder
     notes?: SortOrderInput | SortOrder
     confidence?: SortOrderInput | SortOrder
     sighting_time?: SortOrder
@@ -27793,6 +27823,7 @@ export namespace Prisma {
     sighting_lon?: FloatFilter<"Sighting"> | number
     location_address?: StringNullableFilter<"Sighting"> | string | null
     photo_url?: StringNullableFilter<"Sighting"> | string | null
+    photos?: StringNullableListFilter<"Sighting">
     notes?: StringNullableFilter<"Sighting"> | string | null
     confidence?: StringNullableFilter<"Sighting"> | string | null
     sighting_time?: DateTimeFilter<"Sighting"> | Date | string
@@ -27816,6 +27847,7 @@ export namespace Prisma {
     sighting_lon?: SortOrder
     location_address?: SortOrderInput | SortOrder
     photo_url?: SortOrderInput | SortOrder
+    photos?: SortOrder
     notes?: SortOrderInput | SortOrder
     confidence?: SortOrderInput | SortOrder
     sighting_time?: SortOrder
@@ -27845,6 +27877,7 @@ export namespace Prisma {
     sighting_lon?: FloatWithAggregatesFilter<"Sighting"> | number
     location_address?: StringNullableWithAggregatesFilter<"Sighting"> | string | null
     photo_url?: StringNullableWithAggregatesFilter<"Sighting"> | string | null
+    photos?: StringNullableListFilter<"Sighting">
     notes?: StringNullableWithAggregatesFilter<"Sighting"> | string | null
     confidence?: StringNullableWithAggregatesFilter<"Sighting"> | string | null
     sighting_time?: DateTimeWithAggregatesFilter<"Sighting"> | Date | string
@@ -29102,6 +29135,7 @@ export namespace Prisma {
     name: string
     gender?: $Enums.Gender | null
     photos?: PetCreatephotosInput | string[]
+    primaryPhoto?: string | null
     size?: $Enums.Size | null
     isMissing?: boolean
     birthday?: Date | string | null
@@ -29120,6 +29154,7 @@ export namespace Prisma {
     name: string
     gender?: $Enums.Gender | null
     photos?: PetCreatephotosInput | string[]
+    primaryPhoto?: string | null
     size?: $Enums.Size | null
     isMissing?: boolean
     birthday?: Date | string | null
@@ -29133,6 +29168,7 @@ export namespace Prisma {
     name?: StringFieldUpdateOperationsInput | string
     gender?: NullableEnumGenderFieldUpdateOperationsInput | $Enums.Gender | null
     photos?: PetUpdatephotosInput | string[]
+    primaryPhoto?: NullableStringFieldUpdateOperationsInput | string | null
     size?: NullableEnumSizeFieldUpdateOperationsInput | $Enums.Size | null
     isMissing?: BoolFieldUpdateOperationsInput | boolean
     birthday?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -29151,6 +29187,7 @@ export namespace Prisma {
     name?: StringFieldUpdateOperationsInput | string
     gender?: NullableEnumGenderFieldUpdateOperationsInput | $Enums.Gender | null
     photos?: PetUpdatephotosInput | string[]
+    primaryPhoto?: NullableStringFieldUpdateOperationsInput | string | null
     size?: NullableEnumSizeFieldUpdateOperationsInput | $Enums.Size | null
     isMissing?: BoolFieldUpdateOperationsInput | boolean
     birthday?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -29167,6 +29204,7 @@ export namespace Prisma {
     name: string
     gender?: $Enums.Gender | null
     photos?: PetCreatephotosInput | string[]
+    primaryPhoto?: string | null
     size?: $Enums.Size | null
     isMissing?: boolean
     birthday?: Date | string | null
@@ -29179,6 +29217,7 @@ export namespace Prisma {
     name?: StringFieldUpdateOperationsInput | string
     gender?: NullableEnumGenderFieldUpdateOperationsInput | $Enums.Gender | null
     photos?: PetUpdatephotosInput | string[]
+    primaryPhoto?: NullableStringFieldUpdateOperationsInput | string | null
     size?: NullableEnumSizeFieldUpdateOperationsInput | $Enums.Size | null
     isMissing?: BoolFieldUpdateOperationsInput | boolean
     birthday?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -29194,6 +29233,7 @@ export namespace Prisma {
     name?: StringFieldUpdateOperationsInput | string
     gender?: NullableEnumGenderFieldUpdateOperationsInput | $Enums.Gender | null
     photos?: PetUpdatephotosInput | string[]
+    primaryPhoto?: NullableStringFieldUpdateOperationsInput | string | null
     size?: NullableEnumSizeFieldUpdateOperationsInput | $Enums.Size | null
     isMissing?: BoolFieldUpdateOperationsInput | boolean
     birthday?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -29626,6 +29666,7 @@ export namespace Prisma {
     sighting_lon?: FloatFieldUpdateOperationsInput | number
     location_address?: NullableStringFieldUpdateOperationsInput | string | null
     photo_url?: NullableStringFieldUpdateOperationsInput | string | null
+    photos?: SightingUpdatephotosInput | string[]
     notes?: NullableStringFieldUpdateOperationsInput | string | null
     confidence?: NullableStringFieldUpdateOperationsInput | string | null
     sighting_time?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -29649,6 +29690,7 @@ export namespace Prisma {
     sighting_lon?: FloatFieldUpdateOperationsInput | number
     location_address?: NullableStringFieldUpdateOperationsInput | string | null
     photo_url?: NullableStringFieldUpdateOperationsInput | string | null
+    photos?: SightingUpdatephotosInput | string[]
     notes?: NullableStringFieldUpdateOperationsInput | string | null
     confidence?: NullableStringFieldUpdateOperationsInput | string | null
     sighting_time?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -29667,6 +29709,7 @@ export namespace Prisma {
     sighting_lon?: FloatFieldUpdateOperationsInput | number
     location_address?: NullableStringFieldUpdateOperationsInput | string | null
     photo_url?: NullableStringFieldUpdateOperationsInput | string | null
+    photos?: SightingUpdatephotosInput | string[]
     notes?: NullableStringFieldUpdateOperationsInput | string | null
     confidence?: NullableStringFieldUpdateOperationsInput | string | null
     sighting_time?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -29688,6 +29731,7 @@ export namespace Prisma {
     sighting_lon?: FloatFieldUpdateOperationsInput | number
     location_address?: NullableStringFieldUpdateOperationsInput | string | null
     photo_url?: NullableStringFieldUpdateOperationsInput | string | null
+    photos?: SightingUpdatephotosInput | string[]
     notes?: NullableStringFieldUpdateOperationsInput | string | null
     confidence?: NullableStringFieldUpdateOperationsInput | string | null
     sighting_time?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -30868,6 +30912,7 @@ export namespace Prisma {
     name?: SortOrder
     gender?: SortOrder
     photos?: SortOrder
+    primaryPhoto?: SortOrder
     size?: SortOrder
     isMissing?: SortOrder
     birthday?: SortOrder
@@ -30888,6 +30933,7 @@ export namespace Prisma {
     petTypeId?: SortOrder
     name?: SortOrder
     gender?: SortOrder
+    primaryPhoto?: SortOrder
     size?: SortOrder
     isMissing?: SortOrder
     birthday?: SortOrder
@@ -30902,6 +30948,7 @@ export namespace Prisma {
     petTypeId?: SortOrder
     name?: SortOrder
     gender?: SortOrder
+    primaryPhoto?: SortOrder
     size?: SortOrder
     isMissing?: SortOrder
     birthday?: SortOrder
@@ -31438,6 +31485,7 @@ export namespace Prisma {
     sighting_lon?: SortOrder
     location_address?: SortOrder
     photo_url?: SortOrder
+    photos?: SortOrder
     notes?: SortOrder
     confidence?: SortOrder
     sighting_time?: SortOrder
@@ -32673,6 +32721,11 @@ export namespace Prisma {
     update?: XOR<XOR<UserUpdateToOneWithWhereWithoutAlert_zonesInput, UserUpdateWithoutAlert_zonesInput>, UserUncheckedUpdateWithoutAlert_zonesInput>
   }
 
+  export type SightingUpdatephotosInput = {
+    set?: string[]
+    push?: string | string[]
+  }
+
   export type AlertUpdateOneRequiredWithoutSightingsNestedInput = {
     connect?: AlertWhereUniqueInput
     update?: XOR<XOR<AlertUpdateToOneWithWhereWithoutSightingsInput, AlertUpdateWithoutSightingsInput>, AlertUncheckedUpdateWithoutSightingsInput>
@@ -33402,6 +33455,7 @@ export namespace Prisma {
     name: string
     gender?: $Enums.Gender | null
     photos?: PetCreatephotosInput | string[]
+    primaryPhoto?: string | null
     size?: $Enums.Size | null
     isMissing?: boolean
     birthday?: Date | string | null
@@ -33418,6 +33472,7 @@ export namespace Prisma {
     name: string
     gender?: $Enums.Gender | null
     photos?: PetCreatephotosInput | string[]
+    primaryPhoto?: string | null
     size?: $Enums.Size | null
     isMissing?: boolean
     birthday?: Date | string | null
@@ -33674,6 +33729,7 @@ export namespace Prisma {
     sighting_lon?: FloatFilter<"Sighting"> | number
     location_address?: StringNullableFilter<"Sighting"> | string | null
     photo_url?: StringNullableFilter<"Sighting"> | string | null
+    photos?: StringNullableListFilter<"Sighting">
     notes?: StringNullableFilter<"Sighting"> | string | null
     confidence?: StringNullableFilter<"Sighting"> | string | null
     sighting_time?: DateTimeFilter<"Sighting"> | Date | string
@@ -33757,6 +33813,7 @@ export namespace Prisma {
     name?: StringFilter<"Pet"> | string
     gender?: EnumGenderNullableFilter<"Pet"> | $Enums.Gender | null
     photos?: StringNullableListFilter<"Pet">
+    primaryPhoto?: StringNullableFilter<"Pet"> | string | null
     size?: EnumSizeNullableFilter<"Pet"> | $Enums.Size | null
     isMissing?: BoolFilter<"Pet"> | boolean
     birthday?: DateTimeNullableFilter<"Pet"> | Date | string | null
@@ -34646,6 +34703,7 @@ export namespace Prisma {
     name: string
     gender?: $Enums.Gender | null
     photos?: PetCreatephotosInput | string[]
+    primaryPhoto?: string | null
     size?: $Enums.Size | null
     isMissing?: boolean
     birthday?: Date | string | null
@@ -34662,6 +34720,7 @@ export namespace Prisma {
     name: string
     gender?: $Enums.Gender | null
     photos?: PetCreatephotosInput | string[]
+    primaryPhoto?: string | null
     size?: $Enums.Size | null
     isMissing?: boolean
     birthday?: Date | string | null
@@ -35160,6 +35219,7 @@ export namespace Prisma {
     name: string
     gender?: $Enums.Gender | null
     photos?: PetCreatephotosInput | string[]
+    primaryPhoto?: string | null
     size?: $Enums.Size | null
     isMissing?: boolean
     birthday?: Date | string | null
@@ -35177,6 +35237,7 @@ export namespace Prisma {
     name: string
     gender?: $Enums.Gender | null
     photos?: PetCreatephotosInput | string[]
+    primaryPhoto?: string | null
     size?: $Enums.Size | null
     isMissing?: boolean
     birthday?: Date | string | null
@@ -35205,6 +35266,7 @@ export namespace Prisma {
     name?: StringFieldUpdateOperationsInput | string
     gender?: NullableEnumGenderFieldUpdateOperationsInput | $Enums.Gender | null
     photos?: PetUpdatephotosInput | string[]
+    primaryPhoto?: NullableStringFieldUpdateOperationsInput | string | null
     size?: NullableEnumSizeFieldUpdateOperationsInput | $Enums.Size | null
     isMissing?: BoolFieldUpdateOperationsInput | boolean
     birthday?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -35222,6 +35284,7 @@ export namespace Prisma {
     name?: StringFieldUpdateOperationsInput | string
     gender?: NullableEnumGenderFieldUpdateOperationsInput | $Enums.Gender | null
     photos?: PetUpdatephotosInput | string[]
+    primaryPhoto?: NullableStringFieldUpdateOperationsInput | string | null
     size?: NullableEnumSizeFieldUpdateOperationsInput | $Enums.Size | null
     isMissing?: BoolFieldUpdateOperationsInput | boolean
     birthday?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -36280,6 +36343,7 @@ export namespace Prisma {
     name: string
     gender?: $Enums.Gender | null
     photos?: PetCreatephotosInput | string[]
+    primaryPhoto?: string | null
     size?: $Enums.Size | null
     isMissing?: boolean
     birthday?: Date | string | null
@@ -36603,6 +36667,7 @@ export namespace Prisma {
     sighting_lon?: FloatFieldUpdateOperationsInput | number
     location_address?: NullableStringFieldUpdateOperationsInput | string | null
     photo_url?: NullableStringFieldUpdateOperationsInput | string | null
+    photos?: SightingUpdatephotosInput | string[]
     notes?: NullableStringFieldUpdateOperationsInput | string | null
     confidence?: NullableStringFieldUpdateOperationsInput | string | null
     sighting_time?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -36624,6 +36689,7 @@ export namespace Prisma {
     sighting_lon?: FloatFieldUpdateOperationsInput | number
     location_address?: NullableStringFieldUpdateOperationsInput | string | null
     photo_url?: NullableStringFieldUpdateOperationsInput | string | null
+    photos?: SightingUpdatephotosInput | string[]
     notes?: NullableStringFieldUpdateOperationsInput | string | null
     confidence?: NullableStringFieldUpdateOperationsInput | string | null
     sighting_time?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -36644,6 +36710,7 @@ export namespace Prisma {
     sighting_lon?: FloatFieldUpdateOperationsInput | number
     location_address?: NullableStringFieldUpdateOperationsInput | string | null
     photo_url?: NullableStringFieldUpdateOperationsInput | string | null
+    photos?: SightingUpdatephotosInput | string[]
     notes?: NullableStringFieldUpdateOperationsInput | string | null
     confidence?: NullableStringFieldUpdateOperationsInput | string | null
     sighting_time?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -36730,6 +36797,7 @@ export namespace Prisma {
     name?: StringFieldUpdateOperationsInput | string
     gender?: NullableEnumGenderFieldUpdateOperationsInput | $Enums.Gender | null
     photos?: PetUpdatephotosInput | string[]
+    primaryPhoto?: NullableStringFieldUpdateOperationsInput | string | null
     size?: NullableEnumSizeFieldUpdateOperationsInput | $Enums.Size | null
     isMissing?: BoolFieldUpdateOperationsInput | boolean
     birthday?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -36746,6 +36814,7 @@ export namespace Prisma {
     name?: StringFieldUpdateOperationsInput | string
     gender?: NullableEnumGenderFieldUpdateOperationsInput | $Enums.Gender | null
     photos?: PetUpdatephotosInput | string[]
+    primaryPhoto?: NullableStringFieldUpdateOperationsInput | string | null
     size?: NullableEnumSizeFieldUpdateOperationsInput | $Enums.Size | null
     isMissing?: BoolFieldUpdateOperationsInput | boolean
     birthday?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -36761,6 +36830,7 @@ export namespace Prisma {
     name?: StringFieldUpdateOperationsInput | string
     gender?: NullableEnumGenderFieldUpdateOperationsInput | $Enums.Gender | null
     photos?: PetUpdatephotosInput | string[]
+    primaryPhoto?: NullableStringFieldUpdateOperationsInput | string | null
     size?: NullableEnumSizeFieldUpdateOperationsInput | $Enums.Size | null
     isMissing?: BoolFieldUpdateOperationsInput | boolean
     birthday?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -36887,6 +36957,7 @@ export namespace Prisma {
     name: string
     gender?: $Enums.Gender | null
     photos?: PetCreatephotosInput | string[]
+    primaryPhoto?: string | null
     size?: $Enums.Size | null
     isMissing?: boolean
     birthday?: Date | string | null
@@ -36905,6 +36976,7 @@ export namespace Prisma {
     name?: StringFieldUpdateOperationsInput | string
     gender?: NullableEnumGenderFieldUpdateOperationsInput | $Enums.Gender | null
     photos?: PetUpdatephotosInput | string[]
+    primaryPhoto?: NullableStringFieldUpdateOperationsInput | string | null
     size?: NullableEnumSizeFieldUpdateOperationsInput | $Enums.Size | null
     isMissing?: BoolFieldUpdateOperationsInput | boolean
     birthday?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -36921,6 +36993,7 @@ export namespace Prisma {
     name?: StringFieldUpdateOperationsInput | string
     gender?: NullableEnumGenderFieldUpdateOperationsInput | $Enums.Gender | null
     photos?: PetUpdatephotosInput | string[]
+    primaryPhoto?: NullableStringFieldUpdateOperationsInput | string | null
     size?: NullableEnumSizeFieldUpdateOperationsInput | $Enums.Size | null
     isMissing?: BoolFieldUpdateOperationsInput | boolean
     birthday?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -36936,6 +37009,7 @@ export namespace Prisma {
     name?: StringFieldUpdateOperationsInput | string
     gender?: NullableEnumGenderFieldUpdateOperationsInput | $Enums.Gender | null
     photos?: PetUpdatephotosInput | string[]
+    primaryPhoto?: NullableStringFieldUpdateOperationsInput | string | null
     size?: NullableEnumSizeFieldUpdateOperationsInput | $Enums.Size | null
     isMissing?: BoolFieldUpdateOperationsInput | boolean
     birthday?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -37067,6 +37141,7 @@ export namespace Prisma {
     sighting_lon?: FloatFieldUpdateOperationsInput | number
     location_address?: NullableStringFieldUpdateOperationsInput | string | null
     photo_url?: NullableStringFieldUpdateOperationsInput | string | null
+    photos?: SightingUpdatephotosInput | string[]
     notes?: NullableStringFieldUpdateOperationsInput | string | null
     confidence?: NullableStringFieldUpdateOperationsInput | string | null
     sighting_time?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -37088,6 +37163,7 @@ export namespace Prisma {
     sighting_lon?: FloatFieldUpdateOperationsInput | number
     location_address?: NullableStringFieldUpdateOperationsInput | string | null
     photo_url?: NullableStringFieldUpdateOperationsInput | string | null
+    photos?: SightingUpdatephotosInput | string[]
     notes?: NullableStringFieldUpdateOperationsInput | string | null
     confidence?: NullableStringFieldUpdateOperationsInput | string | null
     sighting_time?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -37108,6 +37184,7 @@ export namespace Prisma {
     sighting_lon?: FloatFieldUpdateOperationsInput | number
     location_address?: NullableStringFieldUpdateOperationsInput | string | null
     photo_url?: NullableStringFieldUpdateOperationsInput | string | null
+    photos?: SightingUpdatephotosInput | string[]
     notes?: NullableStringFieldUpdateOperationsInput | string | null
     confidence?: NullableStringFieldUpdateOperationsInput | string | null
     sighting_time?: DateTimeFieldUpdateOperationsInput | Date | string

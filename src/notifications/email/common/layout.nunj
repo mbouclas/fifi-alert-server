@@ -51,9 +51,9 @@
             Helping reunite lost pets with their families.
           </p>
           <p>
-            <a href="https://fifi-alert.com/unsubscribe" class="footer-link">Unsubscribe</a> | 
-            <a href="https://fifi-alert.com/privacy" class="footer-link">Privacy Policy</a> | 
-            <a href="https://fifi-alert.com/support" class="footer-link">Support</a>
+            <a href="{{ appUrl }}/unsubscribe" class="footer-link">Unsubscribe</a> | 
+            <a href="{{ appUrl }}/privacy" class="footer-link">Privacy Policy</a> | 
+            <a href="{{ appUrl }}/support" class="footer-link">Support</a>
           </p>
           {% endblock %}
         </mj-text>

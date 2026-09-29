@@ -10,6 +10,8 @@ import {
   Min,
   Max,
   IsUrl,
+  IsInt,
+  IsPositive,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { NotificationConfidence } from '@prisma/client';
@@ -55,11 +57,12 @@ export class SightingLocationDto {
 export class CreateSightingDto {
   @ApiProperty({
     description: 'Alert ID this sighting is for',
-    example: 'cuid-abc-123',
+    example: 42,
   })
-  @IsString()
-  @IsNotEmpty()
-  alert_id: string;
+  @Type(() => Number)
+  @IsInt()
+  @IsPositive()
+  alert_id: number;
 
   @ApiProperty({
     description: 'Location where the pet was sighted',

@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { NotificationConfidence } from '@prisma/client';
+import { getMaxSightingPhotos } from '../../config/sighting.config';
 
 /**
  * Response DTO for sighting data
@@ -7,21 +8,21 @@ import { NotificationConfidence } from '@prisma/client';
 export class SightingResponseDto {
   @ApiProperty({
     description: 'Unique sighting ID',
-    example: 'cuid-sighting-123',
+    example: 101,
   })
-  id: string;
+  id: number;
 
   @ApiProperty({
     description: 'Alert ID this sighting is for',
-    example: 'cuid-alert-123',
+    example: 42,
   })
-  alert_id: string;
+  alert_id: number;
 
   @ApiProperty({
     description: 'User ID of the person who reported the sighting',
-    example: 'cuid-user-123',
+    example: 7,
   })
-  reported_by: string;
+  reported_by: number;
 
   @ApiProperty({
     description: 'Latitude in decimal degrees',
@@ -38,15 +39,27 @@ export class SightingResponseDto {
   @ApiProperty({
     description: 'Human-readable address',
     example: '123 Main St, San Francisco, CA',
-  })
-  address: string;
-
-  @ApiProperty({
-    description: 'URL to uploaded photo (optional)',
-    example: 'https://storage.fifi-alert.com/sightings/photo123.jpg',
     required: false,
   })
+  address: string | null;
+
+  @ApiProperty({
+    description:
+      'First photo URL, kept for older clients. Always equals photos[0], or null when the sighting has no photos.',
+    example: 'https://storage.fifi-alert.com/sightings/101/photo123.jpg',
+    required: false,
+    nullable: true,
+  })
   photo: string | null;
+
+  @ApiProperty({
+    description:
+      'Public CDN URLs of all photos attached to the sighting, in upload order. Empty when none. Capped at MAX_SIGHTING_PHOTOS.',
+    type: [String],
+    maxItems: getMaxSightingPhotos(),
+    example: ['https://storage.fifi-alert.com/sightings/101/photo123.jpg'],
+  })
+  photos: string[];
 
   @ApiProperty({
     description: 'Additional notes from the reporter',
@@ -57,8 +70,9 @@ export class SightingResponseDto {
   @ApiProperty({
     description: 'Confidence level of the sighting',
     enum: NotificationConfidence,
+    required: false,
   })
-  confidence: NotificationConfidence;
+  confidence: string | null;
 
   @ApiProperty({
     description: 'When the sighting occurred',

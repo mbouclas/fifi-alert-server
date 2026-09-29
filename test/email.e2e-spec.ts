@@ -287,7 +287,6 @@ describe('Email System Integration Tests', () => {
       const templates = emailService.getEmailTemplateNames();
 
       expect(templates).toHaveProperty('welcome');
-      expect(templates).toHaveProperty('passwordReset');
       expect(templates).toHaveProperty('forgotPassword');
       expect(templates).toHaveProperty('invite');
       expect(templates).toHaveProperty('newAlert');

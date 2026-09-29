@@ -74,6 +74,7 @@ describe('PetController', () => {
       expect(mockUploadService.uploadImages).toHaveBeenCalledWith(
         files,
         'pets/123',
+        5,
       );
       expect(result).toEqual({ photoUrls });
     });

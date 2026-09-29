@@ -8,7 +8,6 @@ import { RolesGuard } from './guards/roles.guard';
 import { MinUserLevelGuard } from './guards/min-user-level.guard';
 import { PrismaService } from '../services/prisma.service';
 import { TokenCleanupService } from './services/token-cleanup.service';
-import { AuthEmailService } from './services/auth-email.service';
 import { SharedModule } from '../shared/shared.module';
 
 /**
@@ -38,14 +37,7 @@ import { SharedModule } from '../shared/shared.module';
     MinUserLevelGuard,
     PrismaService,
     TokenCleanupService,
-    AuthEmailService,
   ],
-  exports: [
-    TokenService,
-    BearerTokenGuard,
-    RolesGuard,
-    MinUserLevelGuard,
-    AuthEmailService,
-  ],
+  exports: [TokenService, BearerTokenGuard, RolesGuard, MinUserLevelGuard],
 })
 export class AuthEndpointsModule {}
