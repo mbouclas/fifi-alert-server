@@ -23,6 +23,7 @@ import {
   VapidPublicKeyResponseDto,
 } from './dto';
 import { BearerTokenGuard } from '../auth/guards/bearer-token.guard';
+import { AllowAnonymous } from '../auth/decorators/allow-anonymous.decorator';
 import { Session } from '../decorators/session.decorator';
 
 @ApiTags('Notifications')
@@ -34,6 +35,7 @@ export class NotificationController {
   ) {}
 
   @Get('vapid-public-key')
+  @AllowAnonymous()
   @ApiOperation({
     summary: 'Get the VAPID public key for web push subscription',
     description:
