@@ -112,6 +112,8 @@ describe('WebPushService (Integration)', () => {
       expect(parsedBody.title).toBe(PAYLOAD.title);
       expect(parsedBody.body).toBe(PAYLOAD.body);
       expect(parsedBody.data).toEqual({ alertId: '42' });
+      expect(parsedBody.icon).toMatch(/^https?:\/\/.+\/icons\/icon-192\.png$/);
+      expect(parsedBody.badge).toBe(parsedBody.icon);
     });
 
     it('flags a 410 Gone subscription as invalid so the token gets cleaned up', async () => {

@@ -1,11 +1,21 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as webpush from 'web-push';
+import { buildWebAppUrl } from '@config/web-app.config';
+
+/**
+ * Default notification icon, served by the SvelteKit app from `static/icons/`.
+ * 192px is the size Chrome recommends for notification icons; this variant is
+ * `purpose: any` (not maskable) so the paw fills the tile instead of being padded.
+ */
+const DEFAULT_ICON_PATH = '/icons/icon-192.png';
 
 export interface WebPushNotificationPayload {
   title: string;
   body: string;
   imageUrl?: string;
+  /** Absolute URL of the notification icon; defaults to the FiFi Alert app icon. */
+  iconUrl?: string;
   data?: Record<string, string>;
 }
 
@@ -122,9 +132,16 @@ export class WebPushService implements OnModuleInit {
     try {
       // iOS enforces userVisibleOnly strictly: every push must render a notification.
       // The service worker reads this shape in its `push` handler.
+      // Icon URLs must be absolute: the service worker may be invoked without a
+      // document context, and a relative path would be resolved against the
+      // push service origin on some browsers.
+      const icon = payload.iconUrl || buildWebAppUrl(DEFAULT_ICON_PATH);
+
       const body = JSON.stringify({
         title: payload.title,
         body: payload.body,
+        icon,
+        badge: icon,
         ...(payload.imageUrl && { image: payload.imageUrl }),
         data: payload.data || {},
       });
