@@ -9,6 +9,9 @@ import {
   NotificationService,
   AlertNotificationJob,
   PushNotificationJob,
+  SuccessStoryJob,
+  SUCCESS_STORY_MATCH_REASON,
+  SUCCESS_STORY_META_KIND,
 } from './notification.service';
 import { FCMService } from './fcm.service';
 import { APNsService } from './apns.service';
@@ -59,13 +62,15 @@ export class NotificationQueueProcessor extends WorkerHost {
    * Main job processor - routes to specific handlers based on job name
    */
   async process(
-    job: Job<AlertNotificationJob | PushNotificationJob>,
+    job: Job<AlertNotificationJob | PushNotificationJob | SuccessStoryJob>,
   ): Promise<any> {
     switch (job.name) {
       case 'send-alert-notifications':
         return this.processAlertNotifications(job as Job<AlertNotificationJob>);
       case 'send-push-notification':
         return this.processPushNotification(job as Job<PushNotificationJob>);
+      case 'send-success-story':
+        return this.processSuccessStory(job as Job<SuccessStoryJob>);
       default:
         this.logger.error(`Unknown job type: ${job.name}`);
         throw new Error(`Unknown job type: ${job.name}`);
@@ -301,6 +306,187 @@ export class NotificationQueueProcessor extends WorkerHost {
    * Process individual push notification job
    * Sends push notification to device via FCM or APNs
    */
+  /**
+   * "{Pet} is home!" fan-out (BACKEND_WORK_ORDER_THANK_YOU.md §3.3).
+   *
+   * Recipients: every user who received this alert (push or email) plus every
+   * sighting reporter, owner excluded, deduplicated. One notification row per
+   * push-enabled device, delivered through the regular push job so dead-token
+   * pruning and FAILED bookkeeping apply. Idempotent: the first run claims
+   * `alert.success_story_sent_at`; later runs are no-ops.
+   */
+  async processSuccessStory(job: Job<SuccessStoryJob>): Promise<void> {
+    const { alertId } = job.data;
+    this.logger.log(`Processing success story for alert ${alertId}`);
+
+    const alert = await this.prisma.alert.findUnique({
+      where: { id: alertId },
+      select: {
+        id: true,
+        creator_id: true,
+        success_story_sent_at: true,
+        reunionSnapshot: {
+          select: {
+            id: true,
+            tagId: true,
+            petName: true,
+            petPhotoUrl: true,
+            thankYouMessage: true,
+          },
+        },
+      },
+    });
+
+    if (!alert) {
+      this.logger.warn(`Alert ${alertId} not found for success story`);
+      return;
+    }
+
+    if (!alert.reunionSnapshot) {
+      this.logger.warn(
+        `Alert ${alertId} has no reunion snapshot; skipping success story`,
+      );
+      return;
+    }
+
+    if (alert.success_story_sent_at) {
+      this.logger.log(
+        `Success story for alert ${alertId} already sent at ${alert.success_story_sent_at.toISOString()}; skipping`,
+      );
+      return;
+    }
+
+    // Atomic claim so a retried/duplicate job can never fan out twice.
+    const claim = await this.prisma.alert.updateMany({
+      where: { id: alertId, success_story_sent_at: null },
+      data: { success_story_sent_at: new Date() },
+    });
+    if (claim.count === 0) {
+      this.logger.log(
+        `Success story for alert ${alertId} claimed by another worker; skipping`,
+      );
+      return;
+    }
+
+    const [notifiedRows, sightingRows] = await Promise.all([
+      this.prisma.notification.findMany({
+        where: {
+          alert_id: alertId,
+          excluded: false,
+          status: {
+            in: [
+              NotificationStatus.SENT,
+              NotificationStatus.DELIVERED,
+              NotificationStatus.OPENED,
+            ],
+          },
+        },
+        select: { device: { select: { user_id: true } } },
+      }),
+      this.prisma.sighting.findMany({
+        where: { alert_id: alertId },
+        select: { reporter_id: true },
+      }),
+    ]);
+
+    const recipientIds = new Set<number>();
+    for (const row of notifiedRows) recipientIds.add(row.device.user_id);
+    for (const row of sightingRows) recipientIds.add(row.reporter_id);
+    recipientIds.delete(alert.creator_id);
+
+    if (recipientIds.size === 0) {
+      this.logger.log(`Success story for alert ${alertId}: no helpers to notify`);
+      return;
+    }
+
+    const devices = await this.prisma.device.findMany({
+      where: {
+        user_id: { in: [...recipientIds] },
+        push_token: { not: null },
+        push_enabled: true,
+      },
+      select: { id: true, user_id: true },
+    });
+
+    let queued = 0;
+    for (const device of devices) {
+      const notification = await this.prisma.notification.create({
+        data: {
+          alert_id: alertId,
+          device_id: device.id,
+          confidence: NotificationConfidence.HIGH,
+          match_reason: SUCCESS_STORY_MATCH_REASON,
+          status: NotificationStatus.QUEUED,
+          meta: { kind: SUCCESS_STORY_META_KIND },
+        },
+      });
+
+      await this.notificationQueue.add('send-push-notification', {
+        notificationId: notification.id,
+      } as PushNotificationJob);
+      queued++;
+    }
+
+    // Email pass: one thank-you email per opted-in helper, alongside the push.
+    // Recorded on any device the user owns (notification rows need a device);
+    // helpers without a device row still get the email, just no log row.
+    const snapshot = alert.reunionSnapshot;
+    const anyDeviceByUser = new Map<number, number>();
+    for (const device of await this.prisma.device.findMany({
+      where: { user_id: { in: [...recipientIds] } },
+      select: { id: true, user_id: true },
+      orderBy: { id: 'asc' },
+    })) {
+      if (!anyDeviceByUser.has(device.user_id)) {
+        anyDeviceByUser.set(device.user_id, device.id);
+      }
+    }
+
+    let emailed = 0;
+    for (const userId of recipientIds) {
+      if (!(await this.alertEmailService.isOptedIn(userId))) {
+        continue;
+      }
+
+      const sent = await this.alertEmailService.sendPetIsHomeEmail(userId, {
+        alertId,
+        tagId: snapshot.tagId,
+        petName: snapshot.petName,
+        petPhotoUrl: snapshot.petPhotoUrl,
+        thankYouMessage: snapshot.thankYouMessage,
+      });
+      if (sent) emailed++;
+
+      const deviceId = anyDeviceByUser.get(userId);
+      if (deviceId !== undefined) {
+        try {
+          await this.prisma.notification.create({
+            data: {
+              alert_id: alertId,
+              device_id: deviceId,
+              confidence: NotificationConfidence.HIGH,
+              match_reason: SUCCESS_STORY_MATCH_REASON,
+              status: sent ? NotificationStatus.SENT : NotificationStatus.FAILED,
+              sent_at: sent ? new Date() : undefined,
+              failed_at: sent ? undefined : new Date(),
+              failure_reason: sent ? undefined : 'EMAIL_NOT_SENT',
+              meta: { channel: 'EMAIL', kind: SUCCESS_STORY_META_KIND },
+            },
+          });
+        } catch (error) {
+          this.logger.error(
+            `Failed to record success-story email for user ${userId}:`,
+            error,
+          );
+        }
+      }
+    }
+
+    this.logger.log(
+      `Success story for alert ${alertId}: ${recipientIds.size} helper(s), ${queued} push(es) queued, ${emailed} email(s) sent`,
+    );
+  }
+
   async processPushNotification(job: Job<PushNotificationJob>): Promise<void> {
     const { notificationId } = job.data;
     this.logger.log(`Processing push notification ${notificationId}`);
@@ -317,6 +503,14 @@ export class NotificationQueueProcessor extends WorkerHost {
               pet_description: true,
               pet_photos: true,
               location_address: true,
+              pet: { select: { tagId: true } },
+              reunionSnapshot: {
+                select: {
+                  petName: true,
+                  petPhotoUrl: true,
+                  thankYouMessage: true,
+                },
+              },
             },
           },
           device: {
@@ -346,28 +540,7 @@ export class NotificationQueueProcessor extends WorkerHost {
       }
 
       // Build notification payload
-      const title = this.notificationService.buildTitle(
-        notification.confidence,
-        notification.alert.pet_species,
-        notification.alert.pet_name,
-        notification.distance_km ?? undefined,
-      );
-
-      const body = this.notificationService.buildBody(
-        notification.alert.pet_description,
-        notification.alert.location_address ?? undefined,
-      );
-
-      const payload = {
-        title,
-        body,
-        imageUrl: notification.alert.pet_photos[0] || undefined,
-        data: {
-          alertId: notification.alert_id.toString(),
-          notificationId: notificationId.toString(),
-          confidence: notification.confidence,
-        },
-      };
+      const payload = this.buildPushPayload(notification, notificationId);
 
       // Send via FCM, APNs, or Web Push based on platform
       let sendResult: {
@@ -627,6 +800,88 @@ export class NotificationQueueProcessor extends WorkerHost {
     } catch (error) {
       this.logger.error('Failed to record email notification:', error);
     }
+  }
+
+  /**
+   * Payload for a single push. Success-story rows (`meta.kind = 'alert_resolved'`)
+   * get the "{Pet} is home!" shape the web service worker deep-links on; every
+   * other row keeps the original alert shape.
+   */
+  private buildPushPayload(
+    notification: {
+      alert_id: number;
+      confidence: NotificationConfidence;
+      distance_km: number | null;
+      meta: unknown;
+      alert: {
+        pet_name: string;
+        pet_species: string;
+        pet_description: string;
+        pet_photos: string[];
+        location_address: string | null;
+        pet: { tagId: string } | null;
+        reunionSnapshot: {
+          petName: string;
+          petPhotoUrl: string | null;
+          thankYouMessage: string | null;
+        } | null;
+      };
+    },
+    notificationId: number,
+  ): {
+    title: string;
+    body: string;
+    imageUrl?: string;
+    data: Record<string, string>;
+  } {
+    const meta = notification.meta as { kind?: string } | null;
+
+    if (meta?.kind === SUCCESS_STORY_META_KIND) {
+      const snapshot = notification.alert.reunionSnapshot;
+      const petName = snapshot?.petName ?? notification.alert.pet_name;
+      const tagId = notification.alert.pet?.tagId;
+      const message = snapshot?.thankYouMessage?.trim();
+
+      return {
+        title: `${petName} is home!`,
+        body:
+          message && message.length > 0
+            ? message.slice(0, 120)
+            : `${petName} has been found safe. Thank you for keeping an eye out.`,
+        imageUrl: snapshot?.petPhotoUrl ?? undefined,
+        data: {
+          type: SUCCESS_STORY_META_KIND,
+          alertId: notification.alert_id.toString(),
+          notificationId: notificationId.toString(),
+          ...(tagId
+            ? { tagId, url: `/thank-you/${encodeURIComponent(tagId)}` }
+            : {}),
+        },
+      };
+    }
+
+    const title = this.notificationService.buildTitle(
+      notification.confidence,
+      notification.alert.pet_species,
+      notification.alert.pet_name,
+      notification.distance_km ?? undefined,
+    );
+
+    const body = this.notificationService.buildBody(
+      notification.alert.pet_description,
+      notification.alert.location_address ?? undefined,
+    );
+
+    return {
+      title,
+      body,
+      imageUrl: notification.alert.pet_photos[0] || undefined,
+      data: {
+        alertId: notification.alert_id.toString(),
+        notificationId: notificationId.toString(),
+        confidence: notification.confidence,
+      },
+    };
   }
 
   /**

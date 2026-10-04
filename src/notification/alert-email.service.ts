@@ -10,6 +10,10 @@ const alertEmailTemplates: Record<string, IEmailTemplate> = {
     subject: 'Missing pet near you',
     file: 'notifications/email/alert/newAlert.njk',
   },
+  petIsHome: {
+    subject: 'Good news: a pet you looked out for is home',
+    file: 'notifications/email/alert/petIsHome.njk',
+  },
 };
 
 export type AlertEmailPayload = {
@@ -20,6 +24,15 @@ export type AlertEmailPayload = {
   locationAddress?: string;
   distanceKm?: number;
   alertId: number;
+};
+
+/** "{Pet} is home!" thank-you email sent to helpers when an alert is resolved as found. */
+export type PetIsHomeEmailPayload = {
+  alertId: number;
+  tagId: string;
+  petName: string;
+  petPhotoUrl?: string | null;
+  thankYouMessage?: string | null;
 };
 
 /**
@@ -102,7 +115,9 @@ export class AlertEmailService {
             photoUrl: payload.petPhotoUrl ?? '',
             // Web-app routes: /alerts/:id shows the alert, /alerts/:id/sighting reports one.
             viewUrl: buildWebAppUrl(`/alerts/${payload.alertId}`),
-            reportSightingUrl: buildWebAppUrl(`/alerts/${payload.alertId}/sighting`),
+            reportSightingUrl: buildWebAppUrl(
+              `/alerts/${payload.alertId}/sighting`,
+            ),
           },
           distanceKm: payload.distanceKm,
           appUrl: getWebAppUrl(),
@@ -117,6 +132,63 @@ export class AlertEmailService {
     } catch (error) {
       this.logger.error(
         `Failed to send fallback alert email to user ${userId}:`,
+        error,
+      );
+      return false;
+    }
+  }
+
+  /**
+   * Send the "{Pet} is home!" thank-you email to a helper. Links to the public
+   * reunion page (web `/thank-you/{tagId}`), same destination as the push.
+   *
+   * @returns true when the provider accepted the message
+   */
+  async sendPetIsHomeEmail(
+    userId: number,
+    payload: PetIsHomeEmailPayload,
+  ): Promise<boolean> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true, email: true, emailVerified: true, firstName: true },
+    });
+
+    if (!user?.email || !user.emailVerified) {
+      return false;
+    }
+
+    const emailService = new EmailService(
+      this.emailProvider,
+      this.eventEmitter,
+      alertEmailTemplates,
+    );
+
+    try {
+      await emailService.sendHtml('petIsHome', {
+        from: String(process.env.MAIL_NOTIFICATIONS_FROM),
+        to: user.email,
+        templateData: {
+          user: { firstName: user.firstName },
+          reunion: {
+            petName: payload.petName,
+            photoUrl: payload.petPhotoUrl ?? '',
+            thankYouMessage: payload.thankYouMessage ?? '',
+            viewUrl: buildWebAppUrl(
+              `/thank-you/${encodeURIComponent(payload.tagId)}`,
+            ),
+          },
+          appUrl: getWebAppUrl(),
+        },
+      });
+
+      this.logger.log(
+        `Pet-is-home email sent to user ${userId} for alert ${payload.alertId}`,
+      );
+
+      return true;
+    } catch (error) {
+      this.logger.error(
+        `Failed to send pet-is-home email to user ${userId}:`,
         error,
       );
       return false;

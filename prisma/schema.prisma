@@ -441,6 +441,7 @@ model Alert {
   resolved_at    DateTime?   @map("resolved_at")
   cancelled_at   DateTime?   @map("cancelled_at")
   renewal_count  Int         @default(0) @map("renewal_count") // Max 3 renewals
+  success_story_sent_at DateTime? @map("success_story_sent_at") // Set once the "pet is home" fan-out has been claimed
 
   // Contact & Preferences
   contact_phone   String? @map("contact_phone")
@@ -456,8 +457,9 @@ model Alert {
   settings              Json?
 
   // Relations
-  sightings     Sighting[]
-  notifications Notification[]
+  sightings       Sighting[]
+  notifications   Notification[]
+  reunionSnapshot ReunionSnapshot?
 
   @@index([creator_id])
   @@index([pet_id])
@@ -466,6 +468,27 @@ model Alert {
   @@index([affected_postal_codes], type: Gin)
   @@index([location_point], type: Gist, name: "alert_location_gist_idx") // Spatial index
   @@map("alert")
+}
+
+// Reunion Snapshot: public "pet is home" card frozen when an alert is resolved as found.
+// One row per pet tag; a later resolve replaces it. This IS the public DTO - no owner data.
+model ReunionSnapshot {
+  id                 Int       @id @default(autoincrement())
+  tagId              String    @unique @map("tag_id") @pg.VarChar(9)
+  alertId            Int       @unique @map("alert_id")
+  alert              Alert     @relation(fields: [alertId], references: [id], onDelete: Cascade)
+  petName            String    @map("pet_name") @pg.VarChar(100)
+  petPhotoUrl        String?   @map("pet_photo_url")
+  thankYouMessage    String?   @map("thank_you_message") @pg.VarChar(500)
+  resolvedAt         DateTime  @map("resolved_at")
+  neighboursNotified Int?      @map("neighbours_notified")
+  sightingsReported  Int       @default(0) @map("sightings_reported")
+  expiresAt          DateTime  @map("expires_at")
+  created_at         DateTime? @default(now()) @map("created_at")
+  updated_at         DateTime? @updatedAt @map("updated_at")
+
+  @@index([expiresAt])
+  @@map("reunion_snapshot")
 }
 
 // Device Platform Enum

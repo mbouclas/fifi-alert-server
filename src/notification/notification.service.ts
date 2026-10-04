@@ -40,6 +40,20 @@ export interface PushNotificationJob {
   notificationId: number;
 }
 
+/**
+ * Job data for the "pet is home" helper fan-out, queued when an owner resolves
+ * an alert as found with `shareSuccessStory: true`.
+ */
+export interface SuccessStoryJob {
+  alertId: number;
+}
+
+/** `notification.match_reason` used for success-story pushes. */
+export const SUCCESS_STORY_MATCH_REASON = 'SUCCESS_STORY';
+
+/** `notification.meta.kind` that switches the push job onto the "pet is home" payload. */
+export const SUCCESS_STORY_META_KIND = 'alert_resolved';
+
 @Injectable()
 export class NotificationService {
   private readonly logger = new Logger(NotificationService.name);
@@ -73,6 +87,22 @@ export class NotificationService {
         `Queued ${wave} wave job ${job.id} for alert ${alertId} (delay ${delayMs}ms)`,
       );
     }
+  }
+
+  /**
+   * Queue the "{Pet} is home!" fan-out to everyone who helped with an alert
+   * (BACKEND_WORK_ORDER_THANK_YOU.md §3.3). One job per alert; the processor
+   * claims `alert.success_story_sent_at` so a replay never sends twice.
+   */
+  async queueSuccessStoryNotifications(alertId: number): Promise<void> {
+    const job = await this.notificationQueue.add(
+      'send-success-story',
+      { alertId } as SuccessStoryJob,
+      { jobId: `success-story-${alertId}` },
+    );
+    this.logger.log(
+      `Queued success-story job ${job.id} for alert ${alertId}`,
+    );
   }
 
   /**

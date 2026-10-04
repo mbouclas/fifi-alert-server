@@ -20,8 +20,11 @@ import {
   CancelAlertDto,
   ListAlertsQueryDto,
   AlertResponseDto,
+  ReunionSnapshotDto,
+  isFoundOutcome,
 } from './dto';
 import { RateLimitService } from './rate-limit.service';
+import { ReunionSnapshotService } from './reunion-snapshot.service';
 import { AUDIT_EVENT_NAMES } from '../audit/audit-event-names';
 import { IAuditEventPayload } from '../audit/interfaces/audit-event-payload.interface';
 import { EmailService, IEmailTemplate } from '@shared/email/email.service';
@@ -76,6 +79,7 @@ export class AlertService {
     @Inject('IEmailProvider') private readonly emailProvider: IEmailProvider,
     private readonly notificationService: NotificationService,
     private readonly alertStatusEvents: AlertStatusEventPublisher,
+    private readonly reunionSnapshots: ReunionSnapshotService,
   ) { }
 
   /**
@@ -467,6 +471,14 @@ export class AlertService {
   }
 
   /**
+   * Public reunion snapshot for a collar tag (GET /alerts/by-tag/:tagId/reunion).
+   * Null when none exists or it has expired.
+   */
+  findReunionByTagId(tagId: string): Promise<ReunionSnapshotDto | null> {
+    return this.reunionSnapshots.findPublicByTagId(tagId);
+  }
+
+  /**
    * Resolve an alert (pet found)
    * Task 2.7
    */
@@ -478,6 +490,11 @@ export class AlertService {
     // Verify ownership
     const alert = await this.prisma.alert.findUnique({
       where: { id: alertId },
+      include: {
+        pet: {
+          select: { tagId: true, name: true, primaryPhoto: true, photos: true },
+        },
+      },
     });
 
     if (!alert) {
@@ -494,6 +511,8 @@ export class AlertService {
       throw new UnprocessableEntityException('Alert is already resolved');
     }
 
+    const resolvedAt = new Date();
+
     // Capture oldValues for audit
     const oldValues = {
       status: alert.status,
@@ -508,7 +527,7 @@ export class AlertService {
       where: { id: alertId },
       data: {
         status: AlertStatus.RESOLVED,
-        resolved_at: new Date(),
+        resolved_at: resolvedAt,
         notes: resolutionNotes,
       },
     });
@@ -516,6 +535,29 @@ export class AlertService {
     this.logger.log(
       `Alert ${alertId} resolved by user ${userId} with outcome: ${dto.outcome}`,
     );
+
+    // Freeze the public "pet is home" snapshot for found outcomes. Never fails the resolve.
+    let snapshotWritten = false;
+    if (isFoundOutcome(dto.outcome) && alert.pet?.tagId) {
+      try {
+        await this.reunionSnapshots.upsertForResolvedAlert({
+          alertId,
+          pet: alert.pet,
+          thankYouMessage: dto.thankYouMessage,
+          resolvedAt,
+        });
+        snapshotWritten = true;
+      } catch (error) {
+        this.logger.error(
+          `Reunion snapshot write failed for alert ${alertId} (tag ${alert.pet.tagId}):`,
+          error,
+        );
+      }
+    } else if (dto.thankYouMessage) {
+      this.logger.log(
+        `Alert ${alertId}: thankYouMessage dropped (outcome ${dto.outcome}, pet tag ${alert.pet?.tagId ?? 'none'})`,
+      );
+    }
 
     // Emit audit event
     try {
@@ -555,7 +597,18 @@ export class AlertService {
     });
 
     // TODO: Cancel any queued notifications (BullMQ)
-    // TODO: Queue resolution notifications to sighting reporters
+
+    // Helper fan-out ("{Pet} is home!") - queued after the DB commit above, never fails the resolve.
+    if (dto.shareSuccessStory && snapshotWritten) {
+      try {
+        await this.notificationService.queueSuccessStoryNotifications(alertId);
+      } catch (error) {
+        this.logger.error(
+          `Failed to queue success-story notifications for alert ${alertId}:`,
+          error,
+        );
+      }
+    }
 
     // Fetch the resolved alert
     const resolvedAlert = await this.findById(alertId, userId);

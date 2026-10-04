@@ -36,6 +36,61 @@ describe('AlertEmailService', () => {
     jest.clearAllMocks();
   });
 
+  describe('sendPetIsHomeEmail', () => {
+    it('should render the petIsHome template linking to the public thank-you page', async () => {
+      prisma.user.findUnique.mockResolvedValue({
+        id: 2170,
+        email: 'helper@example.com',
+        emailVerified: true,
+        firstName: 'Maria',
+      });
+
+      const sent = await service.sendPetIsHomeEmail(2170, {
+        alertId: 41,
+        tagId: 'PET7K9X2A',
+        petName: 'Bella',
+        petPhotoUrl: 'https://cdn/pets/5/primary.jpg',
+        thankYouMessage: 'Thanks everyone!',
+      });
+
+      expect(sent).toBe(true);
+      const emailInstance = (EmailService as unknown as jest.Mock).mock
+        .results[0].value;
+      expect(emailInstance.sendHtml).toHaveBeenCalledWith(
+        'petIsHome',
+        expect.objectContaining({
+          to: 'helper@example.com',
+          templateData: expect.objectContaining({
+            user: { firstName: 'Maria' },
+            reunion: {
+              petName: 'Bella',
+              photoUrl: 'https://cdn/pets/5/primary.jpg',
+              thankYouMessage: 'Thanks everyone!',
+              viewUrl: 'http://localhost:5173/thank-you/PET7K9X2A',
+            },
+          }),
+        }),
+      );
+    });
+
+    it('should not email unverified addresses', async () => {
+      prisma.user.findUnique.mockResolvedValue({
+        id: 1,
+        email: 'x@example.com',
+        emailVerified: false,
+        firstName: '',
+      });
+      await expect(
+        service.sendPetIsHomeEmail(1, {
+          alertId: 1,
+          tagId: 'PET7K9X2A',
+          petName: 'Bella',
+        }),
+      ).resolves.toBe(false);
+      expect(EmailService).not.toHaveBeenCalled();
+    });
+  });
+
   describe('sendAlertEmail', () => {
     it('should link to the web app alert page and its sighting form', async () => {
       prisma.user.findUnique.mockResolvedValue({

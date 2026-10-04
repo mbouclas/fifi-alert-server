@@ -327,6 +327,7 @@ exports.Prisma.AlertScalarFieldEnum = {
   resolved_at: 'resolved_at',
   cancelled_at: 'cancelled_at',
   renewal_count: 'renewal_count',
+  success_story_sent_at: 'success_story_sent_at',
   contact_phone: 'contact_phone',
   contact_email: 'contact_email',
   is_phone_public: 'is_phone_public',
@@ -336,6 +337,21 @@ exports.Prisma.AlertScalarFieldEnum = {
   reward_amount: 'reward_amount',
   meta: 'meta',
   settings: 'settings'
+};
+
+exports.Prisma.ReunionSnapshotScalarFieldEnum = {
+  id: 'id',
+  tagId: 'tagId',
+  alertId: 'alertId',
+  petName: 'petName',
+  petPhotoUrl: 'petPhotoUrl',
+  thankYouMessage: 'thankYouMessage',
+  resolvedAt: 'resolvedAt',
+  neighboursNotified: 'neighboursNotified',
+  sightingsReported: 'sightingsReported',
+  expiresAt: 'expiresAt',
+  created_at: 'created_at',
+  updated_at: 'updated_at'
 };
 
 exports.Prisma.DeviceScalarFieldEnum = {
@@ -570,6 +586,7 @@ exports.Prisma.ModelName = {
   Pet: 'Pet',
   AdoptionListing: 'AdoptionListing',
   Alert: 'Alert',
+  ReunionSnapshot: 'ReunionSnapshot',
   Device: 'Device',
   SavedZone: 'SavedZone',
   AlertZone: 'AlertZone',

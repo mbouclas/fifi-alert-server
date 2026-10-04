@@ -31,12 +31,38 @@ export const CLIENT_API_KEYS_ENV = 'CLIENT_API_KEYS';
  * Fails closed: if no keys are configured every anonymous guarded request is
  * rejected.
  */
+/**
+ * Parse CLIENT_API_KEYS (comma-separated) into a list of non-empty keys.
+ * Read on every call so tests and rotations do not need a restart.
+ */
+export function getConfiguredClientKeys(): string[] {
+  const raw = process.env[CLIENT_API_KEYS_ENV] ?? '';
+  return raw
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+
+/** Timing-safe check of a presented key against CLIENT_API_KEYS. */
+export function isValidClientKey(presented: string): boolean {
+  return getConfiguredClientKeys().some((key) => safeEquals(key, presented));
+}
+
+function safeEquals(expected: string, actual: string): boolean {
+  const a = Buffer.from(expected);
+  const b = Buffer.from(actual);
+  if (a.length !== b.length) {
+    return false;
+  }
+  return timingSafeEqual(a, b);
+}
+
 @Injectable()
 export class ClientKeyGuard implements CanActivate {
   private readonly logger = new Logger(ClientKeyGuard.name);
 
   constructor(private readonly reflector: Reflector) {
-    if (this.getConfiguredKeys().length === 0) {
+    if (getConfiguredClientKeys().length === 0) {
       this.logger.warn(
         `${CLIENT_API_KEYS_ENV} is not set - routes guarded by @RequireClientKey() will reject all requests`,
       );
@@ -66,28 +92,15 @@ export class ClientKeyGuard implements CanActivate {
       throw new UnauthorizedException('Missing client key');
     }
 
-    const keys = this.getConfiguredKeys();
-    if (keys.length === 0) {
+    if (getConfiguredClientKeys().length === 0) {
       throw new UnauthorizedException('Client API keys not configured');
     }
 
-    if (!keys.some((key) => this.safeEquals(key, presented))) {
+    if (!isValidClientKey(presented)) {
       throw new UnauthorizedException('Invalid client key');
     }
 
     return true;
-  }
-
-  /**
-   * Parse CLIENT_API_KEYS (comma-separated) into a list of non-empty keys.
-   * Read on every call so tests and rotations do not need a restart.
-   */
-  private getConfiguredKeys(): string[] {
-    const raw = process.env[CLIENT_API_KEYS_ENV] ?? '';
-    return raw
-      .split(',')
-      .map((s) => s.trim())
-      .filter(Boolean);
   }
 
   private extractHeader(request: ClientKeyRequest): string | undefined {
@@ -96,14 +109,5 @@ export class ClientKeyGuard implements CanActivate {
       return value[0];
     }
     return typeof value === 'string' && value.length > 0 ? value : undefined;
-  }
-
-  private safeEquals(expected: string, actual: string): boolean {
-    const a = Buffer.from(expected);
-    const b = Buffer.from(actual);
-    if (a.length !== b.length) {
-      return false;
-    }
-    return timingSafeEqual(a, b);
   }
 }

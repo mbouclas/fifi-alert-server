@@ -70,6 +70,7 @@ describe('NotificationQueueProcessor', () => {
           useValue: {
             isOptedIn: jest.fn().mockResolvedValue(false),
             sendAlertEmail: jest.fn().mockResolvedValue(true),
+            sendPetIsHomeEmail: jest.fn().mockResolvedValue(true),
           },
         },
         NotificationQueueProcessor,
@@ -92,6 +93,10 @@ describe('NotificationQueueProcessor', () => {
           useValue: {
             alert: {
               findUnique: jest.fn(),
+              updateMany: jest.fn(),
+            },
+            sighting: {
+              findMany: jest.fn(),
             },
             notification: {
               create: jest.fn(),
@@ -1362,6 +1367,235 @@ describe('NotificationQueueProcessor', () => {
           }),
         }),
       );
+    });
+  });
+  describe('processSuccessStory', () => {
+    const successAlert = {
+      id: 41,
+      creator_id: 1,
+      success_story_sent_at: null,
+      reunionSnapshot: {
+        id: 7,
+        tagId: 'PET7K9X2A',
+        petName: 'Bella',
+        petPhotoUrl: 'https://cdn/pets/5/primary.jpg',
+        thankYouMessage: 'Thanks all',
+      },
+    };
+
+    beforeEach(() => {
+      (prismaService.alert.updateMany as jest.Mock).mockResolvedValue({ count: 1 });
+      (prismaService.sighting.findMany as jest.Mock).mockResolvedValue([]);
+      (prismaService.notification.create as jest.Mock).mockImplementation(
+        async ({ data }) => ({ id: 1000 + data.device_id, ...data }),
+      );
+      (prismaService.device.findMany as jest.Mock).mockReset();
+    });
+
+    it('skips when the alert has no reunion snapshot', async () => {
+      (prismaService.alert.findUnique as jest.Mock).mockResolvedValue({
+        ...successAlert,
+        reunionSnapshot: null,
+      });
+
+      await processor.processSuccessStory({ data: { alertId: 41 } } as Job);
+
+      expect(prismaService.alert.updateMany).not.toHaveBeenCalled();
+      expect(mockQueue.add).not.toHaveBeenCalled();
+    });
+
+    it('is a no-op when the story was already sent or the claim is lost', async () => {
+      (prismaService.alert.findUnique as jest.Mock).mockResolvedValue({
+        ...successAlert,
+        success_story_sent_at: new Date('2026-10-04T18:00:00Z'),
+      });
+      await processor.processSuccessStory({ data: { alertId: 41 } } as Job);
+      expect(prismaService.alert.updateMany).not.toHaveBeenCalled();
+
+      (prismaService.alert.findUnique as jest.Mock).mockResolvedValue(successAlert);
+      (prismaService.alert.updateMany as jest.Mock).mockResolvedValue({ count: 0 });
+      await processor.processSuccessStory({ data: { alertId: 41 } } as Job);
+      expect(prismaService.notification.findMany).not.toHaveBeenCalled();
+      expect(mockQueue.add).not.toHaveBeenCalled();
+    });
+
+    it('notifies notified users and sighting reporters once per device, owner excluded', async () => {
+      (prismaService.alert.findUnique as jest.Mock).mockResolvedValue(successAlert);
+      (prismaService.notification.findMany as jest.Mock).mockResolvedValue([
+        { device: { user_id: 2 } },
+        { device: { user_id: 2 } }, // second device of the same user
+        { device: { user_id: 1 } }, // owner, must be excluded
+      ]);
+      (prismaService.sighting.findMany as jest.Mock).mockResolvedValue([
+        { reporter_id: 3 },
+        { reporter_id: 2 },
+      ]);
+      (prismaService.device.findMany as jest.Mock).mockResolvedValue([
+        { id: 20, user_id: 2 },
+        { id: 21, user_id: 2 },
+        { id: 30, user_id: 3 },
+      ]);
+
+      await processor.processSuccessStory({ data: { alertId: 41 } } as Job);
+
+      expect(prismaService.alert.updateMany).toHaveBeenCalledWith({
+        where: { id: 41, success_story_sent_at: null },
+        data: { success_story_sent_at: expect.any(Date) },
+      });
+      const deviceQuery = (prismaService.device.findMany as jest.Mock).mock.calls[0][0];
+      expect([...deviceQuery.where.user_id.in].sort()).toEqual([2, 3]);
+      expect(deviceQuery.where.push_enabled).toBe(true);
+
+      // Email pass: nobody opted in by default, so no email rows.
+      expect(alertEmailService.sendPetIsHomeEmail).not.toHaveBeenCalled();
+      expect(prismaService.notification.create).toHaveBeenCalledTimes(3);
+      expect(prismaService.notification.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          alert_id: 41,
+          device_id: 30,
+          match_reason: 'SUCCESS_STORY',
+          status: NotificationStatus.QUEUED,
+          meta: { kind: 'alert_resolved' },
+        }),
+      });
+      expect(mockQueue.add).toHaveBeenCalledTimes(3);
+      expect(mockQueue.add).toHaveBeenCalledWith('send-push-notification', {
+        notificationId: 1030,
+      });
+    });
+
+    it('emails opted-in helpers alongside the push and records an EMAIL row', async () => {
+      (prismaService.alert.findUnique as jest.Mock).mockResolvedValue(successAlert);
+      (prismaService.notification.findMany as jest.Mock).mockResolvedValue([
+        { device: { user_id: 2 } },
+      ]);
+      (prismaService.sighting.findMany as jest.Mock).mockResolvedValue([{ reporter_id: 3 }]);
+      // First call: push-enabled devices; second call: any device for the email log row.
+      (prismaService.device.findMany as jest.Mock)
+        .mockResolvedValueOnce([{ id: 20, user_id: 2 }])
+        .mockResolvedValueOnce([
+          { id: 20, user_id: 2 },
+          { id: 21, user_id: 2 },
+        ]);
+      (alertEmailService.isOptedIn as jest.Mock).mockImplementation(
+        async (userId: number) => userId === 2 || userId === 3,
+      );
+      (alertEmailService.sendPetIsHomeEmail as jest.Mock)
+        .mockResolvedValueOnce(true)
+        .mockResolvedValueOnce(false);
+
+      await processor.processSuccessStory({ data: { alertId: 41 } } as Job);
+
+      expect(alertEmailService.sendPetIsHomeEmail).toHaveBeenCalledTimes(2);
+      expect(alertEmailService.sendPetIsHomeEmail).toHaveBeenCalledWith(2, {
+        alertId: 41,
+        tagId: 'PET7K9X2A',
+        petName: 'Bella',
+        petPhotoUrl: 'https://cdn/pets/5/primary.jpg',
+        thankYouMessage: 'Thanks all',
+      });
+      // One push row (device 20) + one EMAIL row for user 2 on its first device.
+      // User 3 has no device so the email is sent but not logged.
+      expect(prismaService.notification.create).toHaveBeenCalledTimes(2);
+      expect(prismaService.notification.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          device_id: 20,
+          status: NotificationStatus.SENT,
+          meta: { channel: 'EMAIL', kind: 'alert_resolved' },
+        }),
+      });
+      expect(mockQueue.add).toHaveBeenCalledTimes(1);
+    });
+
+    it('does nothing when the only helper is the owner', async () => {
+      (prismaService.alert.findUnique as jest.Mock).mockResolvedValue(successAlert);
+      (prismaService.notification.findMany as jest.Mock).mockResolvedValue([
+        { device: { user_id: 1 } },
+      ]);
+
+      await processor.processSuccessStory({ data: { alertId: 41 } } as Job);
+
+      expect(prismaService.device.findMany).not.toHaveBeenCalled();
+      expect(mockQueue.add).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('processPushNotification (success story)', () => {
+    const baseRow = {
+      id: 500,
+      alert_id: 41,
+      device_id: 20,
+      confidence: NotificationConfidence.HIGH,
+      match_reason: 'SUCCESS_STORY',
+      distance_km: null,
+      meta: { kind: 'alert_resolved' },
+      alert: {
+        pet_name: 'Bella',
+        pet_species: 'DOG',
+        pet_description: 'Golden',
+        pet_photos: ['https://cdn/alert-photo.jpg'],
+        location_address: null,
+        pet: { tagId: 'PET7K9X2A' },
+        reunionSnapshot: {
+          petName: 'Bella',
+          petPhotoUrl: 'https://cdn/pets/5/primary.jpg',
+          thankYouMessage: 'Thank you everyone who looked for Bella! She was found safe in the park.',
+        },
+      },
+      device: { push_token: 'fcm-token', platform: 'ANDROID' },
+    };
+
+    beforeEach(() => {
+      (fcmService.sendNotification as jest.Mock).mockResolvedValue({
+        success: true,
+        messageId: 'm1',
+      });
+      (prismaService.notification.update as jest.Mock).mockResolvedValue({});
+    });
+
+    it('sends the "pet is home" payload with deep link and snapshot photo', async () => {
+      (prismaService.notification.findUnique as jest.Mock).mockResolvedValue(baseRow);
+
+      await processor.processPushNotification({ data: { notificationId: 500 } } as Job);
+
+      expect(notificationService.buildTitle).not.toHaveBeenCalled();
+      expect(fcmService.sendNotification).toHaveBeenCalledWith('fcm-token', {
+        title: 'Bella is home!',
+        body: 'Thank you everyone who looked for Bella! She was found safe in the park.',
+        imageUrl: 'https://cdn/pets/5/primary.jpg',
+        data: {
+          type: 'alert_resolved',
+          alertId: '41',
+          notificationId: '500',
+          tagId: 'PET7K9X2A',
+          url: '/thank-you/PET7K9X2A',
+        },
+      });
+    });
+
+    it('truncates the body to 120 chars and falls back when there is no message or photo', async () => {
+      const long = 'x'.repeat(200);
+      (prismaService.notification.findUnique as jest.Mock).mockResolvedValueOnce({
+        ...baseRow,
+        alert: {
+          ...baseRow.alert,
+          reunionSnapshot: { ...baseRow.alert.reunionSnapshot, thankYouMessage: long },
+        },
+      });
+      await processor.processPushNotification({ data: { notificationId: 500 } } as Job);
+      expect((fcmService.sendNotification as jest.Mock).mock.calls[0][1].body).toHaveLength(120);
+
+      (prismaService.notification.findUnique as jest.Mock).mockResolvedValueOnce({
+        ...baseRow,
+        alert: {
+          ...baseRow.alert,
+          reunionSnapshot: { petName: 'Bella', petPhotoUrl: null, thankYouMessage: null },
+        },
+      });
+      await processor.processPushNotification({ data: { notificationId: 500 } } as Job);
+      const payload = (fcmService.sendNotification as jest.Mock).mock.calls[1][1];
+      expect(payload.body).toBe('Bella has been found safe. Thank you for keeping an eye out.');
+      expect(payload.imageUrl).toBeUndefined();
     });
   });
 });

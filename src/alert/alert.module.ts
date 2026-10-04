@@ -6,6 +6,7 @@ import { PrismaService } from '../services/prisma.service';
 import { AuthEndpointsModule } from '../auth/auth.module';
 import { UploadModule } from '../upload/upload.module';
 import { RateLimitService } from './rate-limit.service';
+import { ReunionSnapshotService } from './reunion-snapshot.service';
 import { SharedModule } from '../shared/shared.module';
 import { NotificationModule } from '../notification/notification.module';
 import { AlertEventsModule, ALERT_STATUS_HANDLERS } from './events';
@@ -24,6 +25,7 @@ import { AlertEventsModule, ALERT_STATUS_HANDLERS } from './events';
     AlertOwnerGuard,
     PrismaService,
     RateLimitService,
+    ReunionSnapshotService,
     ...ALERT_STATUS_HANDLERS,
   ],
   exports: [AlertService],

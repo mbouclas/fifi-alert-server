@@ -21,3 +21,5 @@ export {
   DEFAULT_SIGHTING_PHOTO_UPLOAD_WINDOW_HOURS,
 } from './sighting.config';
 export { getMaxFileSize, DEFAULT_MAX_FILE_SIZE } from './upload.config';
+export { default as reunionConfig } from './reunion.config';
+export { getReunionTtlDays, DEFAULT_REUNION_TTL_DAYS } from './reunion.config';

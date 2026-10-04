@@ -9,6 +9,7 @@ import { AlertStatus, PetSpecies } from '../generated/prisma';
 import { CreateAlertDto, UpdateAlertDto, ResolveAlertDto, AlertOutcome } from './dto';
 import type { IEmailProvider } from '@shared/email/interfaces/email-provider.interface';
 import { NotificationService } from '../notification/notification.service';
+import { ReunionSnapshotService } from './reunion-snapshot.service';
 
 describe('AlertService', () => {
     let service: AlertService;
@@ -88,6 +89,13 @@ describe('AlertService', () => {
                 {
                     provide: AlertStatusEventPublisher,
                     useValue: mockAlertStatusEvents,
+                },
+                {
+                    provide: ReunionSnapshotService,
+                    useValue: {
+                        upsertForResolvedAlert: jest.fn().mockResolvedValue({ id: 1 }),
+                        findPublicByTagId: jest.fn().mockResolvedValue(null),
+                    },
                 },
             ],
         }).compile();

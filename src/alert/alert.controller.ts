@@ -13,6 +13,8 @@ import {
   ParseIntPipe,
   UseInterceptors,
   UploadedFiles,
+  UsePipes,
+  ValidationPipe,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -33,6 +35,7 @@ import {
   CancelAlertDto,
   ListAlertsQueryDto,
   AlertResponseDto,
+  ReunionSnapshotDto,
 } from './dto';
 import { BearerTokenGuard } from '../auth/guards/bearer-token.guard';
 import { ClientKeyGuard } from '../auth/guards/client-key.guard';
@@ -121,6 +124,54 @@ export class AlertController {
     }
 
     return alert;
+  }
+
+  /**
+   * GET /alerts/by-tag/:tagId/reunion - Public "pet is home" snapshot.
+   * Backs the web `/thank-you/{tagId}` page (BACKEND_WORK_ORDER_THANK_YOU.md §3.2).
+   */
+  @Get('by-tag/:tagId/reunion')
+  @AllowAnonymous()
+  @RequireClientKey()
+  @UseGuards(ClientKeyGuard)
+  @ApiSecurity('client-key')
+  @ApiBearerAuth()
+  @Throttle({ default: { limit: 20, ttl: 60000 } })
+  @ApiParam({
+    name: 'tagId',
+    description:
+      'Collar tag id (9 chars, alphabet 23456789ABCDEFGHJKLMNPQRSTUVWXYZ)',
+    example: 'PET7K9X2A',
+  })
+  @ApiOperation({
+    summary: 'Get the reunion snapshot for a collar tag',
+    description:
+      'Frozen when the owner resolves an alert as FOUND_SAFE, FOUND_INJURED or RETURNED_HOME. ' +
+      'Requires `X-Client-Key` when no bearer token is sent; the bearer is otherwise ignored. ' +
+      'The snapshot is the public DTO: it never contains owner data.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Reunion snapshot for this tag',
+    type: ReunionSnapshotDto,
+  })
+  @ApiResponse({ status: 400, description: 'Malformed tag id' })
+  @ApiResponse({ status: 401, description: 'Missing or invalid client key' })
+  @ApiResponse({
+    status: 404,
+    description: 'No reunion snapshot for this tag, or it has expired',
+  })
+  @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
+  async findReunionByTag(
+    @Param('tagId', TagIdPipe) tagId: string,
+  ): Promise<ReunionSnapshotDto> {
+    const snapshot = await this.alertService.findReunionByTagId(tagId);
+
+    if (!snapshot) {
+      throw new NotFoundException(`No reunion for tag ${tagId}`);
+    }
+
+    return snapshot;
   }
 
   /**
@@ -227,14 +278,32 @@ export class AlertController {
    * Task 2.11
    */
   @Post(':id/resolve')
+  @HttpCode(HttpStatus.OK)
   @UseGuards(BearerTokenGuard)
+  @UsePipes(
+    new ValidationPipe({
+      transform: true,
+      whitelist: true,
+      forbidUnknownValues: false,
+    }),
+  )
   @ApiBearerAuth()
   @ApiParam({ name: 'id', description: 'Alert ID' })
-  @ApiOperation({ summary: 'Mark an alert as resolved' })
+  @ApiOperation({
+    summary: 'Mark an alert as resolved',
+    description:
+      'For found outcomes on a tagged pet this freezes the public reunion snapshot ' +
+      '(GET /alerts/by-tag/{tagId}/reunion). With `shareSuccessStory: true` every helper ' +
+      '(users who received the alert, sighting reporters) gets one "pet is home" push deep-linking to /thank-you/{tagId}.',
+  })
   @ApiResponse({
     status: 200,
     description: 'Alert resolved successfully',
     type: AlertResponseDto,
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Validation failed (e.g. thankYouMessage longer than 500 chars)',
   })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({

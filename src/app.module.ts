@@ -68,6 +68,8 @@ import { I18nModule } from './i18n/i18n.module';
           host: configService.get('REDIS_HOST', 'localhost'),
           port: configService.get('REDIS_PORT', 6379),
           password: configService.get('REDIS_PASSWORD'),
+          // Optional logical DB so a second server (e.g. a smoke run) does not consume this queue.
+          db: Number(configService.get('REDIS_DB', 0)) || 0,
         },
         defaultJobOptions: {
           attempts: 3, // Max retries: 3

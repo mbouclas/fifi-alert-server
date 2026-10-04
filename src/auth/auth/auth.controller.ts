@@ -143,7 +143,7 @@ export class AuthController {
    * User login with email and password
    */
   @Post('login')
-  @Throttle({ default: { limit: 5, ttl: 60000 } }) // 5 attempts per minute
+  @Throttle({ default: { limit: 10, ttl: 60000 } }) // 10 attempts per minute per tracker (user / end-user IP via BFF / IP)
   @AllowAnonymous()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
@@ -614,7 +614,7 @@ export class AuthController {
    * User signup
    */
   @Post('signup')
-  @Throttle({ default: { limit: 3, ttl: 3600000 } }) // 3 signups per hour
+  @Throttle({ default: { limit: 10, ttl: 3600000 } }) // 10 signups per hour per tracker (end-user IP via BFF, else caller IP)
   @AllowAnonymous()
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({
@@ -741,7 +741,7 @@ export class AuthController {
    */
   @Post('request-password-reset')
   @AllowAnonymous()
-  @Throttle({ default: { limit: 3, ttl: 3600000 } }) // 3 reset requests per hour
+  @Throttle({ default: { limit: 5, ttl: 3600000 } }) // 5 reset requests per hour per tracker
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Request password reset',
@@ -968,7 +968,7 @@ export class AuthController {
    */
   @Post('change-email')
   @HttpCode(HttpStatus.OK)
-  @Throttle({ default: { limit: 3, ttl: 3600000 } }) // 3 change requests per hour
+  @Throttle({ default: { limit: 5, ttl: 3600000 } }) // 5 change requests per hour per tracker
   @ApiBearerAuth()
   @ApiOperation({
     summary: 'Change email address',
@@ -1028,7 +1028,7 @@ export class AuthController {
    */
   @Post('delete-account')
   @HttpCode(HttpStatus.OK)
-  @Throttle({ default: { limit: 3, ttl: 3600000 } }) // 3 deletion requests per hour
+  @Throttle({ default: { limit: 5, ttl: 3600000 } }) // 5 deletion requests per hour per tracker
   @ApiBearerAuth()
   @ApiOperation({
     summary: 'Request account deletion',

@@ -89,6 +89,11 @@ export type AdoptionListing = $Result.DefaultSelection<Prisma.$AdoptionListingPa
  */
 export type Alert = $Result.DefaultSelection<Prisma.$AlertPayload>
 /**
+ * Model ReunionSnapshot
+ * 
+ */
+export type ReunionSnapshot = $Result.DefaultSelection<Prisma.$ReunionSnapshotPayload>
+/**
  * Model Device
  * 
  */
@@ -562,6 +567,16 @@ export class PrismaClient<
     * ```
     */
   get alert(): Prisma.AlertDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.reunionSnapshot`: Exposes CRUD operations for the **ReunionSnapshot** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more ReunionSnapshots
+    * const reunionSnapshots = await prisma.reunionSnapshot.findMany()
+    * ```
+    */
+  get reunionSnapshot(): Prisma.ReunionSnapshotDelegate<ExtArgs, ClientOptions>;
 
   /**
    * `prisma.device`: Exposes CRUD operations for the **Device** model.
@@ -1061,6 +1076,7 @@ export namespace Prisma {
     Pet: 'Pet',
     AdoptionListing: 'AdoptionListing',
     Alert: 'Alert',
+    ReunionSnapshot: 'ReunionSnapshot',
     Device: 'Device',
     SavedZone: 'SavedZone',
     AlertZone: 'AlertZone',
@@ -1081,7 +1097,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "user" | "userRole" | "userGate" | "role" | "session" | "account" | "gate" | "verification" | "auditLog" | "language" | "petType" | "petTypeTranslation" | "pet" | "adoptionListing" | "alert" | "device" | "savedZone" | "alertZone" | "sighting" | "notification"
+      modelProps: "user" | "userRole" | "userGate" | "role" | "session" | "account" | "gate" | "verification" | "auditLog" | "language" | "petType" | "petTypeTranslation" | "pet" | "adoptionListing" | "alert" | "reunionSnapshot" | "device" | "savedZone" | "alertZone" | "sighting" | "notification"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -2163,6 +2179,80 @@ export namespace Prisma {
           }
         }
       }
+      ReunionSnapshot: {
+        payload: Prisma.$ReunionSnapshotPayload<ExtArgs>
+        fields: Prisma.ReunionSnapshotFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.ReunionSnapshotFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ReunionSnapshotPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.ReunionSnapshotFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ReunionSnapshotPayload>
+          }
+          findFirst: {
+            args: Prisma.ReunionSnapshotFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ReunionSnapshotPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.ReunionSnapshotFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ReunionSnapshotPayload>
+          }
+          findMany: {
+            args: Prisma.ReunionSnapshotFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ReunionSnapshotPayload>[]
+          }
+          create: {
+            args: Prisma.ReunionSnapshotCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ReunionSnapshotPayload>
+          }
+          createMany: {
+            args: Prisma.ReunionSnapshotCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.ReunionSnapshotCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ReunionSnapshotPayload>[]
+          }
+          delete: {
+            args: Prisma.ReunionSnapshotDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ReunionSnapshotPayload>
+          }
+          update: {
+            args: Prisma.ReunionSnapshotUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ReunionSnapshotPayload>
+          }
+          deleteMany: {
+            args: Prisma.ReunionSnapshotDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.ReunionSnapshotUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.ReunionSnapshotUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ReunionSnapshotPayload>[]
+          }
+          upsert: {
+            args: Prisma.ReunionSnapshotUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ReunionSnapshotPayload>
+          }
+          aggregate: {
+            args: Prisma.ReunionSnapshotAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateReunionSnapshot>
+          }
+          groupBy: {
+            args: Prisma.ReunionSnapshotGroupByArgs<ExtArgs>
+            result: $Utils.Optional<ReunionSnapshotGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.ReunionSnapshotCountArgs<ExtArgs>
+            result: $Utils.Optional<ReunionSnapshotCountAggregateOutputType> | number
+          }
+        }
+      }
       Device: {
         payload: Prisma.$DevicePayload<ExtArgs>
         fields: Prisma.DeviceFieldRefs
@@ -2608,6 +2698,7 @@ export namespace Prisma {
     pet?: PetOmit
     adoptionListing?: AdoptionListingOmit
     alert?: AlertOmit
+    reunionSnapshot?: ReunionSnapshotOmit
     device?: DeviceOmit
     savedZone?: SavedZoneOmit
     alertZone?: AlertZoneOmit
@@ -19562,6 +19653,7 @@ export namespace Prisma {
     resolved_at: Date | null
     cancelled_at: Date | null
     renewal_count: number | null
+    success_story_sent_at: Date | null
     contact_phone: string | null
     contact_email: string | null
     is_phone_public: boolean | null
@@ -19592,6 +19684,7 @@ export namespace Prisma {
     resolved_at: Date | null
     cancelled_at: Date | null
     renewal_count: number | null
+    success_story_sent_at: Date | null
     contact_phone: string | null
     contact_email: string | null
     is_phone_public: boolean | null
@@ -19623,6 +19716,7 @@ export namespace Prisma {
     resolved_at: number
     cancelled_at: number
     renewal_count: number
+    success_story_sent_at: number
     contact_phone: number
     contact_email: number
     is_phone_public: number
@@ -19682,6 +19776,7 @@ export namespace Prisma {
     resolved_at?: true
     cancelled_at?: true
     renewal_count?: true
+    success_story_sent_at?: true
     contact_phone?: true
     contact_email?: true
     is_phone_public?: true
@@ -19712,6 +19807,7 @@ export namespace Prisma {
     resolved_at?: true
     cancelled_at?: true
     renewal_count?: true
+    success_story_sent_at?: true
     contact_phone?: true
     contact_email?: true
     is_phone_public?: true
@@ -19743,6 +19839,7 @@ export namespace Prisma {
     resolved_at?: true
     cancelled_at?: true
     renewal_count?: true
+    success_story_sent_at?: true
     contact_phone?: true
     contact_email?: true
     is_phone_public?: true
@@ -19864,6 +19961,7 @@ export namespace Prisma {
     resolved_at: Date | null
     cancelled_at: Date | null
     renewal_count: number
+    success_story_sent_at: Date | null
     contact_phone: string | null
     contact_email: string | null
     is_phone_public: boolean
@@ -19917,6 +20015,7 @@ export namespace Prisma {
     resolved_at?: boolean
     cancelled_at?: boolean
     renewal_count?: boolean
+    success_story_sent_at?: boolean
     contact_phone?: boolean
     contact_email?: boolean
     is_phone_public?: boolean
@@ -19930,6 +20029,7 @@ export namespace Prisma {
     pet?: boolean | Alert$petArgs<ExtArgs>
     sightings?: boolean | Alert$sightingsArgs<ExtArgs>
     notifications?: boolean | Alert$notificationsArgs<ExtArgs>
+    reunionSnapshot?: boolean | Alert$reunionSnapshotArgs<ExtArgs>
     _count?: boolean | AlertCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["alert"]>
 
@@ -19957,6 +20057,7 @@ export namespace Prisma {
     resolved_at?: boolean
     cancelled_at?: boolean
     renewal_count?: boolean
+    success_story_sent_at?: boolean
     contact_phone?: boolean
     contact_email?: boolean
     is_phone_public?: boolean
@@ -19993,6 +20094,7 @@ export namespace Prisma {
     resolved_at?: boolean
     cancelled_at?: boolean
     renewal_count?: boolean
+    success_story_sent_at?: boolean
     contact_phone?: boolean
     contact_email?: boolean
     is_phone_public?: boolean
@@ -20004,12 +20106,13 @@ export namespace Prisma {
     settings?: boolean
   }
 
-  export type AlertOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "creator_id" | "pet_id" | "pet_name" | "pet_species" | "pet_breed" | "pet_description" | "pet_color" | "pet_age_years" | "pet_photos" | "last_seen_lat" | "last_seen_lon" | "location_address" | "alert_radius_km" | "status" | "time_last_seen" | "created_at" | "updated_at" | "expires_at" | "resolved_at" | "cancelled_at" | "renewal_count" | "contact_phone" | "contact_email" | "is_phone_public" | "affected_postal_codes" | "notes" | "reward_offered" | "reward_amount" | "meta" | "settings", ExtArgs["result"]["alert"]>
+  export type AlertOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "creator_id" | "pet_id" | "pet_name" | "pet_species" | "pet_breed" | "pet_description" | "pet_color" | "pet_age_years" | "pet_photos" | "last_seen_lat" | "last_seen_lon" | "location_address" | "alert_radius_km" | "status" | "time_last_seen" | "created_at" | "updated_at" | "expires_at" | "resolved_at" | "cancelled_at" | "renewal_count" | "success_story_sent_at" | "contact_phone" | "contact_email" | "is_phone_public" | "affected_postal_codes" | "notes" | "reward_offered" | "reward_amount" | "meta" | "settings", ExtArgs["result"]["alert"]>
   export type AlertInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     creator?: boolean | UserDefaultArgs<ExtArgs>
     pet?: boolean | Alert$petArgs<ExtArgs>
     sightings?: boolean | Alert$sightingsArgs<ExtArgs>
     notifications?: boolean | Alert$notificationsArgs<ExtArgs>
+    reunionSnapshot?: boolean | Alert$reunionSnapshotArgs<ExtArgs>
     _count?: boolean | AlertCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type AlertIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -20024,6 +20127,7 @@ export namespace Prisma {
       pet: Prisma.$PetPayload<ExtArgs> | null
       sightings: Prisma.$SightingPayload<ExtArgs>[]
       notifications: Prisma.$NotificationPayload<ExtArgs>[]
+      reunionSnapshot: Prisma.$ReunionSnapshotPayload<ExtArgs> | null
     }
     scalars: $Extensions.GetPayloadResult<{
       id: number
@@ -20048,6 +20152,7 @@ export namespace Prisma {
       resolved_at: Date | null
       cancelled_at: Date | null
       renewal_count: number
+      success_story_sent_at: Date | null
       contact_phone: string | null
       contact_email: string | null
       is_phone_public: boolean
@@ -20384,6 +20489,7 @@ export namespace Prisma {
     pet<T extends Alert$petArgs<ExtArgs> = {}>(args?: Subset<T, Alert$petArgs<ExtArgs>>): Prisma__PetClient<$Result.GetResult<Prisma.$PetPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
     sightings<T extends Alert$sightingsArgs<ExtArgs> = {}>(args?: Subset<T, Alert$sightingsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SightingPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     notifications<T extends Alert$notificationsArgs<ExtArgs> = {}>(args?: Subset<T, Alert$notificationsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$NotificationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    reunionSnapshot<T extends Alert$reunionSnapshotArgs<ExtArgs> = {}>(args?: Subset<T, Alert$reunionSnapshotArgs<ExtArgs>>): Prisma__ReunionSnapshotClient<$Result.GetResult<Prisma.$ReunionSnapshotPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -20435,6 +20541,7 @@ export namespace Prisma {
     readonly resolved_at: FieldRef<"Alert", 'DateTime'>
     readonly cancelled_at: FieldRef<"Alert", 'DateTime'>
     readonly renewal_count: FieldRef<"Alert", 'Int'>
+    readonly success_story_sent_at: FieldRef<"Alert", 'DateTime'>
     readonly contact_phone: FieldRef<"Alert", 'String'>
     readonly contact_email: FieldRef<"Alert", 'String'>
     readonly is_phone_public: FieldRef<"Alert", 'Boolean'>
@@ -20821,6 +20928,25 @@ export namespace Prisma {
   }
 
   /**
+   * Alert.reunionSnapshot
+   */
+  export type Alert$reunionSnapshotArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ReunionSnapshot
+     */
+    select?: ReunionSnapshotSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ReunionSnapshot
+     */
+    omit?: ReunionSnapshotOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ReunionSnapshotInclude<ExtArgs> | null
+    where?: ReunionSnapshotWhereInput
+  }
+
+  /**
    * Alert without action
    */
   export type AlertDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -20836,6 +20962,1201 @@ export namespace Prisma {
      * Choose, which related nodes to fetch as well
      */
     include?: AlertInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model ReunionSnapshot
+   */
+
+  export type AggregateReunionSnapshot = {
+    _count: ReunionSnapshotCountAggregateOutputType | null
+    _avg: ReunionSnapshotAvgAggregateOutputType | null
+    _sum: ReunionSnapshotSumAggregateOutputType | null
+    _min: ReunionSnapshotMinAggregateOutputType | null
+    _max: ReunionSnapshotMaxAggregateOutputType | null
+  }
+
+  export type ReunionSnapshotAvgAggregateOutputType = {
+    id: number | null
+    alertId: number | null
+    neighboursNotified: number | null
+    sightingsReported: number | null
+  }
+
+  export type ReunionSnapshotSumAggregateOutputType = {
+    id: number | null
+    alertId: number | null
+    neighboursNotified: number | null
+    sightingsReported: number | null
+  }
+
+  export type ReunionSnapshotMinAggregateOutputType = {
+    id: number | null
+    tagId: string | null
+    alertId: number | null
+    petName: string | null
+    petPhotoUrl: string | null
+    thankYouMessage: string | null
+    resolvedAt: Date | null
+    neighboursNotified: number | null
+    sightingsReported: number | null
+    expiresAt: Date | null
+    created_at: Date | null
+    updated_at: Date | null
+  }
+
+  export type ReunionSnapshotMaxAggregateOutputType = {
+    id: number | null
+    tagId: string | null
+    alertId: number | null
+    petName: string | null
+    petPhotoUrl: string | null
+    thankYouMessage: string | null
+    resolvedAt: Date | null
+    neighboursNotified: number | null
+    sightingsReported: number | null
+    expiresAt: Date | null
+    created_at: Date | null
+    updated_at: Date | null
+  }
+
+  export type ReunionSnapshotCountAggregateOutputType = {
+    id: number
+    tagId: number
+    alertId: number
+    petName: number
+    petPhotoUrl: number
+    thankYouMessage: number
+    resolvedAt: number
+    neighboursNotified: number
+    sightingsReported: number
+    expiresAt: number
+    created_at: number
+    updated_at: number
+    _all: number
+  }
+
+
+  export type ReunionSnapshotAvgAggregateInputType = {
+    id?: true
+    alertId?: true
+    neighboursNotified?: true
+    sightingsReported?: true
+  }
+
+  export type ReunionSnapshotSumAggregateInputType = {
+    id?: true
+    alertId?: true
+    neighboursNotified?: true
+    sightingsReported?: true
+  }
+
+  export type ReunionSnapshotMinAggregateInputType = {
+    id?: true
+    tagId?: true
+    alertId?: true
+    petName?: true
+    petPhotoUrl?: true
+    thankYouMessage?: true
+    resolvedAt?: true
+    neighboursNotified?: true
+    sightingsReported?: true
+    expiresAt?: true
+    created_at?: true
+    updated_at?: true
+  }
+
+  export type ReunionSnapshotMaxAggregateInputType = {
+    id?: true
+    tagId?: true
+    alertId?: true
+    petName?: true
+    petPhotoUrl?: true
+    thankYouMessage?: true
+    resolvedAt?: true
+    neighboursNotified?: true
+    sightingsReported?: true
+    expiresAt?: true
+    created_at?: true
+    updated_at?: true
+  }
+
+  export type ReunionSnapshotCountAggregateInputType = {
+    id?: true
+    tagId?: true
+    alertId?: true
+    petName?: true
+    petPhotoUrl?: true
+    thankYouMessage?: true
+    resolvedAt?: true
+    neighboursNotified?: true
+    sightingsReported?: true
+    expiresAt?: true
+    created_at?: true
+    updated_at?: true
+    _all?: true
+  }
+
+  export type ReunionSnapshotAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which ReunionSnapshot to aggregate.
+     */
+    where?: ReunionSnapshotWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ReunionSnapshots to fetch.
+     */
+    orderBy?: ReunionSnapshotOrderByWithRelationInput | ReunionSnapshotOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: ReunionSnapshotWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ReunionSnapshots from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ReunionSnapshots.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned ReunionSnapshots
+    **/
+    _count?: true | ReunionSnapshotCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: ReunionSnapshotAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: ReunionSnapshotSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: ReunionSnapshotMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: ReunionSnapshotMaxAggregateInputType
+  }
+
+  export type GetReunionSnapshotAggregateType<T extends ReunionSnapshotAggregateArgs> = {
+        [P in keyof T & keyof AggregateReunionSnapshot]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateReunionSnapshot[P]>
+      : GetScalarType<T[P], AggregateReunionSnapshot[P]>
+  }
+
+
+
+
+  export type ReunionSnapshotGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: ReunionSnapshotWhereInput
+    orderBy?: ReunionSnapshotOrderByWithAggregationInput | ReunionSnapshotOrderByWithAggregationInput[]
+    by: ReunionSnapshotScalarFieldEnum[] | ReunionSnapshotScalarFieldEnum
+    having?: ReunionSnapshotScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: ReunionSnapshotCountAggregateInputType | true
+    _avg?: ReunionSnapshotAvgAggregateInputType
+    _sum?: ReunionSnapshotSumAggregateInputType
+    _min?: ReunionSnapshotMinAggregateInputType
+    _max?: ReunionSnapshotMaxAggregateInputType
+  }
+
+  export type ReunionSnapshotGroupByOutputType = {
+    id: number
+    tagId: string
+    alertId: number
+    petName: string
+    petPhotoUrl: string | null
+    thankYouMessage: string | null
+    resolvedAt: Date
+    neighboursNotified: number | null
+    sightingsReported: number
+    expiresAt: Date
+    created_at: Date | null
+    updated_at: Date | null
+    _count: ReunionSnapshotCountAggregateOutputType | null
+    _avg: ReunionSnapshotAvgAggregateOutputType | null
+    _sum: ReunionSnapshotSumAggregateOutputType | null
+    _min: ReunionSnapshotMinAggregateOutputType | null
+    _max: ReunionSnapshotMaxAggregateOutputType | null
+  }
+
+  type GetReunionSnapshotGroupByPayload<T extends ReunionSnapshotGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<ReunionSnapshotGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof ReunionSnapshotGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], ReunionSnapshotGroupByOutputType[P]>
+            : GetScalarType<T[P], ReunionSnapshotGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type ReunionSnapshotSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    tagId?: boolean
+    alertId?: boolean
+    petName?: boolean
+    petPhotoUrl?: boolean
+    thankYouMessage?: boolean
+    resolvedAt?: boolean
+    neighboursNotified?: boolean
+    sightingsReported?: boolean
+    expiresAt?: boolean
+    created_at?: boolean
+    updated_at?: boolean
+    alert?: boolean | AlertDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["reunionSnapshot"]>
+
+  export type ReunionSnapshotSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    tagId?: boolean
+    alertId?: boolean
+    petName?: boolean
+    petPhotoUrl?: boolean
+    thankYouMessage?: boolean
+    resolvedAt?: boolean
+    neighboursNotified?: boolean
+    sightingsReported?: boolean
+    expiresAt?: boolean
+    created_at?: boolean
+    updated_at?: boolean
+    alert?: boolean | AlertDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["reunionSnapshot"]>
+
+  export type ReunionSnapshotSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    tagId?: boolean
+    alertId?: boolean
+    petName?: boolean
+    petPhotoUrl?: boolean
+    thankYouMessage?: boolean
+    resolvedAt?: boolean
+    neighboursNotified?: boolean
+    sightingsReported?: boolean
+    expiresAt?: boolean
+    created_at?: boolean
+    updated_at?: boolean
+    alert?: boolean | AlertDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["reunionSnapshot"]>
+
+  export type ReunionSnapshotSelectScalar = {
+    id?: boolean
+    tagId?: boolean
+    alertId?: boolean
+    petName?: boolean
+    petPhotoUrl?: boolean
+    thankYouMessage?: boolean
+    resolvedAt?: boolean
+    neighboursNotified?: boolean
+    sightingsReported?: boolean
+    expiresAt?: boolean
+    created_at?: boolean
+    updated_at?: boolean
+  }
+
+  export type ReunionSnapshotOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "tagId" | "alertId" | "petName" | "petPhotoUrl" | "thankYouMessage" | "resolvedAt" | "neighboursNotified" | "sightingsReported" | "expiresAt" | "created_at" | "updated_at", ExtArgs["result"]["reunionSnapshot"]>
+  export type ReunionSnapshotInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    alert?: boolean | AlertDefaultArgs<ExtArgs>
+  }
+  export type ReunionSnapshotIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    alert?: boolean | AlertDefaultArgs<ExtArgs>
+  }
+  export type ReunionSnapshotIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    alert?: boolean | AlertDefaultArgs<ExtArgs>
+  }
+
+  export type $ReunionSnapshotPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "ReunionSnapshot"
+    objects: {
+      alert: Prisma.$AlertPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: number
+      tagId: string
+      alertId: number
+      petName: string
+      petPhotoUrl: string | null
+      thankYouMessage: string | null
+      resolvedAt: Date
+      neighboursNotified: number | null
+      sightingsReported: number
+      expiresAt: Date
+      created_at: Date | null
+      updated_at: Date | null
+    }, ExtArgs["result"]["reunionSnapshot"]>
+    composites: {}
+  }
+
+  type ReunionSnapshotGetPayload<S extends boolean | null | undefined | ReunionSnapshotDefaultArgs> = $Result.GetResult<Prisma.$ReunionSnapshotPayload, S>
+
+  type ReunionSnapshotCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<ReunionSnapshotFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: ReunionSnapshotCountAggregateInputType | true
+    }
+
+  export interface ReunionSnapshotDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['ReunionSnapshot'], meta: { name: 'ReunionSnapshot' } }
+    /**
+     * Find zero or one ReunionSnapshot that matches the filter.
+     * @param {ReunionSnapshotFindUniqueArgs} args - Arguments to find a ReunionSnapshot
+     * @example
+     * // Get one ReunionSnapshot
+     * const reunionSnapshot = await prisma.reunionSnapshot.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends ReunionSnapshotFindUniqueArgs>(args: SelectSubset<T, ReunionSnapshotFindUniqueArgs<ExtArgs>>): Prisma__ReunionSnapshotClient<$Result.GetResult<Prisma.$ReunionSnapshotPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one ReunionSnapshot that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {ReunionSnapshotFindUniqueOrThrowArgs} args - Arguments to find a ReunionSnapshot
+     * @example
+     * // Get one ReunionSnapshot
+     * const reunionSnapshot = await prisma.reunionSnapshot.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends ReunionSnapshotFindUniqueOrThrowArgs>(args: SelectSubset<T, ReunionSnapshotFindUniqueOrThrowArgs<ExtArgs>>): Prisma__ReunionSnapshotClient<$Result.GetResult<Prisma.$ReunionSnapshotPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first ReunionSnapshot that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ReunionSnapshotFindFirstArgs} args - Arguments to find a ReunionSnapshot
+     * @example
+     * // Get one ReunionSnapshot
+     * const reunionSnapshot = await prisma.reunionSnapshot.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends ReunionSnapshotFindFirstArgs>(args?: SelectSubset<T, ReunionSnapshotFindFirstArgs<ExtArgs>>): Prisma__ReunionSnapshotClient<$Result.GetResult<Prisma.$ReunionSnapshotPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first ReunionSnapshot that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ReunionSnapshotFindFirstOrThrowArgs} args - Arguments to find a ReunionSnapshot
+     * @example
+     * // Get one ReunionSnapshot
+     * const reunionSnapshot = await prisma.reunionSnapshot.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends ReunionSnapshotFindFirstOrThrowArgs>(args?: SelectSubset<T, ReunionSnapshotFindFirstOrThrowArgs<ExtArgs>>): Prisma__ReunionSnapshotClient<$Result.GetResult<Prisma.$ReunionSnapshotPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more ReunionSnapshots that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ReunionSnapshotFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all ReunionSnapshots
+     * const reunionSnapshots = await prisma.reunionSnapshot.findMany()
+     * 
+     * // Get first 10 ReunionSnapshots
+     * const reunionSnapshots = await prisma.reunionSnapshot.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const reunionSnapshotWithIdOnly = await prisma.reunionSnapshot.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends ReunionSnapshotFindManyArgs>(args?: SelectSubset<T, ReunionSnapshotFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ReunionSnapshotPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a ReunionSnapshot.
+     * @param {ReunionSnapshotCreateArgs} args - Arguments to create a ReunionSnapshot.
+     * @example
+     * // Create one ReunionSnapshot
+     * const ReunionSnapshot = await prisma.reunionSnapshot.create({
+     *   data: {
+     *     // ... data to create a ReunionSnapshot
+     *   }
+     * })
+     * 
+     */
+    create<T extends ReunionSnapshotCreateArgs>(args: SelectSubset<T, ReunionSnapshotCreateArgs<ExtArgs>>): Prisma__ReunionSnapshotClient<$Result.GetResult<Prisma.$ReunionSnapshotPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many ReunionSnapshots.
+     * @param {ReunionSnapshotCreateManyArgs} args - Arguments to create many ReunionSnapshots.
+     * @example
+     * // Create many ReunionSnapshots
+     * const reunionSnapshot = await prisma.reunionSnapshot.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends ReunionSnapshotCreateManyArgs>(args?: SelectSubset<T, ReunionSnapshotCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many ReunionSnapshots and returns the data saved in the database.
+     * @param {ReunionSnapshotCreateManyAndReturnArgs} args - Arguments to create many ReunionSnapshots.
+     * @example
+     * // Create many ReunionSnapshots
+     * const reunionSnapshot = await prisma.reunionSnapshot.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many ReunionSnapshots and only return the `id`
+     * const reunionSnapshotWithIdOnly = await prisma.reunionSnapshot.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends ReunionSnapshotCreateManyAndReturnArgs>(args?: SelectSubset<T, ReunionSnapshotCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ReunionSnapshotPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a ReunionSnapshot.
+     * @param {ReunionSnapshotDeleteArgs} args - Arguments to delete one ReunionSnapshot.
+     * @example
+     * // Delete one ReunionSnapshot
+     * const ReunionSnapshot = await prisma.reunionSnapshot.delete({
+     *   where: {
+     *     // ... filter to delete one ReunionSnapshot
+     *   }
+     * })
+     * 
+     */
+    delete<T extends ReunionSnapshotDeleteArgs>(args: SelectSubset<T, ReunionSnapshotDeleteArgs<ExtArgs>>): Prisma__ReunionSnapshotClient<$Result.GetResult<Prisma.$ReunionSnapshotPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one ReunionSnapshot.
+     * @param {ReunionSnapshotUpdateArgs} args - Arguments to update one ReunionSnapshot.
+     * @example
+     * // Update one ReunionSnapshot
+     * const reunionSnapshot = await prisma.reunionSnapshot.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends ReunionSnapshotUpdateArgs>(args: SelectSubset<T, ReunionSnapshotUpdateArgs<ExtArgs>>): Prisma__ReunionSnapshotClient<$Result.GetResult<Prisma.$ReunionSnapshotPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more ReunionSnapshots.
+     * @param {ReunionSnapshotDeleteManyArgs} args - Arguments to filter ReunionSnapshots to delete.
+     * @example
+     * // Delete a few ReunionSnapshots
+     * const { count } = await prisma.reunionSnapshot.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends ReunionSnapshotDeleteManyArgs>(args?: SelectSubset<T, ReunionSnapshotDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more ReunionSnapshots.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ReunionSnapshotUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many ReunionSnapshots
+     * const reunionSnapshot = await prisma.reunionSnapshot.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends ReunionSnapshotUpdateManyArgs>(args: SelectSubset<T, ReunionSnapshotUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more ReunionSnapshots and returns the data updated in the database.
+     * @param {ReunionSnapshotUpdateManyAndReturnArgs} args - Arguments to update many ReunionSnapshots.
+     * @example
+     * // Update many ReunionSnapshots
+     * const reunionSnapshot = await prisma.reunionSnapshot.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more ReunionSnapshots and only return the `id`
+     * const reunionSnapshotWithIdOnly = await prisma.reunionSnapshot.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends ReunionSnapshotUpdateManyAndReturnArgs>(args: SelectSubset<T, ReunionSnapshotUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ReunionSnapshotPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one ReunionSnapshot.
+     * @param {ReunionSnapshotUpsertArgs} args - Arguments to update or create a ReunionSnapshot.
+     * @example
+     * // Update or create a ReunionSnapshot
+     * const reunionSnapshot = await prisma.reunionSnapshot.upsert({
+     *   create: {
+     *     // ... data to create a ReunionSnapshot
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the ReunionSnapshot we want to update
+     *   }
+     * })
+     */
+    upsert<T extends ReunionSnapshotUpsertArgs>(args: SelectSubset<T, ReunionSnapshotUpsertArgs<ExtArgs>>): Prisma__ReunionSnapshotClient<$Result.GetResult<Prisma.$ReunionSnapshotPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of ReunionSnapshots.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ReunionSnapshotCountArgs} args - Arguments to filter ReunionSnapshots to count.
+     * @example
+     * // Count the number of ReunionSnapshots
+     * const count = await prisma.reunionSnapshot.count({
+     *   where: {
+     *     // ... the filter for the ReunionSnapshots we want to count
+     *   }
+     * })
+    **/
+    count<T extends ReunionSnapshotCountArgs>(
+      args?: Subset<T, ReunionSnapshotCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], ReunionSnapshotCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a ReunionSnapshot.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ReunionSnapshotAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends ReunionSnapshotAggregateArgs>(args: Subset<T, ReunionSnapshotAggregateArgs>): Prisma.PrismaPromise<GetReunionSnapshotAggregateType<T>>
+
+    /**
+     * Group by ReunionSnapshot.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ReunionSnapshotGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends ReunionSnapshotGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: ReunionSnapshotGroupByArgs['orderBy'] }
+        : { orderBy?: ReunionSnapshotGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, ReunionSnapshotGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetReunionSnapshotGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the ReunionSnapshot model
+   */
+  readonly fields: ReunionSnapshotFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for ReunionSnapshot.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__ReunionSnapshotClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    alert<T extends AlertDefaultArgs<ExtArgs> = {}>(args?: Subset<T, AlertDefaultArgs<ExtArgs>>): Prisma__AlertClient<$Result.GetResult<Prisma.$AlertPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the ReunionSnapshot model
+   */
+  interface ReunionSnapshotFieldRefs {
+    readonly id: FieldRef<"ReunionSnapshot", 'Int'>
+    readonly tagId: FieldRef<"ReunionSnapshot", 'String'>
+    readonly alertId: FieldRef<"ReunionSnapshot", 'Int'>
+    readonly petName: FieldRef<"ReunionSnapshot", 'String'>
+    readonly petPhotoUrl: FieldRef<"ReunionSnapshot", 'String'>
+    readonly thankYouMessage: FieldRef<"ReunionSnapshot", 'String'>
+    readonly resolvedAt: FieldRef<"ReunionSnapshot", 'DateTime'>
+    readonly neighboursNotified: FieldRef<"ReunionSnapshot", 'Int'>
+    readonly sightingsReported: FieldRef<"ReunionSnapshot", 'Int'>
+    readonly expiresAt: FieldRef<"ReunionSnapshot", 'DateTime'>
+    readonly created_at: FieldRef<"ReunionSnapshot", 'DateTime'>
+    readonly updated_at: FieldRef<"ReunionSnapshot", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * ReunionSnapshot findUnique
+   */
+  export type ReunionSnapshotFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ReunionSnapshot
+     */
+    select?: ReunionSnapshotSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ReunionSnapshot
+     */
+    omit?: ReunionSnapshotOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ReunionSnapshotInclude<ExtArgs> | null
+    /**
+     * Filter, which ReunionSnapshot to fetch.
+     */
+    where: ReunionSnapshotWhereUniqueInput
+  }
+
+  /**
+   * ReunionSnapshot findUniqueOrThrow
+   */
+  export type ReunionSnapshotFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ReunionSnapshot
+     */
+    select?: ReunionSnapshotSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ReunionSnapshot
+     */
+    omit?: ReunionSnapshotOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ReunionSnapshotInclude<ExtArgs> | null
+    /**
+     * Filter, which ReunionSnapshot to fetch.
+     */
+    where: ReunionSnapshotWhereUniqueInput
+  }
+
+  /**
+   * ReunionSnapshot findFirst
+   */
+  export type ReunionSnapshotFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ReunionSnapshot
+     */
+    select?: ReunionSnapshotSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ReunionSnapshot
+     */
+    omit?: ReunionSnapshotOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ReunionSnapshotInclude<ExtArgs> | null
+    /**
+     * Filter, which ReunionSnapshot to fetch.
+     */
+    where?: ReunionSnapshotWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ReunionSnapshots to fetch.
+     */
+    orderBy?: ReunionSnapshotOrderByWithRelationInput | ReunionSnapshotOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for ReunionSnapshots.
+     */
+    cursor?: ReunionSnapshotWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ReunionSnapshots from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ReunionSnapshots.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of ReunionSnapshots.
+     */
+    distinct?: ReunionSnapshotScalarFieldEnum | ReunionSnapshotScalarFieldEnum[]
+  }
+
+  /**
+   * ReunionSnapshot findFirstOrThrow
+   */
+  export type ReunionSnapshotFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ReunionSnapshot
+     */
+    select?: ReunionSnapshotSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ReunionSnapshot
+     */
+    omit?: ReunionSnapshotOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ReunionSnapshotInclude<ExtArgs> | null
+    /**
+     * Filter, which ReunionSnapshot to fetch.
+     */
+    where?: ReunionSnapshotWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ReunionSnapshots to fetch.
+     */
+    orderBy?: ReunionSnapshotOrderByWithRelationInput | ReunionSnapshotOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for ReunionSnapshots.
+     */
+    cursor?: ReunionSnapshotWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ReunionSnapshots from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ReunionSnapshots.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of ReunionSnapshots.
+     */
+    distinct?: ReunionSnapshotScalarFieldEnum | ReunionSnapshotScalarFieldEnum[]
+  }
+
+  /**
+   * ReunionSnapshot findMany
+   */
+  export type ReunionSnapshotFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ReunionSnapshot
+     */
+    select?: ReunionSnapshotSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ReunionSnapshot
+     */
+    omit?: ReunionSnapshotOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ReunionSnapshotInclude<ExtArgs> | null
+    /**
+     * Filter, which ReunionSnapshots to fetch.
+     */
+    where?: ReunionSnapshotWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ReunionSnapshots to fetch.
+     */
+    orderBy?: ReunionSnapshotOrderByWithRelationInput | ReunionSnapshotOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing ReunionSnapshots.
+     */
+    cursor?: ReunionSnapshotWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ReunionSnapshots from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ReunionSnapshots.
+     */
+    skip?: number
+    distinct?: ReunionSnapshotScalarFieldEnum | ReunionSnapshotScalarFieldEnum[]
+  }
+
+  /**
+   * ReunionSnapshot create
+   */
+  export type ReunionSnapshotCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ReunionSnapshot
+     */
+    select?: ReunionSnapshotSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ReunionSnapshot
+     */
+    omit?: ReunionSnapshotOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ReunionSnapshotInclude<ExtArgs> | null
+    /**
+     * The data needed to create a ReunionSnapshot.
+     */
+    data: XOR<ReunionSnapshotCreateInput, ReunionSnapshotUncheckedCreateInput>
+  }
+
+  /**
+   * ReunionSnapshot createMany
+   */
+  export type ReunionSnapshotCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many ReunionSnapshots.
+     */
+    data: ReunionSnapshotCreateManyInput | ReunionSnapshotCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * ReunionSnapshot createManyAndReturn
+   */
+  export type ReunionSnapshotCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ReunionSnapshot
+     */
+    select?: ReunionSnapshotSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the ReunionSnapshot
+     */
+    omit?: ReunionSnapshotOmit<ExtArgs> | null
+    /**
+     * The data used to create many ReunionSnapshots.
+     */
+    data: ReunionSnapshotCreateManyInput | ReunionSnapshotCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ReunionSnapshotIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * ReunionSnapshot update
+   */
+  export type ReunionSnapshotUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ReunionSnapshot
+     */
+    select?: ReunionSnapshotSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ReunionSnapshot
+     */
+    omit?: ReunionSnapshotOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ReunionSnapshotInclude<ExtArgs> | null
+    /**
+     * The data needed to update a ReunionSnapshot.
+     */
+    data: XOR<ReunionSnapshotUpdateInput, ReunionSnapshotUncheckedUpdateInput>
+    /**
+     * Choose, which ReunionSnapshot to update.
+     */
+    where: ReunionSnapshotWhereUniqueInput
+  }
+
+  /**
+   * ReunionSnapshot updateMany
+   */
+  export type ReunionSnapshotUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update ReunionSnapshots.
+     */
+    data: XOR<ReunionSnapshotUpdateManyMutationInput, ReunionSnapshotUncheckedUpdateManyInput>
+    /**
+     * Filter which ReunionSnapshots to update
+     */
+    where?: ReunionSnapshotWhereInput
+    /**
+     * Limit how many ReunionSnapshots to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * ReunionSnapshot updateManyAndReturn
+   */
+  export type ReunionSnapshotUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ReunionSnapshot
+     */
+    select?: ReunionSnapshotSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the ReunionSnapshot
+     */
+    omit?: ReunionSnapshotOmit<ExtArgs> | null
+    /**
+     * The data used to update ReunionSnapshots.
+     */
+    data: XOR<ReunionSnapshotUpdateManyMutationInput, ReunionSnapshotUncheckedUpdateManyInput>
+    /**
+     * Filter which ReunionSnapshots to update
+     */
+    where?: ReunionSnapshotWhereInput
+    /**
+     * Limit how many ReunionSnapshots to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ReunionSnapshotIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * ReunionSnapshot upsert
+   */
+  export type ReunionSnapshotUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ReunionSnapshot
+     */
+    select?: ReunionSnapshotSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ReunionSnapshot
+     */
+    omit?: ReunionSnapshotOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ReunionSnapshotInclude<ExtArgs> | null
+    /**
+     * The filter to search for the ReunionSnapshot to update in case it exists.
+     */
+    where: ReunionSnapshotWhereUniqueInput
+    /**
+     * In case the ReunionSnapshot found by the `where` argument doesn't exist, create a new ReunionSnapshot with this data.
+     */
+    create: XOR<ReunionSnapshotCreateInput, ReunionSnapshotUncheckedCreateInput>
+    /**
+     * In case the ReunionSnapshot was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<ReunionSnapshotUpdateInput, ReunionSnapshotUncheckedUpdateInput>
+  }
+
+  /**
+   * ReunionSnapshot delete
+   */
+  export type ReunionSnapshotDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ReunionSnapshot
+     */
+    select?: ReunionSnapshotSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ReunionSnapshot
+     */
+    omit?: ReunionSnapshotOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ReunionSnapshotInclude<ExtArgs> | null
+    /**
+     * Filter which ReunionSnapshot to delete.
+     */
+    where: ReunionSnapshotWhereUniqueInput
+  }
+
+  /**
+   * ReunionSnapshot deleteMany
+   */
+  export type ReunionSnapshotDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which ReunionSnapshots to delete
+     */
+    where?: ReunionSnapshotWhereInput
+    /**
+     * Limit how many ReunionSnapshots to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * ReunionSnapshot without action
+   */
+  export type ReunionSnapshotDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ReunionSnapshot
+     */
+    select?: ReunionSnapshotSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ReunionSnapshot
+     */
+    omit?: ReunionSnapshotOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ReunionSnapshotInclude<ExtArgs> | null
   }
 
 
@@ -26924,6 +28245,7 @@ export namespace Prisma {
     resolved_at: 'resolved_at',
     cancelled_at: 'cancelled_at',
     renewal_count: 'renewal_count',
+    success_story_sent_at: 'success_story_sent_at',
     contact_phone: 'contact_phone',
     contact_email: 'contact_email',
     is_phone_public: 'is_phone_public',
@@ -26936,6 +28258,24 @@ export namespace Prisma {
   };
 
   export type AlertScalarFieldEnum = (typeof AlertScalarFieldEnum)[keyof typeof AlertScalarFieldEnum]
+
+
+  export const ReunionSnapshotScalarFieldEnum: {
+    id: 'id',
+    tagId: 'tagId',
+    alertId: 'alertId',
+    petName: 'petName',
+    petPhotoUrl: 'petPhotoUrl',
+    thankYouMessage: 'thankYouMessage',
+    resolvedAt: 'resolvedAt',
+    neighboursNotified: 'neighboursNotified',
+    sightingsReported: 'sightingsReported',
+    expiresAt: 'expiresAt',
+    created_at: 'created_at',
+    updated_at: 'updated_at'
+  };
+
+  export type ReunionSnapshotScalarFieldEnum = (typeof ReunionSnapshotScalarFieldEnum)[keyof typeof ReunionSnapshotScalarFieldEnum]
 
 
   export const DeviceScalarFieldEnum: {
@@ -28567,6 +29907,7 @@ export namespace Prisma {
     resolved_at?: DateTimeNullableFilter<"Alert"> | Date | string | null
     cancelled_at?: DateTimeNullableFilter<"Alert"> | Date | string | null
     renewal_count?: IntFilter<"Alert"> | number
+    success_story_sent_at?: DateTimeNullableFilter<"Alert"> | Date | string | null
     contact_phone?: StringNullableFilter<"Alert"> | string | null
     contact_email?: StringNullableFilter<"Alert"> | string | null
     is_phone_public?: BoolFilter<"Alert"> | boolean
@@ -28580,6 +29921,7 @@ export namespace Prisma {
     pet?: XOR<PetNullableScalarRelationFilter, PetWhereInput> | null
     sightings?: SightingListRelationFilter
     notifications?: NotificationListRelationFilter
+    reunionSnapshot?: XOR<ReunionSnapshotNullableScalarRelationFilter, ReunionSnapshotWhereInput> | null
   }
 
   export type AlertOrderByWithRelationInput = {
@@ -28605,6 +29947,7 @@ export namespace Prisma {
     resolved_at?: SortOrderInput | SortOrder
     cancelled_at?: SortOrderInput | SortOrder
     renewal_count?: SortOrder
+    success_story_sent_at?: SortOrderInput | SortOrder
     contact_phone?: SortOrderInput | SortOrder
     contact_email?: SortOrderInput | SortOrder
     is_phone_public?: SortOrder
@@ -28618,6 +29961,7 @@ export namespace Prisma {
     pet?: PetOrderByWithRelationInput
     sightings?: SightingOrderByRelationAggregateInput
     notifications?: NotificationOrderByRelationAggregateInput
+    reunionSnapshot?: ReunionSnapshotOrderByWithRelationInput
   }
 
   export type AlertWhereUniqueInput = Prisma.AtLeast<{
@@ -28646,6 +29990,7 @@ export namespace Prisma {
     resolved_at?: DateTimeNullableFilter<"Alert"> | Date | string | null
     cancelled_at?: DateTimeNullableFilter<"Alert"> | Date | string | null
     renewal_count?: IntFilter<"Alert"> | number
+    success_story_sent_at?: DateTimeNullableFilter<"Alert"> | Date | string | null
     contact_phone?: StringNullableFilter<"Alert"> | string | null
     contact_email?: StringNullableFilter<"Alert"> | string | null
     is_phone_public?: BoolFilter<"Alert"> | boolean
@@ -28659,6 +30004,7 @@ export namespace Prisma {
     pet?: XOR<PetNullableScalarRelationFilter, PetWhereInput> | null
     sightings?: SightingListRelationFilter
     notifications?: NotificationListRelationFilter
+    reunionSnapshot?: XOR<ReunionSnapshotNullableScalarRelationFilter, ReunionSnapshotWhereInput> | null
   }, "id">
 
   export type AlertOrderByWithAggregationInput = {
@@ -28684,6 +30030,7 @@ export namespace Prisma {
     resolved_at?: SortOrderInput | SortOrder
     cancelled_at?: SortOrderInput | SortOrder
     renewal_count?: SortOrder
+    success_story_sent_at?: SortOrderInput | SortOrder
     contact_phone?: SortOrderInput | SortOrder
     contact_email?: SortOrderInput | SortOrder
     is_phone_public?: SortOrder
@@ -28726,6 +30073,7 @@ export namespace Prisma {
     resolved_at?: DateTimeNullableWithAggregatesFilter<"Alert"> | Date | string | null
     cancelled_at?: DateTimeNullableWithAggregatesFilter<"Alert"> | Date | string | null
     renewal_count?: IntWithAggregatesFilter<"Alert"> | number
+    success_story_sent_at?: DateTimeNullableWithAggregatesFilter<"Alert"> | Date | string | null
     contact_phone?: StringNullableWithAggregatesFilter<"Alert"> | string | null
     contact_email?: StringNullableWithAggregatesFilter<"Alert"> | string | null
     is_phone_public?: BoolWithAggregatesFilter<"Alert"> | boolean
@@ -28735,6 +30083,98 @@ export namespace Prisma {
     reward_amount?: DecimalNullableWithAggregatesFilter<"Alert"> | Decimal | DecimalJsLike | number | string | null
     meta?: JsonNullableWithAggregatesFilter<"Alert">
     settings?: JsonNullableWithAggregatesFilter<"Alert">
+  }
+
+  export type ReunionSnapshotWhereInput = {
+    AND?: ReunionSnapshotWhereInput | ReunionSnapshotWhereInput[]
+    OR?: ReunionSnapshotWhereInput[]
+    NOT?: ReunionSnapshotWhereInput | ReunionSnapshotWhereInput[]
+    id?: IntFilter<"ReunionSnapshot"> | number
+    tagId?: StringFilter<"ReunionSnapshot"> | string
+    alertId?: IntFilter<"ReunionSnapshot"> | number
+    petName?: StringFilter<"ReunionSnapshot"> | string
+    petPhotoUrl?: StringNullableFilter<"ReunionSnapshot"> | string | null
+    thankYouMessage?: StringNullableFilter<"ReunionSnapshot"> | string | null
+    resolvedAt?: DateTimeFilter<"ReunionSnapshot"> | Date | string
+    neighboursNotified?: IntNullableFilter<"ReunionSnapshot"> | number | null
+    sightingsReported?: IntFilter<"ReunionSnapshot"> | number
+    expiresAt?: DateTimeFilter<"ReunionSnapshot"> | Date | string
+    created_at?: DateTimeNullableFilter<"ReunionSnapshot"> | Date | string | null
+    updated_at?: DateTimeNullableFilter<"ReunionSnapshot"> | Date | string | null
+    alert?: XOR<AlertScalarRelationFilter, AlertWhereInput>
+  }
+
+  export type ReunionSnapshotOrderByWithRelationInput = {
+    id?: SortOrder
+    tagId?: SortOrder
+    alertId?: SortOrder
+    petName?: SortOrder
+    petPhotoUrl?: SortOrderInput | SortOrder
+    thankYouMessage?: SortOrderInput | SortOrder
+    resolvedAt?: SortOrder
+    neighboursNotified?: SortOrderInput | SortOrder
+    sightingsReported?: SortOrder
+    expiresAt?: SortOrder
+    created_at?: SortOrderInput | SortOrder
+    updated_at?: SortOrderInput | SortOrder
+    alert?: AlertOrderByWithRelationInput
+  }
+
+  export type ReunionSnapshotWhereUniqueInput = Prisma.AtLeast<{
+    id?: number
+    tagId?: string
+    alertId?: number
+    AND?: ReunionSnapshotWhereInput | ReunionSnapshotWhereInput[]
+    OR?: ReunionSnapshotWhereInput[]
+    NOT?: ReunionSnapshotWhereInput | ReunionSnapshotWhereInput[]
+    petName?: StringFilter<"ReunionSnapshot"> | string
+    petPhotoUrl?: StringNullableFilter<"ReunionSnapshot"> | string | null
+    thankYouMessage?: StringNullableFilter<"ReunionSnapshot"> | string | null
+    resolvedAt?: DateTimeFilter<"ReunionSnapshot"> | Date | string
+    neighboursNotified?: IntNullableFilter<"ReunionSnapshot"> | number | null
+    sightingsReported?: IntFilter<"ReunionSnapshot"> | number
+    expiresAt?: DateTimeFilter<"ReunionSnapshot"> | Date | string
+    created_at?: DateTimeNullableFilter<"ReunionSnapshot"> | Date | string | null
+    updated_at?: DateTimeNullableFilter<"ReunionSnapshot"> | Date | string | null
+    alert?: XOR<AlertScalarRelationFilter, AlertWhereInput>
+  }, "id" | "tagId" | "alertId">
+
+  export type ReunionSnapshotOrderByWithAggregationInput = {
+    id?: SortOrder
+    tagId?: SortOrder
+    alertId?: SortOrder
+    petName?: SortOrder
+    petPhotoUrl?: SortOrderInput | SortOrder
+    thankYouMessage?: SortOrderInput | SortOrder
+    resolvedAt?: SortOrder
+    neighboursNotified?: SortOrderInput | SortOrder
+    sightingsReported?: SortOrder
+    expiresAt?: SortOrder
+    created_at?: SortOrderInput | SortOrder
+    updated_at?: SortOrderInput | SortOrder
+    _count?: ReunionSnapshotCountOrderByAggregateInput
+    _avg?: ReunionSnapshotAvgOrderByAggregateInput
+    _max?: ReunionSnapshotMaxOrderByAggregateInput
+    _min?: ReunionSnapshotMinOrderByAggregateInput
+    _sum?: ReunionSnapshotSumOrderByAggregateInput
+  }
+
+  export type ReunionSnapshotScalarWhereWithAggregatesInput = {
+    AND?: ReunionSnapshotScalarWhereWithAggregatesInput | ReunionSnapshotScalarWhereWithAggregatesInput[]
+    OR?: ReunionSnapshotScalarWhereWithAggregatesInput[]
+    NOT?: ReunionSnapshotScalarWhereWithAggregatesInput | ReunionSnapshotScalarWhereWithAggregatesInput[]
+    id?: IntWithAggregatesFilter<"ReunionSnapshot"> | number
+    tagId?: StringWithAggregatesFilter<"ReunionSnapshot"> | string
+    alertId?: IntWithAggregatesFilter<"ReunionSnapshot"> | number
+    petName?: StringWithAggregatesFilter<"ReunionSnapshot"> | string
+    petPhotoUrl?: StringNullableWithAggregatesFilter<"ReunionSnapshot"> | string | null
+    thankYouMessage?: StringNullableWithAggregatesFilter<"ReunionSnapshot"> | string | null
+    resolvedAt?: DateTimeWithAggregatesFilter<"ReunionSnapshot"> | Date | string
+    neighboursNotified?: IntNullableWithAggregatesFilter<"ReunionSnapshot"> | number | null
+    sightingsReported?: IntWithAggregatesFilter<"ReunionSnapshot"> | number
+    expiresAt?: DateTimeWithAggregatesFilter<"ReunionSnapshot"> | Date | string
+    created_at?: DateTimeNullableWithAggregatesFilter<"ReunionSnapshot"> | Date | string | null
+    updated_at?: DateTimeNullableWithAggregatesFilter<"ReunionSnapshot"> | Date | string | null
   }
 
   export type DeviceWhereInput = {
@@ -30614,6 +32054,7 @@ export namespace Prisma {
     resolved_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     cancelled_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     renewal_count?: IntFieldUpdateOperationsInput | number
+    success_story_sent_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     contact_phone?: NullableStringFieldUpdateOperationsInput | string | null
     contact_email?: NullableStringFieldUpdateOperationsInput | string | null
     is_phone_public?: BoolFieldUpdateOperationsInput | boolean
@@ -30627,6 +32068,7 @@ export namespace Prisma {
     pet?: PetUpdateOneWithoutAlertsNestedInput
     sightings?: SightingUpdateManyWithoutAlertNestedInput
     notifications?: NotificationUpdateManyWithoutAlertNestedInput
+    reunionSnapshot?: ReunionSnapshotUpdateOneWithoutAlertNestedInput
   }
 
   export type AlertUncheckedUpdateInput = {
@@ -30652,6 +32094,7 @@ export namespace Prisma {
     resolved_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     cancelled_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     renewal_count?: IntFieldUpdateOperationsInput | number
+    success_story_sent_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     contact_phone?: NullableStringFieldUpdateOperationsInput | string | null
     contact_email?: NullableStringFieldUpdateOperationsInput | string | null
     is_phone_public?: BoolFieldUpdateOperationsInput | boolean
@@ -30663,6 +32106,7 @@ export namespace Prisma {
     settings?: NullableJsonNullValueInput | InputJsonValue
     sightings?: SightingUncheckedUpdateManyWithoutAlertNestedInput
     notifications?: NotificationUncheckedUpdateManyWithoutAlertNestedInput
+    reunionSnapshot?: ReunionSnapshotUncheckedUpdateOneWithoutAlertNestedInput
   }
 
   export type AlertUpdateManyMutationInput = {
@@ -30685,6 +32129,7 @@ export namespace Prisma {
     resolved_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     cancelled_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     renewal_count?: IntFieldUpdateOperationsInput | number
+    success_story_sent_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     contact_phone?: NullableStringFieldUpdateOperationsInput | string | null
     contact_email?: NullableStringFieldUpdateOperationsInput | string | null
     is_phone_public?: BoolFieldUpdateOperationsInput | boolean
@@ -30719,6 +32164,7 @@ export namespace Prisma {
     resolved_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     cancelled_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     renewal_count?: IntFieldUpdateOperationsInput | number
+    success_story_sent_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     contact_phone?: NullableStringFieldUpdateOperationsInput | string | null
     contact_email?: NullableStringFieldUpdateOperationsInput | string | null
     is_phone_public?: BoolFieldUpdateOperationsInput | boolean
@@ -30728,6 +32174,107 @@ export namespace Prisma {
     reward_amount?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
     meta?: NullableJsonNullValueInput | InputJsonValue
     settings?: NullableJsonNullValueInput | InputJsonValue
+  }
+
+  export type ReunionSnapshotCreateInput = {
+    tagId: string
+    petName: string
+    petPhotoUrl?: string | null
+    thankYouMessage?: string | null
+    resolvedAt: Date | string
+    neighboursNotified?: number | null
+    sightingsReported?: number
+    expiresAt: Date | string
+    created_at?: Date | string | null
+    updated_at?: Date | string | null
+    alert: AlertCreateNestedOneWithoutReunionSnapshotInput
+  }
+
+  export type ReunionSnapshotUncheckedCreateInput = {
+    id?: number
+    tagId: string
+    alertId: number
+    petName: string
+    petPhotoUrl?: string | null
+    thankYouMessage?: string | null
+    resolvedAt: Date | string
+    neighboursNotified?: number | null
+    sightingsReported?: number
+    expiresAt: Date | string
+    created_at?: Date | string | null
+    updated_at?: Date | string | null
+  }
+
+  export type ReunionSnapshotUpdateInput = {
+    tagId?: StringFieldUpdateOperationsInput | string
+    petName?: StringFieldUpdateOperationsInput | string
+    petPhotoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    thankYouMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    resolvedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    neighboursNotified?: NullableIntFieldUpdateOperationsInput | number | null
+    sightingsReported?: IntFieldUpdateOperationsInput | number
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    created_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    updated_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    alert?: AlertUpdateOneRequiredWithoutReunionSnapshotNestedInput
+  }
+
+  export type ReunionSnapshotUncheckedUpdateInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    tagId?: StringFieldUpdateOperationsInput | string
+    alertId?: IntFieldUpdateOperationsInput | number
+    petName?: StringFieldUpdateOperationsInput | string
+    petPhotoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    thankYouMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    resolvedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    neighboursNotified?: NullableIntFieldUpdateOperationsInput | number | null
+    sightingsReported?: IntFieldUpdateOperationsInput | number
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    created_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    updated_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
+  export type ReunionSnapshotCreateManyInput = {
+    id?: number
+    tagId: string
+    alertId: number
+    petName: string
+    petPhotoUrl?: string | null
+    thankYouMessage?: string | null
+    resolvedAt: Date | string
+    neighboursNotified?: number | null
+    sightingsReported?: number
+    expiresAt: Date | string
+    created_at?: Date | string | null
+    updated_at?: Date | string | null
+  }
+
+  export type ReunionSnapshotUpdateManyMutationInput = {
+    tagId?: StringFieldUpdateOperationsInput | string
+    petName?: StringFieldUpdateOperationsInput | string
+    petPhotoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    thankYouMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    resolvedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    neighboursNotified?: NullableIntFieldUpdateOperationsInput | number | null
+    sightingsReported?: IntFieldUpdateOperationsInput | number
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    created_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    updated_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
+  export type ReunionSnapshotUncheckedUpdateManyInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    tagId?: StringFieldUpdateOperationsInput | string
+    alertId?: IntFieldUpdateOperationsInput | number
+    petName?: StringFieldUpdateOperationsInput | string
+    petPhotoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    thankYouMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    resolvedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    neighboursNotified?: NullableIntFieldUpdateOperationsInput | number | null
+    sightingsReported?: IntFieldUpdateOperationsInput | number
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    created_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    updated_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   }
 
   export type DeviceCreateInput = {
@@ -32493,6 +34040,11 @@ export namespace Prisma {
     none?: NotificationWhereInput
   }
 
+  export type ReunionSnapshotNullableScalarRelationFilter = {
+    is?: ReunionSnapshotWhereInput | null
+    isNot?: ReunionSnapshotWhereInput | null
+  }
+
   export type NotificationOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
@@ -32520,6 +34072,7 @@ export namespace Prisma {
     resolved_at?: SortOrder
     cancelled_at?: SortOrder
     renewal_count?: SortOrder
+    success_story_sent_at?: SortOrder
     contact_phone?: SortOrder
     contact_email?: SortOrder
     is_phone_public?: SortOrder
@@ -32565,6 +34118,7 @@ export namespace Prisma {
     resolved_at?: SortOrder
     cancelled_at?: SortOrder
     renewal_count?: SortOrder
+    success_story_sent_at?: SortOrder
     contact_phone?: SortOrder
     contact_email?: SortOrder
     is_phone_public?: SortOrder
@@ -32595,6 +34149,7 @@ export namespace Prisma {
     resolved_at?: SortOrder
     cancelled_at?: SortOrder
     renewal_count?: SortOrder
+    success_story_sent_at?: SortOrder
     contact_phone?: SortOrder
     contact_email?: SortOrder
     is_phone_public?: SortOrder
@@ -32649,6 +34204,70 @@ export namespace Prisma {
     _sum?: NestedDecimalNullableFilter<$PrismaModel>
     _min?: NestedDecimalNullableFilter<$PrismaModel>
     _max?: NestedDecimalNullableFilter<$PrismaModel>
+  }
+
+  export type AlertScalarRelationFilter = {
+    is?: AlertWhereInput
+    isNot?: AlertWhereInput
+  }
+
+  export type ReunionSnapshotCountOrderByAggregateInput = {
+    id?: SortOrder
+    tagId?: SortOrder
+    alertId?: SortOrder
+    petName?: SortOrder
+    petPhotoUrl?: SortOrder
+    thankYouMessage?: SortOrder
+    resolvedAt?: SortOrder
+    neighboursNotified?: SortOrder
+    sightingsReported?: SortOrder
+    expiresAt?: SortOrder
+    created_at?: SortOrder
+    updated_at?: SortOrder
+  }
+
+  export type ReunionSnapshotAvgOrderByAggregateInput = {
+    id?: SortOrder
+    alertId?: SortOrder
+    neighboursNotified?: SortOrder
+    sightingsReported?: SortOrder
+  }
+
+  export type ReunionSnapshotMaxOrderByAggregateInput = {
+    id?: SortOrder
+    tagId?: SortOrder
+    alertId?: SortOrder
+    petName?: SortOrder
+    petPhotoUrl?: SortOrder
+    thankYouMessage?: SortOrder
+    resolvedAt?: SortOrder
+    neighboursNotified?: SortOrder
+    sightingsReported?: SortOrder
+    expiresAt?: SortOrder
+    created_at?: SortOrder
+    updated_at?: SortOrder
+  }
+
+  export type ReunionSnapshotMinOrderByAggregateInput = {
+    id?: SortOrder
+    tagId?: SortOrder
+    alertId?: SortOrder
+    petName?: SortOrder
+    petPhotoUrl?: SortOrder
+    thankYouMessage?: SortOrder
+    resolvedAt?: SortOrder
+    neighboursNotified?: SortOrder
+    sightingsReported?: SortOrder
+    expiresAt?: SortOrder
+    created_at?: SortOrder
+    updated_at?: SortOrder
+  }
+
+  export type ReunionSnapshotSumOrderByAggregateInput = {
+    id?: SortOrder
+    alertId?: SortOrder
+    neighboursNotified?: SortOrder
+    sightingsReported?: SortOrder
   }
 
   export type EnumDevicePlatformFilter<$PrismaModel = never> = {
@@ -32918,11 +34537,6 @@ export namespace Prisma {
     lon?: SortOrder
     radius_meters?: SortOrder
     priority?: SortOrder
-  }
-
-  export type AlertScalarRelationFilter = {
-    is?: AlertWhereInput
-    isNot?: AlertWhereInput
   }
 
   export type SightingCountOrderByAggregateInput = {
@@ -34094,6 +35708,16 @@ export namespace Prisma {
     deleteMany?: NotificationScalarWhereInput | NotificationScalarWhereInput[]
   }
 
+  export type ReunionSnapshotUpdateOneWithoutAlertNestedInput = {
+    create?: XOR<ReunionSnapshotCreateWithoutAlertInput, ReunionSnapshotUncheckedCreateWithoutAlertInput>
+    connectOrCreate?: ReunionSnapshotCreateOrConnectWithoutAlertInput
+    upsert?: ReunionSnapshotUpsertWithoutAlertInput
+    disconnect?: ReunionSnapshotWhereInput | boolean
+    delete?: ReunionSnapshotWhereInput | boolean
+    connect?: ReunionSnapshotWhereUniqueInput
+    update?: XOR<XOR<ReunionSnapshotUpdateToOneWithWhereWithoutAlertInput, ReunionSnapshotUpdateWithoutAlertInput>, ReunionSnapshotUncheckedUpdateWithoutAlertInput>
+  }
+
   export type SightingUncheckedUpdateManyWithoutAlertNestedInput = {
     set?: SightingWhereUniqueInput | SightingWhereUniqueInput[]
     disconnect?: SightingWhereUniqueInput | SightingWhereUniqueInput[]
@@ -34116,6 +35740,25 @@ export namespace Prisma {
     update?: NotificationUpdateWithWhereUniqueWithoutAlertInput | NotificationUpdateWithWhereUniqueWithoutAlertInput[]
     updateMany?: NotificationUpdateManyWithWhereWithoutAlertInput | NotificationUpdateManyWithWhereWithoutAlertInput[]
     deleteMany?: NotificationScalarWhereInput | NotificationScalarWhereInput[]
+  }
+
+  export type ReunionSnapshotUncheckedUpdateOneWithoutAlertNestedInput = {
+    create?: XOR<ReunionSnapshotCreateWithoutAlertInput, ReunionSnapshotUncheckedCreateWithoutAlertInput>
+    connectOrCreate?: ReunionSnapshotCreateOrConnectWithoutAlertInput
+    upsert?: ReunionSnapshotUpsertWithoutAlertInput
+    disconnect?: ReunionSnapshotWhereInput | boolean
+    delete?: ReunionSnapshotWhereInput | boolean
+    connect?: ReunionSnapshotWhereUniqueInput
+    update?: XOR<XOR<ReunionSnapshotUpdateToOneWithWhereWithoutAlertInput, ReunionSnapshotUpdateWithoutAlertInput>, ReunionSnapshotUncheckedUpdateWithoutAlertInput>
+  }
+
+  export type AlertCreateNestedOneWithoutReunionSnapshotInput = {
+    connect?: AlertWhereUniqueInput
+  }
+
+  export type AlertUpdateOneRequiredWithoutReunionSnapshotNestedInput = {
+    connect?: AlertWhereUniqueInput
+    update?: XOR<XOR<AlertUpdateToOneWithWhereWithoutReunionSnapshotInput, AlertUpdateWithoutReunionSnapshotInput>, AlertUncheckedUpdateWithoutReunionSnapshotInput>
   }
 
   export type DeviceCreatepostal_codesInput = {
@@ -35234,6 +36877,7 @@ export namespace Prisma {
     resolved_at?: DateTimeNullableFilter<"Alert"> | Date | string | null
     cancelled_at?: DateTimeNullableFilter<"Alert"> | Date | string | null
     renewal_count?: IntFilter<"Alert"> | number
+    success_story_sent_at?: DateTimeNullableFilter<"Alert"> | Date | string | null
     contact_phone?: StringNullableFilter<"Alert"> | string | null
     contact_email?: StringNullableFilter<"Alert"> | string | null
     is_phone_public?: BoolFilter<"Alert"> | boolean
@@ -37232,6 +38876,154 @@ export namespace Prisma {
     updated_at?: DateTimeFilter<"Notification"> | Date | string
   }
 
+  export type ReunionSnapshotCreateWithoutAlertInput = {
+    tagId: string
+    petName: string
+    petPhotoUrl?: string | null
+    thankYouMessage?: string | null
+    resolvedAt: Date | string
+    neighboursNotified?: number | null
+    sightingsReported?: number
+    expiresAt: Date | string
+    created_at?: Date | string | null
+    updated_at?: Date | string | null
+  }
+
+  export type ReunionSnapshotUncheckedCreateWithoutAlertInput = {
+    id?: number
+    tagId: string
+    petName: string
+    petPhotoUrl?: string | null
+    thankYouMessage?: string | null
+    resolvedAt: Date | string
+    neighboursNotified?: number | null
+    sightingsReported?: number
+    expiresAt: Date | string
+    created_at?: Date | string | null
+    updated_at?: Date | string | null
+  }
+
+  export type ReunionSnapshotCreateOrConnectWithoutAlertInput = {
+    where: ReunionSnapshotWhereUniqueInput
+    create: XOR<ReunionSnapshotCreateWithoutAlertInput, ReunionSnapshotUncheckedCreateWithoutAlertInput>
+  }
+
+  export type ReunionSnapshotUpsertWithoutAlertInput = {
+    update: XOR<ReunionSnapshotUpdateWithoutAlertInput, ReunionSnapshotUncheckedUpdateWithoutAlertInput>
+    create: XOR<ReunionSnapshotCreateWithoutAlertInput, ReunionSnapshotUncheckedCreateWithoutAlertInput>
+    where?: ReunionSnapshotWhereInput
+  }
+
+  export type ReunionSnapshotUpdateToOneWithWhereWithoutAlertInput = {
+    where?: ReunionSnapshotWhereInput
+    data: XOR<ReunionSnapshotUpdateWithoutAlertInput, ReunionSnapshotUncheckedUpdateWithoutAlertInput>
+  }
+
+  export type ReunionSnapshotUpdateWithoutAlertInput = {
+    tagId?: StringFieldUpdateOperationsInput | string
+    petName?: StringFieldUpdateOperationsInput | string
+    petPhotoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    thankYouMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    resolvedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    neighboursNotified?: NullableIntFieldUpdateOperationsInput | number | null
+    sightingsReported?: IntFieldUpdateOperationsInput | number
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    created_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    updated_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
+  export type ReunionSnapshotUncheckedUpdateWithoutAlertInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    tagId?: StringFieldUpdateOperationsInput | string
+    petName?: StringFieldUpdateOperationsInput | string
+    petPhotoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    thankYouMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    resolvedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    neighboursNotified?: NullableIntFieldUpdateOperationsInput | number | null
+    sightingsReported?: IntFieldUpdateOperationsInput | number
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    created_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    updated_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
+  export type AlertUpdateToOneWithWhereWithoutReunionSnapshotInput = {
+    where?: AlertWhereInput
+    data: XOR<AlertUpdateWithoutReunionSnapshotInput, AlertUncheckedUpdateWithoutReunionSnapshotInput>
+  }
+
+  export type AlertUpdateWithoutReunionSnapshotInput = {
+    pet_name?: StringFieldUpdateOperationsInput | string
+    pet_species?: EnumPetSpeciesFieldUpdateOperationsInput | $Enums.PetSpecies
+    pet_breed?: NullableStringFieldUpdateOperationsInput | string | null
+    pet_description?: StringFieldUpdateOperationsInput | string
+    pet_color?: NullableStringFieldUpdateOperationsInput | string | null
+    pet_age_years?: NullableIntFieldUpdateOperationsInput | number | null
+    pet_photos?: AlertUpdatepet_photosInput | string[]
+    last_seen_lat?: FloatFieldUpdateOperationsInput | number
+    last_seen_lon?: FloatFieldUpdateOperationsInput | number
+    location_address?: NullableStringFieldUpdateOperationsInput | string | null
+    alert_radius_km?: FloatFieldUpdateOperationsInput | number
+    status?: EnumAlertStatusFieldUpdateOperationsInput | $Enums.AlertStatus
+    time_last_seen?: DateTimeFieldUpdateOperationsInput | Date | string
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    expires_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    resolved_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    cancelled_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    renewal_count?: IntFieldUpdateOperationsInput | number
+    success_story_sent_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    contact_phone?: NullableStringFieldUpdateOperationsInput | string | null
+    contact_email?: NullableStringFieldUpdateOperationsInput | string | null
+    is_phone_public?: BoolFieldUpdateOperationsInput | boolean
+    affected_postal_codes?: AlertUpdateaffected_postal_codesInput | string[]
+    notes?: NullableStringFieldUpdateOperationsInput | string | null
+    reward_offered?: BoolFieldUpdateOperationsInput | boolean
+    reward_amount?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    meta?: NullableJsonNullValueInput | InputJsonValue
+    settings?: NullableJsonNullValueInput | InputJsonValue
+    creator?: UserUpdateOneRequiredWithoutCreated_alertsNestedInput
+    pet?: PetUpdateOneWithoutAlertsNestedInput
+    sightings?: SightingUpdateManyWithoutAlertNestedInput
+    notifications?: NotificationUpdateManyWithoutAlertNestedInput
+  }
+
+  export type AlertUncheckedUpdateWithoutReunionSnapshotInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    creator_id?: IntFieldUpdateOperationsInput | number
+    pet_id?: NullableIntFieldUpdateOperationsInput | number | null
+    pet_name?: StringFieldUpdateOperationsInput | string
+    pet_species?: EnumPetSpeciesFieldUpdateOperationsInput | $Enums.PetSpecies
+    pet_breed?: NullableStringFieldUpdateOperationsInput | string | null
+    pet_description?: StringFieldUpdateOperationsInput | string
+    pet_color?: NullableStringFieldUpdateOperationsInput | string | null
+    pet_age_years?: NullableIntFieldUpdateOperationsInput | number | null
+    pet_photos?: AlertUpdatepet_photosInput | string[]
+    last_seen_lat?: FloatFieldUpdateOperationsInput | number
+    last_seen_lon?: FloatFieldUpdateOperationsInput | number
+    location_address?: NullableStringFieldUpdateOperationsInput | string | null
+    alert_radius_km?: FloatFieldUpdateOperationsInput | number
+    status?: EnumAlertStatusFieldUpdateOperationsInput | $Enums.AlertStatus
+    time_last_seen?: DateTimeFieldUpdateOperationsInput | Date | string
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    expires_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    resolved_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    cancelled_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    renewal_count?: IntFieldUpdateOperationsInput | number
+    success_story_sent_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    contact_phone?: NullableStringFieldUpdateOperationsInput | string | null
+    contact_email?: NullableStringFieldUpdateOperationsInput | string | null
+    is_phone_public?: BoolFieldUpdateOperationsInput | boolean
+    affected_postal_codes?: AlertUpdateaffected_postal_codesInput | string[]
+    notes?: NullableStringFieldUpdateOperationsInput | string | null
+    reward_offered?: BoolFieldUpdateOperationsInput | boolean
+    reward_amount?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    meta?: NullableJsonNullValueInput | InputJsonValue
+    settings?: NullableJsonNullValueInput | InputJsonValue
+    sightings?: SightingUncheckedUpdateManyWithoutAlertNestedInput
+    notifications?: NotificationUncheckedUpdateManyWithoutAlertNestedInput
+  }
+
   export type UserCreateWithoutDevicesInput = {
     name?: string
     firstName?: string
@@ -37720,6 +39512,7 @@ export namespace Prisma {
     resolved_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     cancelled_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     renewal_count?: IntFieldUpdateOperationsInput | number
+    success_story_sent_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     contact_phone?: NullableStringFieldUpdateOperationsInput | string | null
     contact_email?: NullableStringFieldUpdateOperationsInput | string | null
     is_phone_public?: BoolFieldUpdateOperationsInput | boolean
@@ -37732,6 +39525,7 @@ export namespace Prisma {
     creator?: UserUpdateOneRequiredWithoutCreated_alertsNestedInput
     pet?: PetUpdateOneWithoutAlertsNestedInput
     notifications?: NotificationUpdateManyWithoutAlertNestedInput
+    reunionSnapshot?: ReunionSnapshotUpdateOneWithoutAlertNestedInput
   }
 
   export type AlertUncheckedUpdateWithoutSightingsInput = {
@@ -37757,6 +39551,7 @@ export namespace Prisma {
     resolved_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     cancelled_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     renewal_count?: IntFieldUpdateOperationsInput | number
+    success_story_sent_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     contact_phone?: NullableStringFieldUpdateOperationsInput | string | null
     contact_email?: NullableStringFieldUpdateOperationsInput | string | null
     is_phone_public?: BoolFieldUpdateOperationsInput | boolean
@@ -37767,6 +39562,7 @@ export namespace Prisma {
     meta?: NullableJsonNullValueInput | InputJsonValue
     settings?: NullableJsonNullValueInput | InputJsonValue
     notifications?: NotificationUncheckedUpdateManyWithoutAlertNestedInput
+    reunionSnapshot?: ReunionSnapshotUncheckedUpdateOneWithoutAlertNestedInput
   }
 
   export type UserCreateWithoutReported_sightingsInput = {
@@ -37974,6 +39770,7 @@ export namespace Prisma {
     resolved_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     cancelled_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     renewal_count?: IntFieldUpdateOperationsInput | number
+    success_story_sent_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     contact_phone?: NullableStringFieldUpdateOperationsInput | string | null
     contact_email?: NullableStringFieldUpdateOperationsInput | string | null
     is_phone_public?: BoolFieldUpdateOperationsInput | boolean
@@ -37986,6 +39783,7 @@ export namespace Prisma {
     creator?: UserUpdateOneRequiredWithoutCreated_alertsNestedInput
     pet?: PetUpdateOneWithoutAlertsNestedInput
     sightings?: SightingUpdateManyWithoutAlertNestedInput
+    reunionSnapshot?: ReunionSnapshotUpdateOneWithoutAlertNestedInput
   }
 
   export type AlertUncheckedUpdateWithoutNotificationsInput = {
@@ -38011,6 +39809,7 @@ export namespace Prisma {
     resolved_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     cancelled_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     renewal_count?: IntFieldUpdateOperationsInput | number
+    success_story_sent_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     contact_phone?: NullableStringFieldUpdateOperationsInput | string | null
     contact_email?: NullableStringFieldUpdateOperationsInput | string | null
     is_phone_public?: BoolFieldUpdateOperationsInput | boolean
@@ -38021,6 +39820,7 @@ export namespace Prisma {
     meta?: NullableJsonNullValueInput | InputJsonValue
     settings?: NullableJsonNullValueInput | InputJsonValue
     sightings?: SightingUncheckedUpdateManyWithoutAlertNestedInput
+    reunionSnapshot?: ReunionSnapshotUncheckedUpdateOneWithoutAlertNestedInput
   }
 
   export type DeviceUpsertWithoutNotificationsInput = {
@@ -38424,6 +40224,7 @@ export namespace Prisma {
     resolved_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     cancelled_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     renewal_count?: IntFieldUpdateOperationsInput | number
+    success_story_sent_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     contact_phone?: NullableStringFieldUpdateOperationsInput | string | null
     contact_email?: NullableStringFieldUpdateOperationsInput | string | null
     is_phone_public?: BoolFieldUpdateOperationsInput | boolean
@@ -38436,6 +40237,7 @@ export namespace Prisma {
     pet?: PetUpdateOneWithoutAlertsNestedInput
     sightings?: SightingUpdateManyWithoutAlertNestedInput
     notifications?: NotificationUpdateManyWithoutAlertNestedInput
+    reunionSnapshot?: ReunionSnapshotUpdateOneWithoutAlertNestedInput
   }
 
   export type AlertUncheckedUpdateWithoutCreatorInput = {
@@ -38460,6 +40262,7 @@ export namespace Prisma {
     resolved_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     cancelled_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     renewal_count?: IntFieldUpdateOperationsInput | number
+    success_story_sent_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     contact_phone?: NullableStringFieldUpdateOperationsInput | string | null
     contact_email?: NullableStringFieldUpdateOperationsInput | string | null
     is_phone_public?: BoolFieldUpdateOperationsInput | boolean
@@ -38471,6 +40274,7 @@ export namespace Prisma {
     settings?: NullableJsonNullValueInput | InputJsonValue
     sightings?: SightingUncheckedUpdateManyWithoutAlertNestedInput
     notifications?: NotificationUncheckedUpdateManyWithoutAlertNestedInput
+    reunionSnapshot?: ReunionSnapshotUncheckedUpdateOneWithoutAlertNestedInput
   }
 
   export type AlertUncheckedUpdateManyWithoutCreatorInput = {
@@ -38495,6 +40299,7 @@ export namespace Prisma {
     resolved_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     cancelled_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     renewal_count?: IntFieldUpdateOperationsInput | number
+    success_story_sent_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     contact_phone?: NullableStringFieldUpdateOperationsInput | string | null
     contact_email?: NullableStringFieldUpdateOperationsInput | string | null
     is_phone_public?: BoolFieldUpdateOperationsInput | boolean
@@ -38940,6 +40745,7 @@ export namespace Prisma {
     resolved_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     cancelled_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     renewal_count?: IntFieldUpdateOperationsInput | number
+    success_story_sent_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     contact_phone?: NullableStringFieldUpdateOperationsInput | string | null
     contact_email?: NullableStringFieldUpdateOperationsInput | string | null
     is_phone_public?: BoolFieldUpdateOperationsInput | boolean
@@ -38952,6 +40758,7 @@ export namespace Prisma {
     creator?: UserUpdateOneRequiredWithoutCreated_alertsNestedInput
     sightings?: SightingUpdateManyWithoutAlertNestedInput
     notifications?: NotificationUpdateManyWithoutAlertNestedInput
+    reunionSnapshot?: ReunionSnapshotUpdateOneWithoutAlertNestedInput
   }
 
   export type AlertUncheckedUpdateWithoutPetInput = {
@@ -38976,6 +40783,7 @@ export namespace Prisma {
     resolved_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     cancelled_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     renewal_count?: IntFieldUpdateOperationsInput | number
+    success_story_sent_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     contact_phone?: NullableStringFieldUpdateOperationsInput | string | null
     contact_email?: NullableStringFieldUpdateOperationsInput | string | null
     is_phone_public?: BoolFieldUpdateOperationsInput | boolean
@@ -38987,6 +40795,7 @@ export namespace Prisma {
     settings?: NullableJsonNullValueInput | InputJsonValue
     sightings?: SightingUncheckedUpdateManyWithoutAlertNestedInput
     notifications?: NotificationUncheckedUpdateManyWithoutAlertNestedInput
+    reunionSnapshot?: ReunionSnapshotUncheckedUpdateOneWithoutAlertNestedInput
   }
 
   export type AlertUncheckedUpdateManyWithoutPetInput = {
@@ -39011,6 +40820,7 @@ export namespace Prisma {
     resolved_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     cancelled_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     renewal_count?: IntFieldUpdateOperationsInput | number
+    success_story_sent_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     contact_phone?: NullableStringFieldUpdateOperationsInput | string | null
     contact_email?: NullableStringFieldUpdateOperationsInput | string | null
     is_phone_public?: BoolFieldUpdateOperationsInput | boolean
