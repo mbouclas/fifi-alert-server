@@ -27,6 +27,25 @@ import {
   NotificationStatus,
 } from '../generated/prisma';
 
+
+/**
+ * Default `device.findMany` behaviour: every matched device that carries a push
+ * token is reachable. Mirrors what the real table holds for the matches the
+ * test hands to `findDevicesForAlert`; tests that care about extra or disabled
+ * devices override it.
+ */
+function reachableDevicesFromMatches(locationService: LocationService) {
+  return async ({ where }: any) => {
+    const mock = locationService.findDevicesForAlert as jest.Mock;
+    const matches: any[] =
+      (await mock.mock.results[mock.mock.results.length - 1]?.value) ?? [];
+    const ids: number[] = where?.user_id?.in ?? [];
+    return matches
+      .filter((m) => m.pushToken && ids.includes(parseInt(m.userId)))
+      .map((m) => ({ id: parseInt(m.deviceId), user_id: parseInt(m.userId) }));
+  };
+}
+
 describe('Notification Flow (e2e)', () => {
   let app: INestApplication;
   let prismaService: PrismaService;
@@ -61,6 +80,10 @@ describe('Notification Flow (e2e)', () => {
               findUnique: jest.fn(),
               update: jest.fn(),
               count: jest.fn(),
+            },
+            device: {
+              findMany: jest.fn(),
+              update: jest.fn(),
             },
             notificationExclusion: {
               create: jest.fn(),
@@ -102,6 +125,9 @@ describe('Notification Flow (e2e)', () => {
     locationService = module.get<LocationService>(LocationService);
     queueProcessor = module.get<NotificationQueueProcessor>(
       NotificationQueueProcessor,
+    );
+    (prismaService.device.findMany as jest.Mock).mockImplementation(
+      reachableDevicesFromMatches(locationService),
     );
   });
 

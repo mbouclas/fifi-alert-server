@@ -18,6 +18,25 @@ import {
   LocationSource,
 } from '../generated/prisma';
 
+
+/**
+ * Default `device.findMany` behaviour: every matched device that carries a push
+ * token is reachable. Mirrors what the real table holds for the matches the
+ * test hands to `findDevicesForAlert`; tests that care about extra or disabled
+ * devices override it.
+ */
+function reachableDevicesFromMatches(locationService: LocationService) {
+  return async ({ where }: any) => {
+    const mock = locationService.findDevicesForAlert as jest.Mock;
+    const matches: any[] =
+      (await mock.mock.results[mock.mock.results.length - 1]?.value) ?? [];
+    const ids: number[] = where?.user_id?.in ?? [];
+    return matches
+      .filter((m) => m.pushToken && ids.includes(parseInt(m.userId)))
+      .map((m) => ({ id: parseInt(m.deviceId), user_id: parseInt(m.userId) }));
+  };
+}
+
 describe('NotificationQueueProcessor', () => {
   let processor: NotificationQueueProcessor;
   let notificationService: NotificationService;
@@ -82,6 +101,10 @@ describe('NotificationQueueProcessor', () => {
               update: jest.fn(),
               count: jest.fn(),
             },
+            device: {
+              findMany: jest.fn(),
+              update: jest.fn(),
+            },
           },
         },
         {
@@ -113,6 +136,9 @@ describe('NotificationQueueProcessor', () => {
     apnsService = module.get<APNsService>(APNsService);
     webPushService = module.get<WebPushService>(WebPushService);
     alertEmailService = module.get<AlertEmailService>(AlertEmailService);
+    (prismaService.device.findMany as jest.Mock).mockImplementation(
+      reachableDevicesFromMatches(locationService),
+    );
 
     // Fatigue guards default to "clear" so each test opts into the case it cares about.
     (prismaService.notification.findFirst as jest.Mock).mockResolvedValue(null);
@@ -721,6 +747,11 @@ describe('NotificationQueueProcessor', () => {
       });
       // Email is the HIGH wave's job, not the push job's.
       expect(alertEmailService.sendAlertEmail).not.toHaveBeenCalled();
+      // The dead subscription is cleared so the next alert does not target it again.
+      expect(prismaService.device.update).toHaveBeenCalledWith({
+        where: { id: 11 },
+        data: expect.objectContaining({ push_token: null }),
+      });
     });
 
     it('should not retry when the push provider is not configured', async () => {
@@ -891,6 +922,159 @@ describe('NotificationQueueProcessor', () => {
         16,
         1,
         expect.anything(),
+      );
+    });
+
+    it('should push to every push-enabled device of a matched user, not just the matched one', async () => {
+      (prismaService.alert.findUnique as jest.Mock).mockResolvedValue({
+        id: 1,
+        status: AlertStatus.ACTIVE,
+        creator_id: 99,
+        pet_name: 'Timos',
+        pet_species: 'DOG',
+        pet_description: 'Brown terrier',
+        location_address: 'Nicosia',
+        pet_photos: [],
+      });
+      // The zone matched the laptop; the phone and a tablet sit on the same account.
+      (locationService.findDevicesForAlert as jest.Mock).mockResolvedValue([
+        {
+          deviceId: '2120',
+          userId: '2170',
+          pushToken: 'laptop-sub',
+          confidence: NotificationConfidence.HIGH,
+          matchReason: 'MANUAL',
+          distanceKm: 3.6,
+          matchedVia: 'Alert zone: Home Zone',
+        },
+      ]);
+      (prismaService.device.findMany as jest.Mock).mockResolvedValue([
+        { id: 2102, user_id: 2170 },
+        { id: 2118, user_id: 2170 },
+        { id: 2120, user_id: 2170 },
+      ]);
+      let nextId = 600;
+      (prismaService.notification.create as jest.Mock).mockImplementation(() =>
+        Promise.resolve({ id: nextId++ }),
+      );
+      (alertEmailService.isOptedIn as jest.Mock).mockResolvedValue(true);
+
+      await processor.processAlertNotifications({
+        data: { alertId: 1, wave: 'HIGH' },
+      } as Job);
+
+      expect(prismaService.device.findMany).toHaveBeenCalledWith({
+        where: {
+          user_id: { in: [2170] },
+          push_token: { not: null },
+          push_enabled: true,
+        },
+        select: { id: true, user_id: true },
+      });
+      // Three pushes (one per device) + one email row.
+      expect(mockQueue.add).toHaveBeenCalledTimes(3);
+      for (const deviceId of [2102, 2118, 2120]) {
+        expect(prismaService.notification.create).toHaveBeenCalledWith({
+          data: expect.objectContaining({
+            device_id: deviceId,
+            distance_km: 3.6,
+            status: 'QUEUED',
+          }),
+        });
+      }
+      expect(alertEmailService.sendAlertEmail).toHaveBeenCalledTimes(1);
+      expect(notificationService.trackExclusion).not.toHaveBeenCalled();
+    });
+
+    it('should record PUSH_TOKEN_MISSING when the only tokened device has push disabled', async () => {
+      (prismaService.alert.findUnique as jest.Mock).mockResolvedValue({
+        id: 1,
+        status: AlertStatus.ACTIVE,
+        creator_id: 99,
+        pet_name: 'Timos',
+        pet_species: 'DOG',
+        pet_description: '',
+        location_address: null,
+        pet_photos: [],
+      });
+      (locationService.findDevicesForAlert as jest.Mock).mockResolvedValue([
+        {
+          deviceId: '11',
+          userId: '1',
+          pushToken: 'fcm-token',
+          confidence: NotificationConfidence.HIGH,
+          matchReason: 'MANUAL',
+          distanceKm: 0.5,
+          matchedVia: 'Alert zone: Home',
+        },
+      ]);
+      // push_enabled = false filters the device out at the query.
+      (prismaService.device.findMany as jest.Mock).mockResolvedValue([]);
+      (alertEmailService.isOptedIn as jest.Mock).mockResolvedValue(true);
+      (prismaService.notification.create as jest.Mock).mockResolvedValue({
+        id: 700,
+      });
+
+      await processor.processAlertNotifications({
+        data: { alertId: 1, wave: 'HIGH' },
+      } as Job);
+
+      expect(mockQueue.add).not.toHaveBeenCalled();
+      expect(notificationService.trackExclusion).toHaveBeenCalledTimes(1);
+      expect(notificationService.trackExclusion).toHaveBeenCalledWith(
+        1,
+        11,
+        'PUSH_TOKEN_MISSING',
+      );
+      // Email still goes out: the user matched, they just have no push channel.
+      expect(alertEmailService.sendAlertEmail).toHaveBeenCalledTimes(1);
+    });
+
+    it('should exclude every device of a user an earlier wave already pushed', async () => {
+      (prismaService.alert.findUnique as jest.Mock).mockResolvedValue({
+        id: 1,
+        status: AlertStatus.ACTIVE,
+        creator_id: 99,
+        pet_name: 'Timos',
+        pet_species: 'DOG',
+        pet_description: '',
+        location_address: null,
+        pet_photos: [],
+      });
+      (locationService.findDevicesForAlert as jest.Mock).mockResolvedValue([
+        {
+          deviceId: '11',
+          userId: '1',
+          pushToken: 'fcm-token',
+          confidence: NotificationConfidence.MEDIUM,
+          matchReason: 'GPS',
+          distanceKm: 4,
+          matchedVia: 'Stale GPS',
+        },
+      ]);
+      (prismaService.device.findMany as jest.Mock).mockResolvedValue([
+        { id: 11, user_id: 1 },
+        { id: 12, user_id: 1 },
+      ]);
+      // A PUSH row from the HIGH wave already exists.
+      (prismaService.notification.findMany as jest.Mock).mockResolvedValue([
+        { meta: null },
+      ]);
+
+      await processor.processAlertNotifications({
+        data: { alertId: 1, wave: 'MEDIUM' },
+      } as Job);
+
+      expect(mockQueue.add).not.toHaveBeenCalled();
+      expect(notificationService.trackExclusion).toHaveBeenCalledWith(
+        1,
+        11,
+        'ALREADY_NOTIFIED',
+      );
+      expect(notificationService.trackExclusion).toHaveBeenCalledWith(
+        1,
+        12,
+        'ALREADY_NOTIFIED',
       );
     });
 

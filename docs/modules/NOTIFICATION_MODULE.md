@@ -132,29 +132,41 @@ async processAlertNotifications(job: Job<{ alertId: string }>): Promise<void> {
   // 1. Get alert details
   const alert = await this.prisma.alert.findUnique({ where: { id: alertId } });
   
-  // 2. Find matching devices (geospatial query)
+  // 2. Find matching users (geospatial query; one best match per user)
   const matches = await this.locationService.findDevicesForAlert(alertId);
   
-  // 3. Queue individual push notifications
+  // 3. Load every push-enabled device those users own. Zones and GPS match a
+  //    single device (often the laptop that created the zone), but the push
+  //    must reach the phone too, so the fan-out is per user, then per device.
+  const devices = await this.prisma.device.findMany({
+    where: { user_id: { in: userIds }, push_token: { not: null }, push_enabled: true },
+  });
+  
+  // 4. Queue one push per device, carrying the user's match confidence/distance
   for (const match of matches) {
-    // Create notification record
-    const notification = await this.prisma.notification.create({
-      data: {
-        alert_id: alertId,
-        device_id: match.deviceId,
-        confidence: match.confidence,
-        match_type: match.matchType,
-        status: 'QUEUED',
-      },
-    });
-    
-    // Queue push job
-    await this.notificationQueue.add('send-push', {
-      notificationId: notification.id,
-    });
+    for (const device of devicesOf(match.userId)) {
+      const notification = await this.prisma.notification.create({
+        data: {
+          alert_id: alertId,
+          device_id: device.id,
+          confidence: match.confidence,
+          match_reason: match.matchReason,
+          distance_km: match.distanceKm,
+          status: 'QUEUED',
+        },
+      });
+      await this.notificationQueue.add('send-push-notification', {
+        notificationId: notification.id,
+      });
+    }
   }
+  // 5. HIGH wave only: one email per matched user (same user set as the pushes)
 }
 ```
+
+Push and email therefore reach the same users: email once per user, push once per
+registered device with a live token and `push_enabled = true`. Later waves skip a
+user who already received a push for this alert (`hasBeenNotified`).
 
 ---
 
@@ -561,7 +573,11 @@ ORDER BY COUNT(*) DESC;
 ### Invalid Token Handling
 
 **FCM Error:** `messaging/registration-token-not-registered`  
-**APNs Error:** `BadDeviceToken`, `Unregistered`
+**APNs Error:** `BadDeviceToken`, `Unregistered`  
+**Web Push:** HTTP 404 / 410 from the push service
+
+Because every device a user owns is targeted, a dead subscription is cleared on
+the first failure so it is not retried on every future alert.
 
 **Action:**
 1. Mark notification as FAILED
@@ -573,7 +589,7 @@ ORDER BY COUNT(*) DESC;
 if (error.code === 'messaging/registration-token-not-registered') {
   await this.prisma.device.update({
     where: { id: notification.device_id },
-    data: { push_token: null, push_token_updated_at: null },
+    data: { push_token: null, push_token_updated_at: new Date() },
   });
   
   this.logger.warn(`Invalid push token for device ${notification.device_id}`);

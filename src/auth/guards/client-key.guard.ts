@@ -10,6 +10,11 @@ import { timingSafeEqual } from 'crypto';
 import { REQUIRE_CLIENT_KEY_KEY } from '../decorators/require-client-key.decorator';
 
 export const CLIENT_KEY_HEADER = 'x-client-key';
+
+interface ClientKeyRequest {
+  user?: { id?: number };
+  headers?: Record<string, string | string[] | undefined>;
+}
 export const CLIENT_API_KEYS_ENV = 'CLIENT_API_KEYS';
 
 /**
@@ -19,7 +24,12 @@ export const CLIENT_API_KEYS_ENV = 'CLIENT_API_KEYS';
  * Validates the `X-Client-Key` header against the comma-separated list in
  * the `CLIENT_API_KEYS` env var using a timing-safe comparison.
  *
- * Fails closed: if no keys are configured every guarded request is rejected.
+ * Requests that already carry an authenticated user (a valid bearer token,
+ * attached by the global BearerTokenGuard which runs first) pass without a
+ * client key, so logged-in app clients keep working unchanged.
+ *
+ * Fails closed: if no keys are configured every anonymous guarded request is
+ * rejected.
  */
 @Injectable()
 export class ClientKeyGuard implements CanActivate {
@@ -43,7 +53,13 @@ export class ClientKeyGuard implements CanActivate {
       return true;
     }
 
-    const request = context.switchToHttp().getRequest();
+    const request = context.switchToHttp().getRequest<ClientKeyRequest>();
+
+    // Bearer-authenticated callers are already identified; the key only gates anonymous traffic.
+    if (request?.user?.id) {
+      return true;
+    }
+
     const presented = this.extractHeader(request);
 
     if (!presented) {
@@ -74,7 +90,7 @@ export class ClientKeyGuard implements CanActivate {
       .filter(Boolean);
   }
 
-  private extractHeader(request: any): string | undefined {
+  private extractHeader(request: ClientKeyRequest): string | undefined {
     const value = request?.headers?.[CLIENT_KEY_HEADER];
     if (Array.isArray(value)) {
       return value[0];

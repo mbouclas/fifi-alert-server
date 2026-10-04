@@ -126,10 +126,31 @@ src/alert/
 
 ---
 
+### GET /alerts/by-tag/:tagId
+**Public alert lookup by collar tag** (backs the web `/active-alerts/{tagId}` page)
+
+**Authentication:** `X-Client-Key` header (anonymous, e.g. the web BFF) **or** a bearer token. Anonymous
+callers receive a redacted payload: no `creatorId`, `contactEmail`, `notes`, `affectedPostalCodes`;
+`lastSeenLat`/`lastSeenLon` rounded to 3 decimals (~100 m); `contactPhone` only when `isPhonePublic`.
+Bearer callers get the full payload (creator additionally sees `contactEmail`). Every response carries
+`tagId` (collar tag of the linked pet, `null` when none) so clients can link to the public page.
+
+**Throttle:** 60/min, keyed on user id, else on a hash of `X-Client-Key`, else IP (`UserThrottlerGuard`).
+
+- `tagId` is validated by `TagIdPipe` (`src/pet/pipes/tag-id.pipe.ts`, format in `src/pet/tag-id.ts`) → `400` when malformed.
+- Returns the newest `ACTIVE` alert whose `pet.tag_id = :tagId`, otherwise `404`.
+- Declared before `GET /alerts/:id` in the controller.
+
+---
+
 ### GET /alerts/:id
 **Get Alert Details**
 
-**Authentication:** Optional (public endpoint)
+**Authentication:** `X-Client-Key` header (anonymous, e.g. the web BFF) **or** a bearer token. Anonymous
+callers receive a redacted payload: no `creatorId`, `contactEmail`, `notes`, `affectedPostalCodes`;
+`lastSeenLat`/`lastSeenLon` rounded to 3 decimals (~100 m); `contactPhone` only when `isPhonePublic`.
+Bearer callers get the full payload (creator additionally sees `contactEmail`). Every response carries
+`tagId` (collar tag of the linked pet, `null` when none) so clients can link to the public page.
 
 **Response (200 OK):**
 ```typescript
@@ -166,7 +187,14 @@ src/alert/
 ### GET /alerts
 **Search Nearby Alerts (Geospatial)**
 
-**Authentication:** Optional (public endpoint)
+**Authentication:** `X-Client-Key` header (anonymous, e.g. the web BFF) **or** a bearer token. Anonymous
+callers receive a redacted payload: no `creatorId`, `contactEmail`, `notes`, `affectedPostalCodes`;
+`lastSeenLat`/`lastSeenLon` rounded to 3 decimals (~100 m); `contactPhone` only when `isPhonePublic`.
+Bearer callers get the full payload (creator additionally sees `contactEmail`). Every response carries
+`tagId` (collar tag of the linked pet, `null` when none) so clients can link to the public page.
+
+Anonymous callers are always restricted to `status = ACTIVE`; any other `status` value is ignored.
+Without `lat`/`lon` results are newest first; with both, ordered by `distanceKm` within `radiusKm`.
 
 **Query Parameters:**
 - `lat` (required): Latitude

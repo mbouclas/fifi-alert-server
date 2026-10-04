@@ -51,6 +51,20 @@ const alertServiceEmailTemplates: Record<string, IEmailTemplate> = {
   },
 };
 
+/** Includes shared by the single-alert lookups (detail, by-tag). */
+const ALERT_DETAIL_INCLUDE = {
+  sightings: {
+    where: { dismissed: false },
+    orderBy: { sighting_time: 'desc' as const },
+  },
+  pet: { select: { tagId: true } },
+} satisfies Prisma.AlertInclude;
+
+/** ~100 m precision for anonymous callers (3 decimals). */
+function roundCoordinate(value: number): number {
+  return Math.round(value * 1000) / 1000;
+}
+
 @Injectable()
 export class AlertService {
   private readonly logger = new Logger(AlertService.name);
@@ -226,26 +240,52 @@ export class AlertService {
   ): Promise<AlertResponseDto | null> {
     const alert = await this.prisma.alert.findUnique({
       where: { id: alertId },
-      include: {
-        sightings: {
-          where: { dismissed: false },
-          orderBy: { sighting_time: 'desc' },
-        },
-      },
+      include: ALERT_DETAIL_INCLUDE,
     });
 
     if (!alert) {
       return null;
     }
 
-    return this.mapToResponseDto(alert, requesterId);
+    return this.applyViewerRedaction(
+      this.mapToResponseDto(alert, requesterId),
+      requesterId,
+    );
+  }
+
+  /**
+   * Newest ACTIVE alert for the pet wearing collar tag `tagId`.
+   * Backs the public `/active-alerts/{tagId}` page. Returns null when the tag
+   * is unknown or the pet currently has no ACTIVE alert.
+   */
+  async findActiveByTagId(
+    tagId: string,
+    requesterId?: number,
+  ): Promise<AlertResponseDto | null> {
+    const alert = await this.prisma.alert.findFirst({
+      where: { status: AlertStatus.ACTIVE, pet: { tagId } },
+      orderBy: { created_at: 'desc' },
+      include: ALERT_DETAIL_INCLUDE,
+    });
+
+    if (!alert) {
+      return null;
+    }
+
+    return this.applyViewerRedaction(
+      this.mapToResponseDto(alert, requesterId),
+      requesterId,
+    );
   }
 
   /**
    * Find nearby alerts using geospatial query
    * Task 2.5
    */
-  async findNearby(query: ListAlertsQueryDto): Promise<AlertResponseDto[]> {
+  async findNearby(
+    query: ListAlertsQueryDto,
+    requesterId?: number,
+  ): Promise<AlertResponseDto[]> {
     const {
       lat,
       lon,
@@ -258,12 +298,12 @@ export class AlertService {
     } = query;
 
     // Build the WHERE conditions
-    const conditions: string[] = ['status = $1::\"AlertStatus\"'];
+    const conditions: string[] = ['a.status = $1::\"AlertStatus\"'];
     const params: any[] = [status];
     let paramIndex = 2;
 
     if (species) {
-      conditions.push(`pet_species = $${paramIndex}::\"PetSpecies\"`);
+      conditions.push(`a.pet_species = $${paramIndex}::\"PetSpecies\"`);
       params.push(species);
       paramIndex++;
     }
@@ -271,14 +311,14 @@ export class AlertService {
     // Geospatial condition
     if (lat !== undefined && lon !== undefined) {
       conditions.push(`ST_DWithin(
-                location_point::geography,
+                a.location_point::geography,
                 ST_SetSRID(ST_MakePoint($${paramIndex}, $${paramIndex + 1}), 4326)::geography,
                 $${paramIndex + 2} * 1000
             )`);
       params.push(lon, lat, radiusKm);
       paramIndex += 3;
     } else if (postalCode) {
-      conditions.push(`$${paramIndex} = ANY(affected_postal_codes)`);
+      conditions.push(`$${paramIndex} = ANY(a.affected_postal_codes)`);
       params.push(postalCode);
       paramIndex++;
     }
@@ -286,14 +326,14 @@ export class AlertService {
     const whereClause = conditions.join(' AND ');
 
     // Build ORDER BY and distance calculation
-    let orderBy = 'created_at DESC';
+    let orderBy = 'a.created_at DESC';
     let distanceSelect = 'NULL as distance_km';
 
     if (lat !== undefined && lon !== undefined) {
       const lonIndex = params.indexOf(lon) + 1;
       const latIndex = params.indexOf(lat) + 1;
       distanceSelect = `ST_Distance(
-                location_point::geography,
+                a.location_point::geography,
                 ST_SetSRID(ST_MakePoint($${lonIndex}, $${latIndex}), 4326)::geography
             ) / 1000 as distance_km`;
       orderBy = 'distance_km ASC';
@@ -301,14 +341,16 @@ export class AlertService {
 
     // Execute query
     const sqlQuery = `
-            SELECT 
-                id, creator_id, pet_id, pet_name, pet_species, pet_breed, pet_description, pet_color, pet_age_years, pet_photos,
-                last_seen_lat, last_seen_lon, location_address, alert_radius_km,
-                status, time_last_seen, created_at, updated_at, expires_at, resolved_at, cancelled_at, renewal_count,
-                contact_phone, contact_email, is_phone_public,
-                affected_postal_codes, notes, reward_offered, reward_amount,
+            SELECT
+                a.id, a.creator_id, a.pet_id, a.pet_name, a.pet_species, a.pet_breed, a.pet_description, a.pet_color, a.pet_age_years, a.pet_photos,
+                a.last_seen_lat, a.last_seen_lon, a.location_address, a.alert_radius_km,
+                a.status, a.time_last_seen, a.created_at, a.updated_at, a.expires_at, a.resolved_at, a.cancelled_at, a.renewal_count,
+                a.contact_phone, a.contact_email, a.is_phone_public,
+                a.affected_postal_codes, a.notes, a.reward_offered, a.reward_amount,
+                p.tag_id,
                 ${distanceSelect}
-            FROM alert
+            FROM alert a
+            LEFT JOIN pet p ON p.id = a.pet_id
             WHERE ${whereClause}
             ORDER BY ${orderBy}
             LIMIT ${limit}
@@ -320,7 +362,9 @@ export class AlertService {
       ...params,
     );
 
-    return alerts.map((alert) => this.mapRawToResponseDto(alert));
+    return alerts.map((alert) =>
+      this.applyViewerRedaction(this.mapRawToResponseDto(alert), requesterId),
+    );
   }
 
   /**
@@ -746,6 +790,8 @@ export class AlertService {
       id: alert.id,
       creatorId: alert.creator_id,
       petId: alert.pet_id,
+      // Raw geo query exposes `tag_id` via LEFT JOIN pet; Prisma includes expose `pet.tagId`.
+      tagId: alert.tag_id ?? alert.pet?.tagId ?? null,
       petName: alert.pet_name,
       petSpecies: alert.pet_species,
       petBreed: alert.pet_breed,
@@ -775,6 +821,30 @@ export class AlertService {
         ? parseFloat(alert.reward_amount)
         : undefined,
       distanceKm: alert.distance_km ? parseFloat(alert.distance_km) : undefined,
+    };
+  }
+
+  /**
+   * Strip fields that are private to members when the caller is anonymous
+   * (client-key only, no bearer). Bearer callers keep the full payload; the
+   * creator-only rules for contact details live in mapToResponseDto.
+   */
+  private applyViewerRedaction(
+    dto: AlertResponseDto,
+    requesterId?: number,
+  ): AlertResponseDto {
+    if (requesterId !== undefined) {
+      return dto;
+    }
+
+    return {
+      ...dto,
+      creatorId: undefined,
+      contactEmail: undefined,
+      notes: undefined,
+      affectedPostalCodes: undefined,
+      lastSeenLat: roundCoordinate(dto.lastSeenLat),
+      lastSeenLon: roundCoordinate(dto.lastSeenLon),
     };
   }
 

@@ -30,9 +30,12 @@ describe('ClientKeyGuard', () => {
         }
     });
 
-    const createMockContext = (headers: Record<string, string> = {}): ExecutionContext =>
+    const createMockContext = (
+        headers: Record<string, string> = {},
+        user?: { id: number },
+    ): ExecutionContext =>
         ({
-            switchToHttp: () => ({ getRequest: () => ({ headers }) }),
+            switchToHttp: () => ({ getRequest: () => ({ headers, user }) }),
             getHandler: () => jest.fn(),
             getClass: () => class MockController { },
         }) as any;
@@ -45,6 +48,16 @@ describe('ClientKeyGuard', () => {
     it('allows access with a valid client key', () => {
         reflector.getAllAndOverride.mockReturnValue(true);
         expect(guard.canActivate(createMockContext({ 'x-client-key': 'key-one' }))).toBe(true);
+    });
+
+    it('allows a bearer-authenticated request without a client key', () => {
+        reflector.getAllAndOverride.mockReturnValue(true);
+        expect(guard.canActivate(createMockContext({}, { id: 7 }))).toBe(true);
+    });
+
+    it('still requires the key when the bearer did not resolve to a user', () => {
+        reflector.getAllAndOverride.mockReturnValue(true);
+        expect(() => guard.canActivate(createMockContext({}, undefined))).toThrow(UnauthorizedException);
     });
 
     it('accepts any key from the configured list', () => {

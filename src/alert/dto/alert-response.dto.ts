@@ -9,14 +9,27 @@ export class AlertResponseDto {
   @ApiProperty({ description: 'Alert ID', example: 1 })
   id: number;
 
-  @ApiProperty({ description: 'Creator user ID', example: 42 })
-  creatorId: number;
+  @ApiPropertyOptional({
+    description:
+      'Creator user ID. Omitted for anonymous (client-key only) callers.',
+    example: 42,
+  })
+  creatorId?: number;
 
   @ApiPropertyOptional({
     description: 'Associated pet ID (if linked to registered pet)',
     example: 5,
   })
   petId?: number;
+
+  @ApiProperty({
+    description:
+      'Collar tag id of the linked pet, null when the alert was created without a registered pet. Key for the public alert page.',
+    example: 'LUNA2M4PQ',
+    type: String,
+    nullable: true,
+  })
+  tagId: string | null;
 
   // Pet Details
   @ApiProperty({ description: 'Pet name', example: 'Max' })
@@ -127,10 +140,17 @@ export class AlertResponseDto {
   isPhonePublic: boolean;
 
   // Metadata
-  @ApiProperty({ description: 'Affected postal codes', type: [String] })
-  affectedPostalCodes: string[];
+  @ApiPropertyOptional({
+    description:
+      'Affected postal codes. Omitted for anonymous (client-key only) callers.',
+    type: [String],
+  })
+  affectedPostalCodes?: string[];
 
-  @ApiPropertyOptional({ description: 'Additional notes' })
+  @ApiPropertyOptional({
+    description:
+      'Additional notes. Omitted for anonymous (client-key only) callers.',
+  })
   notes?: string;
 
   @ApiProperty({ description: 'Whether reward is offered', example: true })

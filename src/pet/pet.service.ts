@@ -13,6 +13,7 @@ import { PrismaService } from '../services/prisma.service';
 import { Pet, Prisma, AlertStatus } from '@prisma-lib/client';
 import { customAlphabet } from 'nanoid';
 import { CreatePetDto, UpdatePetDto } from './dto';
+import { TAG_ID_ALPHABET, TAG_ID_LENGTH } from './tag-id';
 
 import { PetWithType, petWithTypeInclude, orderedPetPhotos } from './pet.mapper';
 import { AlertStatusEventPublisher } from '../alert/events/alert-status-event.publisher';
@@ -23,10 +24,7 @@ export type { PetWithType };
 export class PetService {
   private readonly logger = new Logger(PetService.name);
   // Custom alphabet for tagId: uppercase letters and numbers (no confusing chars like 0, O, I, 1)
-  private readonly nanoid = customAlphabet(
-    '23456789ABCDEFGHJKLMNPQRSTUVWXYZ',
-    9,
-  );
+  private readonly nanoid = customAlphabet(TAG_ID_ALPHABET, TAG_ID_LENGTH);
 
   constructor(
     private readonly prisma: PrismaService,

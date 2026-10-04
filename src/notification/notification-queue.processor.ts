@@ -143,96 +143,134 @@ export class NotificationQueueProcessor extends WorkerHost {
         `Confidence breakdown: ${JSON.stringify(confidenceBreakdown)}`,
       );
 
-      // Pass 1: push to every device with a push channel.
+      // One match per user. findDevicesForAlert already keeps the best match per
+      // user, and that match carries the distance both channels report. Matches
+      // are ordered by priority then distance, so the first one per user wins.
+      const userMatches = new Map<string, (typeof deviceMatches)[number]>();
+      for (const match of deviceMatches) {
+        if (!userMatches.has(match.userId)) {
+          userMatches.set(match.userId, match);
+        }
+      }
+
+      // Pass 1: push to every reachable device each matched user owns. Zones and
+      // GPS match a single device, which is often the laptop that created the
+      // zone while the phone sits in the same account. The email goes to the
+      // user, so the push must reach every device they registered.
       let queuedCount = 0;
+      let pushedUserCount = 0;
       const inQuietHours = this.isQuietHours();
-      const pushedUserIds = new Set<string>();
 
-      const pushMatches = deviceMatches.filter((match) => match.pushToken);
-      const tokenlessMatches = deviceMatches.filter((match) => !match.pushToken);
+      const userIds = [...userMatches.keys()]
+        .map((id) => parseInt(id))
+        .filter((id) => Number.isFinite(id));
 
-      for (const match of pushMatches) {
-        const deviceId = parseInt(match.deviceId);
+      const reachableDevices =
+        userIds.length > 0
+          ? await this.prisma.device.findMany({
+              where: {
+                user_id: { in: userIds },
+                push_token: { not: null },
+                push_enabled: true,
+              },
+              select: { id: true, user_id: true },
+            })
+          : [];
+
+      const devicesByUser = new Map<string, number[]>();
+      for (const device of reachableDevices) {
+        const key = String(device.user_id);
+        const list = devicesByUser.get(key) ?? [];
+        list.push(device.id);
+        devicesByUser.set(key, list);
+      }
+
+      // Matched devices with no push channel are recorded so the audit trail
+      // shows why they got nothing, even when a sibling device is pushed.
+      for (const match of deviceMatches) {
+        if (!match.pushToken) {
+          await this.notificationService.trackExclusion(
+            alertId,
+            parseInt(match.deviceId),
+            EXCLUSION_REASONS.PUSH_TOKEN_MISSING,
+          );
+        }
+      }
+
+      for (const [userId, match] of userMatches) {
+        const targets = devicesByUser.get(userId) ?? [];
+
+        if (targets.length === 0) {
+          // The matched device may hold a token with push disabled; record that
+          // too, but never twice for the same token-less device.
+          if (match.pushToken) {
+            await this.notificationService.trackExclusion(
+              alertId,
+              parseInt(match.deviceId),
+              EXCLUSION_REASONS.PUSH_TOKEN_MISSING,
+            );
+          }
+          continue;
+        }
+
+        const excludeAll = async (reason: string) => {
+          for (const deviceId of targets) {
+            await this.notificationService.trackExclusion(
+              alertId,
+              deviceId,
+              reason,
+            );
+          }
+        };
 
         // A missing pet 400m away is worth waking someone for; a LOW-confidence
         // city-level match at 3am is not.
         if (inQuietHours && wave !== 'HIGH') {
-          await this.notificationService.trackExclusion(
-            alertId,
-            deviceId,
-            EXCLUSION_REASONS.QUIET_HOURS,
-          );
+          await excludeAll(EXCLUSION_REASONS.QUIET_HOURS);
           continue;
         }
 
         // A later wave must not re-notify someone an earlier wave already reached.
-        if (
-          pushedUserIds.has(match.userId) ||
-          (await this.hasBeenNotified(alertId, match.userId, 'PUSH'))
-        ) {
-          await this.notificationService.trackExclusion(
-            alertId,
-            deviceId,
-            EXCLUSION_REASONS.ALREADY_NOTIFIED,
-          );
+        if (await this.hasBeenNotified(alertId, userId, 'PUSH')) {
+          await excludeAll(EXCLUSION_REASONS.ALREADY_NOTIFIED);
           continue;
         }
 
-        if (await this.isOverDailyCap(match.userId, wave)) {
-          await this.notificationService.trackExclusion(
-            alertId,
-            deviceId,
-            EXCLUSION_REASONS.DAILY_CAP,
-          );
+        if (await this.isOverDailyCap(userId, wave)) {
+          await excludeAll(EXCLUSION_REASONS.DAILY_CAP);
           continue;
         }
 
-        // Create notification record
-        const notification = await this.prisma.notification.create({
-          data: {
-            alert_id: alertId,
-            device_id: deviceId,
-            confidence: match.confidence,
-            match_reason: match.matchReason,
-            distance_km: match.distanceKm,
-            status: NotificationStatus.QUEUED,
-          },
-        });
+        for (const deviceId of targets) {
+          const notification = await this.prisma.notification.create({
+            data: {
+              alert_id: alertId,
+              device_id: deviceId,
+              confidence: match.confidence,
+              match_reason: match.matchReason,
+              distance_km: match.distanceKm,
+              status: NotificationStatus.QUEUED,
+            },
+          });
 
-        // Queue individual push notification job
-        await this.notificationQueue.add('send-push-notification', {
-          notificationId: notification.id,
-        } as PushNotificationJob);
+          await this.notificationQueue.add('send-push-notification', {
+            notificationId: notification.id,
+          } as PushNotificationJob);
 
-        pushedUserIds.add(match.userId);
-        queuedCount++;
+          queuedCount++;
+        }
+
+        pushedUserCount++;
       }
 
       // Pass 2: email. Push is best-effort (iOS users who never added FiFi to
       // their Home Screen cannot be subscribed at all), so every HIGH-wave user
       // also gets one email. Lower waves are push-only: "a pet is missing
       // somewhere in your city" is not worth an email.
-      for (const match of tokenlessMatches) {
-        await this.notificationService.trackExclusion(
-          alertId,
-          parseInt(match.deviceId),
-          EXCLUSION_REASONS.PUSH_TOKEN_MISSING,
-        );
-      }
-
       let emailedCount = 0;
 
       if (wave === 'HIGH') {
-        // Matches are ordered by priority then distance, so the first one per
-        // user carries the most relevant distance for the email.
-        const emailCandidates = new Map<string, (typeof deviceMatches)[number]>();
-        for (const match of deviceMatches) {
-          if (!emailCandidates.has(match.userId)) {
-            emailCandidates.set(match.userId, match);
-          }
-        }
-
-        for (const [userId, match] of emailCandidates) {
+        for (const [userId, match] of userMatches) {
           if (await this.hasBeenNotified(alertId, userId, 'EMAIL')) continue;
 
           const sent = await this.sendFallbackEmail(alert, match);
@@ -248,7 +286,7 @@ export class NotificationQueueProcessor extends WorkerHost {
       );
 
       this.logger.log(
-        `Wave ${wave}: queued ${queuedCount} push notifications for alert ${alertId}`,
+        `Wave ${wave}: queued ${queuedCount} push notifications to ${pushedUserCount} users for alert ${alertId}`,
       );
     } catch (error) {
       this.logger.error(
@@ -424,8 +462,21 @@ export class NotificationQueueProcessor extends WorkerHost {
         // If token is invalid, we could mark device for token refresh
         if (sendResult.invalidToken) {
           this.logger.warn(
-            `Invalid push token for device ${notification.device_id}. Token should be refreshed.`,
+            `Invalid push token for device ${notification.device_id}. Clearing it.`,
           );
+          // Every device a user owns is now targeted, so a dead subscription
+          // would otherwise fail again on every future alert.
+          try {
+            await this.prisma.device.update({
+              where: { id: notification.device_id },
+              data: { push_token: null, push_token_updated_at: new Date() },
+            });
+          } catch (error) {
+            this.logger.error(
+              `Failed to clear dead push token for device ${notification.device_id}:`,
+              error,
+            );
+          }
         }
 
         const terminal =

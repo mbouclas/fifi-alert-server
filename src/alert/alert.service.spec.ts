@@ -23,9 +23,11 @@ describe('AlertService', () => {
 
     const mockPrismaService = {
         $queryRaw: jest.fn(),
+        $queryRawUnsafe: jest.fn(),
         $executeRaw: jest.fn(),
         alert: {
             findUnique: jest.fn(),
+            findFirst: jest.fn(),
             findMany: jest.fn(),
             update: jest.fn(),
             count: jest.fn(),
@@ -227,10 +229,176 @@ describe('AlertService', () => {
                 include: {
                     sightings: {
                         where: { dismissed: false },
-                        orderBy: { sightingTime: 'desc' },
+                        orderBy: { sighting_time: 'desc' },
                     },
+                    pet: { select: { tagId: true } },
                 },
             });
+        });
+
+        const publicAlertRow = () => ({
+            id: 7,
+            creator_id: 1,
+            pet_id: 5,
+            pet: { tagId: 'LUNA2M4PQ' },
+            pet_name: 'Luna',
+            pet_species: PetSpecies.CAT,
+            pet_breed: null,
+            pet_description: 'Grey tabby',
+            pet_color: 'Grey',
+            pet_age_years: 2,
+            pet_photos: ['https://cdn/luna.jpg'],
+            last_seen_lat: 35.1712345,
+            last_seen_lon: 33.3698765,
+            location_address: 'Strovolos',
+            alert_radius_km: 5,
+            status: AlertStatus.ACTIVE,
+            time_last_seen: new Date(),
+            created_at: new Date(),
+            updated_at: new Date(),
+            expires_at: new Date(),
+            resolved_at: null,
+            cancelled_at: null,
+            renewal_count: 0,
+            contact_phone: '+35799000000',
+            contact_email: 'owner@example.com',
+            is_phone_public: true,
+            affected_postal_codes: ['2000', '2001'],
+            notes: 'Shy, do not chase',
+            reward_offered: true,
+            reward_amount: '100.00',
+            sightings: [{ id: 1 }],
+        });
+
+        it('maps tagId from the linked pet', async () => {
+            mockPrismaService.alert.findUnique.mockResolvedValueOnce(publicAlertRow());
+
+            const result = await service.findById(7, 1);
+
+            expect(result!.tagId).toBe('LUNA2M4PQ');
+        });
+
+        it('returns tagId null when the alert has no registered pet', async () => {
+            mockPrismaService.alert.findUnique.mockResolvedValueOnce({
+                ...publicAlertRow(),
+                pet_id: null,
+                pet: null,
+            });
+
+            const result = await service.findById(7, 1);
+
+            expect(result!.tagId).toBeNull();
+        });
+
+        it('redacts member-only fields for anonymous callers', async () => {
+            mockPrismaService.alert.findUnique.mockResolvedValueOnce(publicAlertRow());
+
+            const result = await service.findById(7, undefined);
+
+            expect(result!.creatorId).toBeUndefined();
+            expect(result!.contactEmail).toBeUndefined();
+            expect(result!.notes).toBeUndefined();
+            expect(result!.affectedPostalCodes).toBeUndefined();
+            expect(result!.lastSeenLat).toBe(35.171);
+            expect(result!.lastSeenLon).toBe(33.37);
+            // Public-by-design fields survive
+            expect(result!.tagId).toBe('LUNA2M4PQ');
+            expect(result!.contactPhone).toBe('+35799000000');
+            expect(result!.petPhotos).toEqual(['https://cdn/luna.jpg']);
+            expect(result!.rewardAmount).toBe(100);
+            expect(result!.sightingCount).toBe(1);
+        });
+
+        it('hides contactPhone from anonymous callers when not public', async () => {
+            mockPrismaService.alert.findUnique.mockResolvedValueOnce({
+                ...publicAlertRow(),
+                is_phone_public: false,
+            });
+
+            const result = await service.findById(7, undefined);
+
+            expect(result!.contactPhone).toBeUndefined();
+        });
+
+        it('keeps creatorId, notes and postal codes for bearer non-creators', async () => {
+            mockPrismaService.alert.findUnique.mockResolvedValueOnce(publicAlertRow());
+
+            const result = await service.findById(7, 99);
+
+            expect(result!.creatorId).toBe(1);
+            expect(result!.notes).toBe('Shy, do not chase');
+            expect(result!.affectedPostalCodes).toEqual(['2000', '2001']);
+            expect(result!.contactEmail).toBeUndefined();
+            expect(result!.lastSeenLat).toBe(35.1712345);
+        });
+    });
+
+    describe('findActiveByTagId', () => {
+        const row = {
+            id: 7,
+            creator_id: 1,
+            pet_id: 5,
+            pet: { tagId: 'LUNA2M4PQ' },
+            pet_name: 'Luna',
+            pet_species: PetSpecies.CAT,
+            pet_description: 'Grey tabby',
+            pet_photos: [],
+            last_seen_lat: 35.1,
+            last_seen_lon: 33.3,
+            alert_radius_km: 5,
+            status: AlertStatus.ACTIVE,
+            time_last_seen: new Date(),
+            created_at: new Date(),
+            updated_at: new Date(),
+            expires_at: new Date(),
+            renewal_count: 0,
+            contact_phone: '+35799000000',
+            contact_email: 'owner@example.com',
+            is_phone_public: false,
+            affected_postal_codes: [],
+            notes: 'private',
+            reward_offered: false,
+            reward_amount: null,
+            sightings: [],
+        };
+
+        it('queries the newest ACTIVE alert for the tag', async () => {
+            mockPrismaService.alert.findFirst.mockResolvedValueOnce(row);
+
+            const result = await service.findActiveByTagId('LUNA2M4PQ');
+
+            expect(mockPrismaService.alert.findFirst).toHaveBeenCalledWith({
+                where: { status: AlertStatus.ACTIVE, pet: { tagId: 'LUNA2M4PQ' } },
+                orderBy: { created_at: 'desc' },
+                include: {
+                    sightings: {
+                        where: { dismissed: false },
+                        orderBy: { sighting_time: 'desc' },
+                    },
+                    pet: { select: { tagId: true } },
+                },
+            });
+            expect(result!.id).toBe(7);
+            expect(result!.tagId).toBe('LUNA2M4PQ');
+            expect(result!.creatorId).toBeUndefined();
+            expect(result!.notes).toBeUndefined();
+            expect(result!.contactPhone).toBeUndefined();
+        });
+
+        it('returns null when the tag has no active alert', async () => {
+            mockPrismaService.alert.findFirst.mockResolvedValueOnce(null);
+
+            expect(await service.findActiveByTagId('ZZZZZZZZZ')).toBeNull();
+        });
+
+        it('shows the creator their own contact details', async () => {
+            mockPrismaService.alert.findFirst.mockResolvedValueOnce(row);
+
+            const result = await service.findActiveByTagId('LUNA2M4PQ', 1);
+
+            expect(result!.creatorId).toBe(1);
+            expect(result!.contactEmail).toBe('owner@example.com');
+            expect(result!.contactPhone).toBe('+35799000000');
         });
 
         it('should return null when alert not found', async () => {
@@ -747,24 +915,90 @@ describe('AlertService', () => {
                     reward_offered: false,
                     reward_amount: null,
                     distance_km: 2.5,
+                    tag_id: 'LUNA2M4PQ',
                 },
             ];
 
-            mockPrismaService.$queryRaw.mockResolvedValueOnce(mockAlerts);
+            mockPrismaService.$queryRawUnsafe.mockResolvedValueOnce(mockAlerts);
 
-            const result = await service.findNearby({
-                lat: 37.7749,
-                lon: -122.4194,
-                radiusKm: 10,
-                status: AlertStatus.ACTIVE,
-                limit: 20,
-                offset: 0,
-            });
+            const result = await service.findNearby(
+                {
+                    lat: 37.7749,
+                    lon: -122.4194,
+                    radiusKm: 10,
+                    status: AlertStatus.ACTIVE,
+                    limit: 20,
+                    offset: 0,
+                },
+                1,
+            );
 
             expect(result).toBeDefined();
             expect(result.length).toBe(1);
             expect(result[0].distanceKm).toBe(2.5);
-            expect(mockPrismaService.$queryRaw).toHaveBeenCalledTimes(1);
+            expect(result[0].tagId).toBe('LUNA2M4PQ');
+            expect(result[0].creatorId).toBe(1);
+            expect(mockPrismaService.$queryRawUnsafe).toHaveBeenCalledTimes(1);
+
+            const [sql, ...params] = mockPrismaService.$queryRawUnsafe.mock.calls[0];
+            expect(sql).toContain('LEFT JOIN pet p ON p.id = a.pet_id');
+            expect(sql).toContain('p.tag_id');
+            expect(sql).toContain('ORDER BY distance_km ASC');
+            expect(params[0]).toBe(AlertStatus.ACTIVE);
+        });
+
+        it('orders newest first without coordinates', async () => {
+            mockPrismaService.$queryRawUnsafe.mockResolvedValueOnce([]);
+
+            await service.findNearby({ limit: 20, offset: 0 });
+
+            const [sql] = mockPrismaService.$queryRawUnsafe.mock.calls[0];
+            expect(sql).toContain('ORDER BY a.created_at DESC');
+            expect(sql).toContain('a.status = $1');
+        });
+
+        it('redacts member-only fields for anonymous callers', async () => {
+            mockPrismaService.$queryRawUnsafe.mockResolvedValueOnce([
+                {
+                    id: 2,
+                    creator_id: 9,
+                    pet_id: null,
+                    tag_id: null,
+                    pet_name: 'Rex',
+                    pet_species: PetSpecies.DOG,
+                    pet_description: 'Brown',
+                    pet_photos: [],
+                    last_seen_lat: 35.1712345,
+                    last_seen_lon: 33.3698765,
+                    alert_radius_km: 5,
+                    status: AlertStatus.ACTIVE,
+                    time_last_seen: new Date(),
+                    created_at: new Date(),
+                    updated_at: new Date(),
+                    expires_at: new Date(),
+                    renewal_count: 0,
+                    contact_phone: '+35799000000',
+                    contact_email: 'owner@example.com',
+                    is_phone_public: true,
+                    affected_postal_codes: ['2000'],
+                    notes: 'private',
+                    reward_offered: false,
+                    reward_amount: null,
+                    distance_km: null,
+                },
+            ]);
+
+            const [dto] = await service.findNearby({ limit: 20, offset: 0 });
+
+            expect(dto.tagId).toBeNull();
+            expect(dto.creatorId).toBeUndefined();
+            expect(dto.contactEmail).toBeUndefined();
+            expect(dto.notes).toBeUndefined();
+            expect(dto.affectedPostalCodes).toBeUndefined();
+            expect(dto.lastSeenLat).toBe(35.171);
+            expect(dto.lastSeenLon).toBe(33.37);
+            expect(dto.contactPhone).toBe('+35799000000');
+            expect(dto.distanceKm).toBeUndefined();
         });
     });
     describe('Email Methods', () => {

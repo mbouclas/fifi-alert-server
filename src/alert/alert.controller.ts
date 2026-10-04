@@ -21,8 +21,10 @@ import {
   ApiBearerAuth,
   ApiParam,
   ApiConsumes,
+  ApiSecurity,
 } from '@nestjs/swagger';
 import { FilesInterceptor } from '@nestjs/platform-express';
+import { Throttle } from '@nestjs/throttler';
 import { AlertService } from './alert.service';
 import {
   CreateAlertDto,
@@ -33,7 +35,12 @@ import {
   AlertResponseDto,
 } from './dto';
 import { BearerTokenGuard } from '../auth/guards/bearer-token.guard';
+import { ClientKeyGuard } from '../auth/guards/client-key.guard';
+import { AllowAnonymous } from '../auth/decorators/allow-anonymous.decorator';
+import { RequireClientKey } from '../auth/decorators/require-client-key.decorator';
 import { User } from '../decorators/user.decorator';
+import { TagIdPipe } from '../pet/pipes/tag-id.pipe';
+import { AlertStatus } from '../generated/prisma';
 import { UploadService } from '../upload/upload.service';
 
 @ApiTags('alerts')
@@ -69,17 +76,76 @@ export class AlertController {
   }
 
   /**
+   * GET /alerts/by-tag/:tagId - Public alert page lookup by collar tag.
+   * Declared before GET /alerts/:id so the literal segment wins.
+   */
+  @Get('by-tag/:tagId')
+  @AllowAnonymous()
+  @RequireClientKey()
+  @UseGuards(ClientKeyGuard)
+  @ApiSecurity('client-key')
+  @ApiBearerAuth()
+  @Throttle({ default: { limit: 60, ttl: 60000 } })
+  @ApiParam({
+    name: 'tagId',
+    description:
+      'Collar tag id (9 chars, alphabet 23456789ABCDEFGHJKLMNPQRSTUVWXYZ)',
+    example: 'LUNA2M4PQ',
+  })
+  @ApiOperation({
+    summary: 'Get the newest ACTIVE alert for a collar tag',
+    description:
+      'Backs the public `/active-alerts/{tagId}` page. Requires `X-Client-Key` when no bearer token is sent. ' +
+      'Anonymous callers receive a redacted payload (no `creatorId`, `contactEmail`, `notes`, `affectedPostalCodes`; coordinates rounded to ~100 m).',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Active alert for this tag',
+    type: AlertResponseDto,
+  })
+  @ApiResponse({ status: 400, description: 'Malformed tag id' })
+  @ApiResponse({ status: 401, description: 'Missing or invalid client key' })
+  @ApiResponse({
+    status: 404,
+    description: 'Unknown tag, or the pet has no ACTIVE alert',
+  })
+  @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
+  async findByTag(
+    @Param('tagId', TagIdPipe) tagId: string,
+    @User('id') userId?: number,
+  ): Promise<AlertResponseDto> {
+    const alert = await this.alertService.findActiveByTagId(tagId, userId);
+
+    if (!alert) {
+      throw new NotFoundException(`No active alert for tag ${tagId}`);
+    }
+
+    return alert;
+  }
+
+  /**
    * GET /alerts/:id - View a specific alert
    * Task 2.11
    */
   @Get(':id')
+  @AllowAnonymous()
+  @RequireClientKey()
+  @UseGuards(ClientKeyGuard)
+  @ApiSecurity('client-key')
+  @ApiBearerAuth()
   @ApiParam({ name: 'id', description: 'Alert ID' })
-  @ApiOperation({ summary: 'Get alert by ID' })
+  @ApiOperation({
+    summary: 'Get alert by ID',
+    description:
+      'Requires `X-Client-Key` when no bearer token is sent. Anonymous callers receive a redacted payload ' +
+      '(no `creatorId`, `contactEmail`, `notes`, `affectedPostalCodes`; coordinates rounded to ~100 m).',
+  })
   @ApiResponse({
     status: 200,
     description: 'Alert found',
     type: AlertResponseDto,
   })
+  @ApiResponse({ status: 401, description: 'Missing or invalid client key' })
   @ApiResponse({ status: 404, description: 'Alert not found' })
   async findOne(
     @Param('id', ParseIntPipe) id: number,
@@ -99,16 +165,33 @@ export class AlertController {
    * Task 2.11
    */
   @Get()
-  @ApiOperation({ summary: 'Search for alerts by location' })
+  @AllowAnonymous()
+  @RequireClientKey()
+  @UseGuards(ClientKeyGuard)
+  @ApiSecurity('client-key')
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Search for alerts by location',
+    description:
+      'Requires `X-Client-Key` when no bearer token is sent. Without `lat`/`lon` results are newest first; ' +
+      'with both, results are ordered by `distanceKm` within `radiusKm`. Anonymous callers always receive ' +
+      'ACTIVE alerts only (any `status` filter is ignored) with a redacted payload.',
+  })
   @ApiResponse({
     status: 200,
     description: 'Alerts found',
     type: [AlertResponseDto],
   })
+  @ApiResponse({ status: 401, description: 'Missing or invalid client key' })
   async findAll(
     @Query() query: ListAlertsQueryDto,
+    @User('id') userId?: number,
   ): Promise<AlertResponseDto[]> {
-    return this.alertService.findNearby(query);
+    if (userId === undefined) {
+      // Public callers must never see DRAFT/RESOLVED/EXPIRED/CANCELLED alerts.
+      query = { ...query, status: AlertStatus.ACTIVE };
+    }
+    return this.alertService.findNearby(query, userId);
   }
 
   /**
@@ -194,7 +277,8 @@ export class AlertController {
   @ApiResponse({ status: 404, description: 'Alert not found' })
   @ApiResponse({
     status: 422,
-    description: 'Alert is not DRAFT or ACTIVE (already resolved, expired or cancelled)',
+    description:
+      'Alert is not DRAFT or ACTIVE (already resolved, expired or cancelled)',
   })
   async cancel(
     @Param('id', ParseIntPipe) id: number,
