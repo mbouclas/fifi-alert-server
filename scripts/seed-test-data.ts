@@ -1,6 +1,6 @@
 // Simple seed script using raw SQL with Prisma
 import 'dotenv/config';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from '../src/generated/prisma';
 
 const prisma = new PrismaClient();
 

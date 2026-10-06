@@ -14,7 +14,7 @@ import {
   IsPositive,
 } from 'class-validator';
 import { Type } from 'class-transformer';
-import { NotificationConfidence } from '@prisma/client';
+import { NotificationConfidence } from '../../generated/prisma';
 
 /**
  * Location details for a sighting

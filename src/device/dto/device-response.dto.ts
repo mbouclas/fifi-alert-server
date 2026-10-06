@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { DevicePlatform, LocationSource } from '@prisma/client';
+import { DevicePlatform, LocationSource } from '../../generated/prisma';
 
 /**
  * Location status information

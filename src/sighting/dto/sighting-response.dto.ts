@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { NotificationConfidence } from '@prisma/client';
+import { NotificationConfidence } from '../../generated/prisma';
 import { getMaxSightingPhotos } from '../../config/sighting.config';
 
 /**

@@ -14,7 +14,7 @@ import {
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { PrismaService } from '../services/prisma.service';
 import { NotificationService } from '../notification/notification.service';
-import { Prisma, AlertStatus, Sighting } from '@prisma/client';
+import { Prisma, AlertStatus, Sighting } from '../generated/prisma';
 import {
   CreateSightingDto,
   SightingResponseDto,

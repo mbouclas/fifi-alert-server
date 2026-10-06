@@ -8,7 +8,7 @@ import {
   BadRequestException,
   ForbiddenException,
 } from '@nestjs/common';
-import { AlertStatus, NotificationConfidence } from '@prisma/client';
+import { AlertStatus, NotificationConfidence } from '../generated/prisma';
 import { CreateSightingDto, DismissSightingDto } from './dto';
 import type { IEmailProvider } from '@shared/email/interfaces/email-provider.interface';
 

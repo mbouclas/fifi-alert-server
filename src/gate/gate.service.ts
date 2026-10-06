@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../services/prisma.service';
 import { CreateGateDto, UpdateGateDto } from './dto';
-import { Prisma } from '@prisma/client';
+import { Prisma } from '../generated/prisma';
 
 @Injectable()
 export class GateService {

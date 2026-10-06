@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { DeviceService } from './device.service';
 import { PrismaService } from '../services/prisma.service';
 import { NotFoundException } from '@nestjs/common';
-import { DevicePlatform, LocationSource } from '@prisma/client';
+import { DevicePlatform, LocationSource } from '../generated/prisma';
 import { RegisterDeviceDto, UpdateLocationDto } from './dto';
 
 describe('DeviceService', () => {

@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { PrismaService } from '../services/prisma.service';
-import { SavedZone } from '@prisma/client';
+import { SavedZone } from '../generated/prisma';
 import {
   CreateSavedZoneDto,
   UpdateSavedZoneDto,

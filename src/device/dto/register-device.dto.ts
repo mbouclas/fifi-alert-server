@@ -13,7 +13,7 @@ import {
   IsUUID,
 } from 'class-validator';
 import { Type } from 'class-transformer';
-import { DevicePlatform, LocationSource } from '@prisma/client';
+import { DevicePlatform, LocationSource } from '../../generated/prisma';
 
 /**
  * GPS location data

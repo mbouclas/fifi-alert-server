@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { PrismaService } from '../services/prisma.service';
-import { Device, LocationSource } from '@prisma/client';
+import { Device, LocationSource } from '../generated/prisma';
 import {
   RegisterDeviceDto,
   UpdateLocationDto,
