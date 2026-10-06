@@ -13,10 +13,14 @@ import {
   UpdatePasswordCommand,
   ConvertToAdminCommand,
   ListAdminsCommand,
+  RolesCommand,
+  ListRolesCommand,
+  CreateRoleCommand,
   AdminCreateQuestions,
   AdminCreateUserQuestions,
   AdminUpdatePasswordQuestions,
   AdminConvertQuestions,
+  AdminCreateRoleQuestions,
 } from '@commands/admin';
 
 @Module({
@@ -32,11 +36,15 @@ import {
     UpdatePasswordCommand,
     ConvertToAdminCommand,
     ListAdminsCommand,
+    RolesCommand,
+    ListRolesCommand,
+    CreateRoleCommand,
     // Question sets
     AdminCreateQuestions,
     AdminCreateUserQuestions,
     AdminUpdatePasswordQuestions,
     AdminConvertQuestions,
+    AdminCreateRoleQuestions,
   ],
 })
-export class CommandsModule { }
+export class CommandsModule {}

@@ -5,6 +5,7 @@ import { CreateUserCommand } from './subcommands/create-user.command';
 import { UpdatePasswordCommand } from './subcommands/update-password.command';
 import { ConvertToAdminCommand } from './subcommands/convert-to-admin.command';
 import { ListAdminsCommand } from './subcommands/list-admins.command';
+import { RolesCommand } from './subcommands/roles/roles.command';
 
 /**
  * Admin Command
@@ -33,6 +34,7 @@ import { ListAdminsCommand } from './subcommands/list-admins.command';
     UpdatePasswordCommand,
     ConvertToAdminCommand,
     ListAdminsCommand,
+    RolesCommand,
   ],
 })
 @Injectable()
@@ -49,6 +51,7 @@ Available subcommands:
   update-password  Update an admin user's password
   convert          Convert an existing user to admin
   list             List all system administrators
+  roles            Manage roles (list, create)
 
 Usage:
   bun run cli admin <subcommand> [options]

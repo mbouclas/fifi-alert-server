@@ -4,6 +4,7 @@ import { SharedModule } from './shared/shared.module.js';
 import { CommandsModule } from './commands/commands.module.js';
 import { UserModule } from './user/user.module.js';
 import { SimulationModule } from './simulation/simulation.module.js';
+import { I18nModule } from './i18n/i18n.module.js';
 import { authConfig, petConfig } from './config/index.js';
 
 /**
@@ -25,6 +26,7 @@ import { authConfig, petConfig } from './config/index.js';
       cache: true,
     }),
     SharedModule,
+    I18nModule,
     UserModule,
     SimulationModule,
     CommandsModule,
