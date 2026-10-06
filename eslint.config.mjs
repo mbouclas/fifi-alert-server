@@ -30,6 +30,21 @@ export default tseslint.config(
       '@typescript-eslint/no-floating-promises': 'warn',
       '@typescript-eslint/no-unsafe-argument': 'warn',
       "prettier/prettier": ["error", { endOfLine: "auto" }],
+      // The Prisma client is generated into src/generated/prisma (see schema.prisma).
+      // Importing '@prisma/client' only works on machines with a stale
+      // node_modules/.prisma and crashed production at boot on 2026-10-06.
+      'no-restricted-imports': [
+        'error',
+        {
+          paths: [
+            {
+              name: '@prisma/client',
+              message:
+                "Import from the generated client (src/generated/prisma) instead of '@prisma/client'.",
+            },
+          ],
+        },
+      ],
     },
   },
 );
