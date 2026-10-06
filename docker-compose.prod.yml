@@ -1,0 +1,63 @@
+# Production data stack for fifi-alert-server.
+# Only Postgres (PostGIS) and Redis. The API itself runs on the host under pm2.
+#
+#   docker-compose -p fifi-alert -f docker-compose.prod.yml up -d
+#
+# Reads POSTGRES_PASSWORD / REDIS_PASSWORD from the .env in this directory.
+# Ports are bound to 127.0.0.1 only; nothing is reachable from outside the host.
+# Names and host ports are deliberately unique because this host runs other stacks
+# (a container named "redis" and ports 5432/6379/6380/6381 already exist there).
+version: "3.8"
+
+services:
+  postgres:
+    image: postgis/postgis:17-3.5
+    container_name: fifi-alert-postgres
+    restart: always
+    environment:
+      POSTGRES_USER: fifi_alert
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: fifi_alert
+    ports:
+      - "127.0.0.1:5433:5432"
+    volumes:
+      - fifi-alert-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U fifi_alert -d fifi_alert"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    command:
+      - "postgres"
+      - "-c"
+      - "shared_buffers=512MB"
+      - "-c"
+      - "effective_cache_size=2GB"
+      - "-c"
+      - "max_connections=100"
+
+  redis:
+    image: redis:7-alpine
+    container_name: fifi-alert-redis
+    restart: always
+    command: >
+      redis-server
+      --requirepass ${REDIS_PASSWORD}
+      --appendonly yes
+      --maxmemory 512mb
+      --maxmemory-policy noeviction
+    ports:
+      - "127.0.0.1:6382:6379"
+    volumes:
+      - fifi-alert-redis-data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a \"$$REDIS_PASSWORD\" ping | grep -q PONG"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    environment:
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+
+volumes:
+  fifi-alert-postgres-data:
+  fifi-alert-redis-data:
