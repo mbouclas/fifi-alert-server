@@ -251,6 +251,31 @@ describe('SmtpService', () => {
         }),
       );
     });
+
+    it('should use Mailjet preset when SMTP_PROVIDER=mailjet', async () => {
+      process.env.SMTP_PROVIDER = 'mailjet';
+
+      const module: TestingModule = await Test.createTestingModule({
+        providers: [
+          SmtpService,
+          {
+            provide: EventEmitter2,
+            useValue: { emit: jest.fn() },
+          },
+        ],
+      }).compile();
+
+      module.get<SmtpService>(SmtpService);
+
+      expect(nodemailer.createTransport).toHaveBeenCalledWith(
+        expect.objectContaining({
+          host: 'in-v3.mailjet.com',
+          port: 587,
+          secure: false,
+          auth: { user: 'test@test.com', pass: 'test-password' },
+        }),
+      );
+    });
   });
 
   describe('send', () => {

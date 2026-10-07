@@ -98,7 +98,7 @@ export class SmtpService implements IEmailProvider {
   /**
    * Get preset configuration for common email providers
    *
-   * @param provider - Provider name (gmail, outlook, etc.)
+   * @param provider - Provider name (gmail, outlook, yahoo, sendgrid, mailjet)
    * @returns Nodemailer transport configuration or null
    */
   private getProviderPreset(provider?: string): any {
@@ -125,6 +125,14 @@ export class SmtpService implements IEmailProvider {
         port: 587,
         secure: false,
         auth: { user: 'apikey', pass: password },
+      },
+      // Mailjet SMTP relay: username = API Key, password = Secret Key
+      // https://dev.mailjet.com/docs/smtp-relay/configuration
+      mailjet: {
+        host: 'in-v3.mailjet.com',
+        port: 587,
+        secure: false,
+        auth: { user, pass: password },
       },
     };
 

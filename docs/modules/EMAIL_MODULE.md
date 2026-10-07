@@ -143,6 +143,8 @@ The email provider is selected **once at application startup** based on the `MAI
 | **Tracking** | None | Built-in (opens, clicks) |
 | **Best For** | Development, small apps | Production, high volume |
 
+> **Mailjet** is used through the SMTP driver (`MAIL_SYSTEM=smtp`, `SMTP_PROVIDER=mailjet`). Mailjet's relay accepts the API Key / Secret Key pair as SMTP login, so no dedicated driver exists or is needed. See `docs/EMAIL_QUICKSTART.md` → "Option 3: Mailjet".
+
 ---
 
 ## Email Service API
@@ -748,6 +750,15 @@ SMTP_PORT=587
 SMTP_SECURE=false
 SMTP_USER=your-email@gmail.com
 SMTP_PASSWORD=your-app-password
+```
+
+Optional `SMTP_PROVIDER` presets replace host/port/secure: `gmail`, `outlook`, `yahoo`, `sendgrid`, `mailjet`.
+
+```env
+# Mailjet via SMTP relay (in-v3.mailjet.com:587, STARTTLS)
+SMTP_PROVIDER=mailjet
+SMTP_USER=your-mailjet-api-key
+SMTP_PASSWORD=your-mailjet-secret-key
 ```
 
 #### Mailgun Provider (when MAIL_SYSTEM=mailgun)

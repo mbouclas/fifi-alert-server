@@ -422,6 +422,27 @@ await marketingService.sendPromotion('user-id-123', {
    ```
 5. **Restart server**: `bun run start:dev`
 
+### Option 3: Mailjet (Paid, SMTP relay — uses the built-in SMTP driver)
+
+Mailjet exposes a standard SMTP relay, so it runs through the existing SMTP driver. No Mailjet-specific driver or SDK is needed.
+
+1. **Sign up**: https://www.mailjet.com
+2. **Verify sender/domain**: Account → Senders & Domains (add SPF + DKIM records)
+3. **Get credentials**: Account → SMTP settings (https://app.mailjet.com/account/relay). Username is your **API Key**, password is your **Secret Key** (same pair as the REST API).
+4. **Update `.env`**:
+   ```env
+   MAIL_SYSTEM=smtp
+   SMTP_PROVIDER=mailjet          # preset: in-v3.mailjet.com:587, STARTTLS
+   SMTP_USER=your-mailjet-api-key
+   SMTP_PASSWORD=your-mailjet-secret-key
+   SMTP_FROM_NAME=FiFi Alert
+   SMTP_FROM_EMAIL=noreply@yourdomain.com   # must be verified in Mailjet
+   ```
+   Or without the preset: `SMTP_HOST=in-v3.mailjet.com`, `SMTP_PORT=587`, `SMTP_SECURE=false` (or port `465` with `SMTP_SECURE=true`).
+5. **Restart server**: `bun run start:dev`
+
+Mailjet extras (templates, custom IDs, event payloads) remain available over SMTP via `X-MJ-*` headers if ever needed.
+
 **No code changes required!** Just update environment variables and restart.
 
 ---
