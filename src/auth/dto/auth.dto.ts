@@ -6,6 +6,7 @@ import {
   MinLength,
   MaxLength,
   IsUrl,
+  IsIn,
 } from 'class-validator';
 
 /**
@@ -461,4 +462,52 @@ export class MeResponseDto {
     type: [UserGateDto],
   })
   gates: UserGateDto[];
+}
+
+/**
+ * DTO for social login (Google / Facebook).
+ *
+ * The client obtains the provider token itself (Google Identity Services,
+ * Facebook JS SDK, native mobile SDKs) and sends it here for verification.
+ */
+export class SocialLoginDto {
+  @ApiProperty({
+    description: 'Social provider id',
+    enum: ['google', 'facebook'],
+    example: 'google',
+  })
+  @IsString()
+  @IsIn(['google', 'facebook'])
+  provider: 'google' | 'facebook';
+
+  @ApiProperty({
+    description:
+      'Provider token. Google: the ID token (JWT) from any platform. ' +
+      'Facebook iOS Limited Login: the OIDC ID token (JWT). ' +
+      'Facebook web / Android: the Graph access token (also send it as accessToken).',
+    example: 'eyJhbGciOiJSUzI1NiIs...',
+  })
+  @IsString()
+  @MinLength(10)
+  @MaxLength(8192)
+  token: string;
+
+  @ApiPropertyOptional({
+    description:
+      'Provider access token. Required for Facebook when `token` is a Graph access token ' +
+      '(send the same value in both fields). Optional for Google.',
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(8192)
+  accessToken?: string;
+
+  @ApiPropertyOptional({
+    description:
+      'Nonce the client passed to the provider SDK, when one was used. Verified against the token.',
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(512)
+  nonce?: string;
 }

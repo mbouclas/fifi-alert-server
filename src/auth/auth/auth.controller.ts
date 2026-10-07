@@ -10,9 +10,13 @@ import {
   BadRequestException,
   ForbiddenException,
   NotFoundException,
+  ConflictException,
+  ServiceUnavailableException,
   Logger,
   UseGuards,
   UseInterceptors,
+  UsePipes,
+  ValidationPipe,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -25,8 +29,10 @@ import { Throttle } from '@nestjs/throttler';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Session, type UserSession } from '@thallesp/nestjs-better-auth';
 import { verifyPassword, hashPassword } from 'better-auth/crypto';
+import { APIError } from 'better-auth/api';
 import type { Request } from 'express';
 import { auth, getEmailVerificationCallbackURL } from '../../auth';
+import { isSocialProviderConfigured } from '@config/social-auth.config';
 import { UserService } from '../../user/user.service';
 import {
   TokenService,
@@ -40,6 +46,7 @@ import type { ITokenUser } from '../services/token.service';
 import { SanitizeUserInterceptor } from '../../shared/interceptors/sanitize-user.interceptor';
 import {
   LoginDto,
+  SocialLoginDto,
   SignupDto,
   RequestPasswordResetDto,
   ResetPasswordDto,
@@ -328,6 +335,263 @@ export class AuthController {
       this.logger.error(`Login failed: ${error}`);
       throw new UnauthorizedException('Invalid credentials');
     }
+  }
+
+  @Post('social')
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  @AllowAnonymous()
+  // AuthController has no controller-level pipe; validate this body explicitly
+  // so an unknown provider or missing token is a 400, not a provider lookup.
+  @UsePipes(new ValidationPipe({ whitelist: true }))
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Sign in with Google or Facebook',
+    description:
+      'Verifies a provider token obtained by the client (web or native SDK), ' +
+      'creates the user on first sign-in or links the provider to the existing ' +
+      'account with the same email, and returns the JWT pair. The server never ' +
+      'runs the OAuth redirect flow; only the web app origin is registered with the providers.',
+  })
+  @ApiBody({ type: SocialLoginDto })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Sign-in successful',
+    type: AuthResponseDto,
+  })
+  @ApiResponse({
+    status: HttpStatus.UNAUTHORIZED,
+    description: 'Provider token invalid, expired or issued for another app',
+  })
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    description: 'Invalid input or the provider did not share an email',
+  })
+  @ApiResponse({
+    status: HttpStatus.CONFLICT,
+    description:
+      'Email belongs to an account that cannot be linked automatically',
+  })
+  @ApiResponse({
+    status: HttpStatus.SERVICE_UNAVAILABLE,
+    description: 'Provider not configured on this server',
+  })
+  async socialLogin(
+    @Body() dto: SocialLoginDto,
+    @Req() req: Request,
+  ): Promise<AuthResponseDto> {
+    const provider = dto.provider;
+    const ipAddress = req.ip || req.socket.remoteAddress;
+    const userAgent = req.headers['user-agent'];
+
+    if (!isSocialProviderConfigured(provider)) {
+      throw new ServiceUnavailableException(
+        `${provider} sign-in is not configured`,
+      );
+    }
+
+    type SocialSignInResult = {
+      user?: { id: string | number; email: string; name?: string };
+    };
+    let result: SocialSignInResult | null = null;
+    try {
+      result = (await auth.api.signInSocial({
+        body: {
+          provider,
+          idToken: {
+            token: dto.token,
+            accessToken: dto.accessToken,
+            nonce: dto.nonce,
+          },
+        },
+      })) as unknown as SocialSignInResult;
+    } catch (error) {
+      throw this.mapSocialSignInError(provider, error, ipAddress, userAgent);
+    }
+
+    if (!result?.user) {
+      throw new UnauthorizedException('Social sign-in failed');
+    }
+
+    const userId = Number(result.user.id);
+    let userWithRelations = await this.userService.findOne({ id: userId }, [
+      'roles',
+      'gates',
+    ]);
+    if (!userWithRelations) {
+      throw new UnauthorizedException('User not found');
+    }
+
+    // Better Auth only creates the user + account rows. A user without any
+    // role was just created by this sign-in: finish what `signup` does.
+    const isNewUser =
+      ((userWithRelations as { roles?: unknown[] }).roles ?? []).length === 0;
+    if (isNewUser) {
+      await this.userService.update(
+        { id: userId },
+        { meta: { firstTime: true } },
+      );
+      await this.userService.assignDefaultRole(userId);
+      userWithRelations = await this.userService.findOne({ id: userId }, [
+        'roles',
+        'gates',
+      ]);
+      if (!userWithRelations) {
+        throw new UnauthorizedException('User not found');
+      }
+
+      this.logger.log(
+        `New user via ${provider}: ${result.user.email} (id ${userId})`,
+      );
+      try {
+        const auditPayload: IAuditEventPayload = {
+          eventType: 'CREATE',
+          entityType: 'USER',
+          userId,
+          action: 'user_signup_social',
+          description: `New user signed up via ${provider}: ${result.user.email}`,
+          metadata: {
+            email: result.user.email,
+            provider,
+            ipAddress,
+            userAgent,
+          },
+          success: true,
+        };
+        this.eventEmitter.emit(AUDIT_EVENT_NAMES.ENTITY.CREATED, auditPayload);
+      } catch (error) {
+        this.logger.error(
+          'Failed to emit audit event for social signup:',
+          error,
+        );
+      }
+
+      // Non-blocking, same as UserService.store(). The provider already
+      // verified the email so no verification email is sent.
+      this.userService
+        .sendWelcomeEmail(userWithRelations as any)
+        .catch((error) =>
+          this.logger.error(
+            `Welcome email failed for social user ${userId}:`,
+            error,
+          ),
+        );
+    }
+
+    const accessTokenData = await this.tokenService.generateAccessToken(
+      userWithRelations as any,
+      ipAddress,
+      userAgent,
+    );
+    const refreshTokenData = await this.tokenService.generateRefreshToken(
+      userWithRelations as any,
+      ipAddress,
+      userAgent,
+    );
+
+    // The better-auth session token is deliberately not returned (see login).
+    this.logger.log(`User logged in via ${provider}: ${result.user.email}`);
+    try {
+      const auditPayload: IAuditEventPayload = {
+        eventType: 'LOGIN',
+        entityType: 'SESSION',
+        userId,
+        action: 'user_login',
+        description: `User logged in via ${provider}: ${result.user.email}`,
+        metadata: {
+          email: result.user.email,
+          method: provider,
+          newUser: isNewUser,
+          ipAddress,
+          userAgent,
+        },
+        success: true,
+      };
+      this.eventEmitter.emit(AUDIT_EVENT_NAMES.USER.LOGIN, auditPayload);
+    } catch (error) {
+      this.logger.error('Failed to emit audit event for social login:', error);
+    }
+
+    return {
+      message: 'Login successful',
+      user: {
+        id: String(userId),
+        email: userWithRelations.email,
+        name: userWithRelations.name,
+      },
+      accessToken: accessTokenData.token,
+      refreshToken: refreshTokenData.token,
+      expiresAt: accessTokenData.expiresAt.toISOString(),
+      refreshExpiresAt: refreshTokenData.expiresAt.toISOString(),
+    };
+  }
+
+  /**
+   * Translate a better-auth `signInSocial` failure into an HTTP error and
+   * emit the login-failure audit event. Token contents are never logged.
+   */
+  private mapSocialSignInError(
+    provider: string,
+    error: unknown,
+    ipAddress: string | undefined,
+    userAgent: string | undefined,
+  ): Error {
+    const rawMessage =
+      error instanceof APIError
+        ? String(
+            (error.body as { message?: string } | undefined)?.message ??
+              error.message,
+          )
+        : error instanceof Error
+          ? error.message
+          : String(error);
+    const message = rawMessage.toLowerCase();
+
+    let mapped: Error;
+    if (
+      message.includes('email not found') ||
+      message.includes('email is required')
+    ) {
+      mapped = new BadRequestException(
+        `${provider} did not share an email address for this account. Grant the email permission and try again.`,
+      );
+    } else if (
+      message.includes('not linked') ||
+      message.includes('unable to link')
+    ) {
+      mapped = new ConflictException(
+        'An account with this email already exists and could not be linked automatically. Sign in with your password first.',
+      );
+    } else if (message.includes('provider not found')) {
+      mapped = new ServiceUnavailableException(
+        `${provider} sign-in is not configured`,
+      );
+    } else {
+      mapped = new UnauthorizedException(
+        `Could not verify the ${provider} token`,
+      );
+    }
+
+    this.logger.warn(
+      `Social sign-in via ${provider} failed: ${rawMessage} -> ${mapped.constructor.name}`,
+    );
+    try {
+      const auditPayload: IAuditEventPayload = {
+        eventType: 'FAILURE',
+        entityType: 'SESSION',
+        action: 'user_login_failed',
+        description: `Failed ${provider} sign-in`,
+        errorMessage: rawMessage,
+        metadata: { method: provider, ipAddress, userAgent },
+        success: false,
+      };
+      this.eventEmitter.emit(AUDIT_EVENT_NAMES.USER.LOGIN_FAILED, auditPayload);
+    } catch (auditError) {
+      this.logger.error(
+        'Failed to emit audit event for social login failure:',
+        auditError,
+      );
+    }
+    return mapped;
   }
 
   private async requestVerificationEmail(

@@ -386,8 +386,8 @@ Consider implementing:
    - Enhance security for sensitive operations
 
 4. **OAuth Providers**
-   - Google, GitHub, Microsoft authentication
-   - Social login integration
+   - Google and Facebook sign-in: done, see `docs/SOCIAL_LOGIN.md` (`POST /auth/social`)
+   - GitHub, Microsoft, Apple: not yet
 
 5. **Audit Logging**
    - Track authentication events

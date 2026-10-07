@@ -3,6 +3,8 @@ import { betterAuth } from 'better-auth';
 import { prismaAdapter } from 'better-auth/adapters/prisma';
 import { PrismaSingleton } from '@services/prisma-singleton.service';
 import { SharedModule } from '@shared/shared.module';
+import { getSocialAuthConfig } from '@config/social-auth.config';
+import { buildSocialProviders } from './auth/social/social-providers';
 import {
   buildWebDeleteAccountUrl,
   buildWebResetPasswordUrl,
@@ -105,6 +107,14 @@ function emit<T>(event: string, payload: T): Promise<void> {
   return Promise.resolve();
 }
 
+const socialAuthConfig = getSocialAuthConfig();
+const socialProviders = buildSocialProviders(socialAuthConfig);
+logger.log(
+  `Social providers enabled: ${
+    socialProviders ? Object.keys(socialProviders).join(', ') : 'none'
+  }`,
+);
+
 export const auth = betterAuth({
   basePath: '/api/auth',
   baseURL: getBetterAuthURL(),
@@ -112,6 +122,19 @@ export const auth = betterAuth({
     provider: 'postgresql',
   }),
   experimental: { joins: true },
+  // Google / Facebook. Clients obtain the provider token themselves (web JS
+  // SDKs, native SDKs) and POST it to `/auth/social`; we never run the
+  // redirect flow, so no callback URL is registered for this server.
+  ...(socialProviders ? { socialProviders: socialProviders as any } : {}),
+  account: {
+    accountLinking: {
+      enabled: true,
+      // A social sign-in whose email matches an existing (credentials) user
+      // attaches to that user instead of failing with `account_not_linked`.
+      // Google reports email_verified; Facebook does not, hence "trusted".
+      trustedProviders: ['google', 'facebook'],
+    },
+  },
   emailAndPassword: {
     enabled: true,
     minPasswordLength: AUTH_PASSWORD_MIN_LENGTH,
@@ -236,6 +259,7 @@ export const auth = betterAuth({
       '/change-email': { window: 60 * 60, max: 3 },
       '/delete-user': { window: 60 * 60, max: 3 },
       '/sign-in/email': { window: 60, max: 5 },
+      '/sign-in/social': { window: 60, max: 10 },
       '/sign-up/email': { window: 60 * 60, max: 3 },
     },
   },
