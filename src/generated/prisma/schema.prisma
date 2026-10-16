@@ -37,6 +37,7 @@ model User {
   pets               Pet[]             @relation("UserPets")
   alert_zones        AlertZone[]       @relation("UserAlertZones")
   adoptionListings   AdoptionListing[] @relation("UserAdoptionListings")
+  passkeys           Passkey[]         @relation("UserPasskeys")
 
   @@index([email])
   @@index([banned])
@@ -726,4 +727,30 @@ model Notification {
   @@index([excluded])
   @@index([sent_at])
   @@map("notification")
+}
+
+/// WebAuthn passkey (discoverable credential). One row per authenticator the
+/// user registered. `publicKey`, `counter` and `credentialId` are never
+/// returned to clients.
+model Passkey {
+  id           String    @id @default(cuid())
+  userId       Int       @map("user_id")
+  user         User      @relation("UserPasskeys", fields: [userId], references: [id], onDelete: Cascade)
+  /// base64url credential id as returned by the browser (`response.id`)
+  credentialId String    @unique @map("credential_id")
+  /// COSE public key from verifyRegistrationResponse
+  publicKey    Bytes     @map("public_key")
+  counter      BigInt    @default(0)
+  transports   String[]  @default([])
+  aaguid       String
+  /// "singleDevice" | "multiDevice"
+  deviceType   String    @map("device_type")
+  backedUp     Boolean   @default(false) @map("backed_up")
+  /// user-facing label, 1-64 chars
+  name         String
+  createdAt    DateTime  @default(now()) @map("created_at")
+  lastUsedAt   DateTime? @map("last_used_at")
+
+  @@index([userId])
+  @@map("passkey")
 }

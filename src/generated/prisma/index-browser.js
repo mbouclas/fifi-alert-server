@@ -452,6 +452,21 @@ exports.Prisma.NotificationScalarFieldEnum = {
   updated_at: 'updated_at'
 };
 
+exports.Prisma.PasskeyScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  credentialId: 'credentialId',
+  publicKey: 'publicKey',
+  counter: 'counter',
+  transports: 'transports',
+  aaguid: 'aaguid',
+  deviceType: 'deviceType',
+  backedUp: 'backedUp',
+  name: 'name',
+  createdAt: 'createdAt',
+  lastUsedAt: 'lastUsedAt'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -591,7 +606,8 @@ exports.Prisma.ModelName = {
   SavedZone: 'SavedZone',
   AlertZone: 'AlertZone',
   Sighting: 'Sighting',
-  Notification: 'Notification'
+  Notification: 'Notification',
+  Passkey: 'Passkey'
 };
 
 /**

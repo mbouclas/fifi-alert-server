@@ -462,6 +462,13 @@ export class MeResponseDto {
     type: [UserGateDto],
   })
   gates: UserGateDto[];
+
+  @ApiProperty({
+    description:
+      'Number of registered WebAuthn passkeys. Clients use it to decide whether to offer saving a passkey after login.',
+    example: 0,
+  })
+  passkeyCount: number;
 }
 
 /**

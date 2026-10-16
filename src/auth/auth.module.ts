@@ -8,6 +8,11 @@ import { RolesGuard } from './guards/roles.guard';
 import { MinUserLevelGuard } from './guards/min-user-level.guard';
 import { PrismaService } from '../services/prisma.service';
 import { TokenCleanupService } from './services/token-cleanup.service';
+import { LoginIssuerService } from './services/login-issuer.service';
+import { PasskeyController } from './passkeys/passkey.controller';
+import { PasskeyService, PASSKEY_CONFIG } from './passkeys/passkey.service';
+import { PasskeyChallengeStore } from './passkeys/passkey-challenge.store';
+import { getPasskeyConfig } from '@config/passkey.config';
 import { SharedModule } from '../shared/shared.module';
 
 /**
@@ -29,15 +34,26 @@ import { SharedModule } from '../shared/shared.module';
       // the JWT `exp` claim always matches the persisted Session.expiresAt.
     }),
   ],
-  controllers: [AuthController],
+  controllers: [AuthController, PasskeyController],
   providers: [
     TokenService,
+    LoginIssuerService,
     BearerTokenGuard,
     RolesGuard,
     MinUserLevelGuard,
     PrismaService,
     TokenCleanupService,
+    { provide: PASSKEY_CONFIG, useFactory: () => getPasskeyConfig() },
+    PasskeyChallengeStore,
+    PasskeyService,
   ],
-  exports: [TokenService, BearerTokenGuard, RolesGuard, MinUserLevelGuard],
+  exports: [
+    TokenService,
+    LoginIssuerService,
+    BearerTokenGuard,
+    RolesGuard,
+    MinUserLevelGuard,
+    PasskeyService,
+  ],
 })
 export class AuthEndpointsModule {}

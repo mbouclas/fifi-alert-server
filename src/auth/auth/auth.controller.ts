@@ -39,6 +39,11 @@ import {
   RefreshTokenReuseError,
 } from '../services/token.service';
 import { PrismaService } from '../../services/prisma.service';
+import {
+  LoginIssuerService,
+  type LoginMethod,
+} from '../services/login-issuer.service';
+import { PasskeyService } from '../passkeys/passkey.service';
 import { AllowAnonymous } from '../decorators/allow-anonymous.decorator';
 import { CurrentUser } from '../decorators/current-user.decorator';
 import { BearerTokenGuard } from '../guards/bearer-token.guard';
@@ -83,6 +88,8 @@ export class AuthController {
     private readonly tokenService: TokenService,
     private readonly eventEmitter: EventEmitter2,
     private readonly prisma: PrismaService,
+    private readonly loginIssuer: LoginIssuerService,
+    private readonly passkeyService: PasskeyService,
   ) {}
 
   /**
@@ -237,57 +244,11 @@ export class AuthController {
         );
       }
 
-      // Generate JWT tokens
-      const ipAddress = req.ip || req.socket.remoteAddress;
-      const userAgent = req.headers['user-agent'];
-
-      const accessTokenData = await this.tokenService.generateAccessToken(
-        userWithRelations as any,
-        ipAddress,
-        userAgent,
-      );
-      const refreshTokenData = await this.tokenService.generateRefreshToken(
-        userWithRelations as any,
-        ipAddress,
-        userAgent,
-      );
-
-      // NOTE: the better-auth session cookie token is deliberately NOT
-      // returned to clients anymore. Bearer clients only need the JWT pair.
-      this.logger.log(`User logged in: ${result.user.email}`);
-
-      // Emit audit event for successful login
-      try {
-        const auditPayload: IAuditEventPayload = {
-          eventType: 'LOGIN',
-          entityType: 'SESSION',
-          userId: Number(result.user.id),
-          action: 'user_login',
-          description: `User logged in: ${result.user.email}`,
-          metadata: {
-            email: result.user.email,
-            ipAddress,
-            userAgent,
-          },
-          success: true,
-        };
-        this.eventEmitter.emit(AUDIT_EVENT_NAMES.USER.LOGIN, auditPayload);
-      } catch (error) {
-        this.logger.error('Failed to emit audit event for login:', error);
-      }
-
-      return {
-        message: 'Login successful',
-        user: {
-          id: String(result.user.id),
-          email: result.user.email,
-          name: result.user.name,
-        },
-        accessToken: accessTokenData.token,
-        refreshToken: refreshTokenData.token,
-        expiresAt: accessTokenData.expiresAt.toISOString(),
-        refreshExpiresAt: refreshTokenData.expiresAt.toISOString(),
-      };
+      // Issue the JWT pair + LOGIN audit event (shared with social and
+      // passkey login so the success body cannot drift between methods).
+      return await this.loginIssuer.issueTokens(userWithRelations as any, req, {
+        method: 'password',
+      });
     } catch (error) {
       await this.logFailedLoginAttempt(
         loginDto.email,
@@ -477,52 +438,12 @@ export class AuthController {
         );
     }
 
-    const accessTokenData = await this.tokenService.generateAccessToken(
-      userWithRelations as any,
-      ipAddress,
-      userAgent,
-    );
-    const refreshTokenData = await this.tokenService.generateRefreshToken(
-      userWithRelations as any,
-      ipAddress,
-      userAgent,
-    );
-
-    // The better-auth session token is deliberately not returned (see login).
-    this.logger.log(`User logged in via ${provider}: ${result.user.email}`);
-    try {
-      const auditPayload: IAuditEventPayload = {
-        eventType: 'LOGIN',
-        entityType: 'SESSION',
-        userId,
-        action: 'user_login',
-        description: `User logged in via ${provider}: ${result.user.email}`,
-        metadata: {
-          email: result.user.email,
-          method: provider,
-          newUser: isNewUser,
-          ipAddress,
-          userAgent,
-        },
-        success: true,
-      };
-      this.eventEmitter.emit(AUDIT_EVENT_NAMES.USER.LOGIN, auditPayload);
-    } catch (error) {
-      this.logger.error('Failed to emit audit event for social login:', error);
-    }
-
-    return {
-      message: 'Login successful',
-      user: {
-        id: String(userId),
-        email: userWithRelations.email,
-        name: userWithRelations.name,
-      },
-      accessToken: accessTokenData.token,
-      refreshToken: refreshTokenData.token,
-      expiresAt: accessTokenData.expiresAt.toISOString(),
-      refreshExpiresAt: refreshTokenData.expiresAt.toISOString(),
-    };
+    // Issue the JWT pair + LOGIN audit event (shared with password and
+    // passkey login). The better-auth session token is not returned.
+    return this.loginIssuer.issueTokens(userWithRelations as any, req, {
+      method: provider as LoginMethod,
+      extraMetadata: { newUser: isNewUser },
+    });
   }
 
   /**
@@ -723,7 +644,8 @@ export class AuthController {
       throw new NotFoundException('User not found');
     }
 
-    return user as any as MeResponseDto;
+    const passkeyCount = await this.passkeyService.countForUser(userId);
+    return { ...(user as any), passkeyCount } as MeResponseDto;
   }
 
   /**
