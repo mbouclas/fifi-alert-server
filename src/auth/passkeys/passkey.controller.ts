@@ -2,7 +2,6 @@ import {
   Body,
   Controller,
   Delete,
-  ForbiddenException,
   Get,
   HttpCode,
   HttpStatus,
@@ -32,7 +31,10 @@ import { CurrentUser } from '../decorators/current-user.decorator';
 import type { ITokenUser } from '../services/token.service';
 import { LoginIssuerService } from '../services/login-issuer.service';
 import { AuthResponseDto } from '../dto';
-import { PasskeyService } from './passkey.service';
+import {
+  PasskeyEmailNotVerifiedException,
+  PasskeyService,
+} from './passkey.service';
 import {
   PasskeyAuthenticationOptionsResponseDto,
   PasskeyDto,
@@ -42,9 +44,6 @@ import {
   PasskeyRegistrationOptionsResponseDto,
   RenamePasskeyDto,
 } from './dto/passkey.dto';
-
-const EMAIL_NOT_VERIFIED_MESSAGE =
-  'Please verify your email address before logging in. We sent a new verification link to your email.';
 
 /**
  * PasskeyController — WebAuthn passkeys: register, sign in, manage.
@@ -185,7 +184,18 @@ export class PasskeyController {
     @Body() body: PasskeyLoginVerifyDto,
     @Req() req: Request,
   ): Promise<AuthResponseDto> {
-    const { userId, passkeyId } = await this.passkeyService.finishLogin(body);
+    let userId: number;
+    let passkeyId: string;
+    try {
+      ({ userId, passkeyId } = await this.passkeyService.finishLogin(body));
+    } catch (error) {
+      // The service applies the /auth/login email gate before touching the
+      // passkey row; this layer only owns the resend side effect.
+      if (error instanceof PasskeyEmailNotVerifiedException) {
+        await this.requestVerificationEmail(error.email);
+      }
+      throw error;
+    }
 
     const userWithRelations = await this.userService.findOne({ id: userId }, [
       'roles',
@@ -193,12 +203,6 @@ export class PasskeyController {
     ]);
     if (!userWithRelations) {
       throw new UnauthorizedException('User not found');
-    }
-
-    // Same gate as /auth/login (not /auth/social).
-    if (!userWithRelations.emailVerified) {
-      await this.requestVerificationEmail(userWithRelations.email);
-      throw new ForbiddenException(EMAIL_NOT_VERIFIED_MESSAGE);
     }
 
     return this.loginIssuer.issueTokens(userWithRelations as never, req, {

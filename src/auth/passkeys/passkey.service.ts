@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   ConflictException,
+  ForbiddenException,
   Inject,
   Injectable,
   Logger,
@@ -30,6 +31,21 @@ import {
 
 /** DI token for the relying-party config (provided in AuthEndpointsModule). */
 export const PASSKEY_CONFIG = Symbol('PASSKEY_CONFIG');
+
+export const EMAIL_NOT_VERIFIED_MESSAGE =
+  'Please verify your email address before logging in. We sent a new verification link to your email.';
+
+/**
+ * Thrown by finishLogin BEFORE the counter / lastUsedAt write when the
+ * assertion is valid but the account's email is unverified. Carries the email
+ * so the controller can resend the verification link (same rule as
+ * /auth/login).
+ */
+export class PasskeyEmailNotVerifiedException extends ForbiddenException {
+  constructor(public readonly email: string) {
+    super(EMAIL_NOT_VERIFIED_MESSAGE);
+  }
+}
 
 export const PASSKEY_ERRORS = {
   notConfigured: 'passkeys not configured',
@@ -253,6 +269,10 @@ export class PasskeyService implements OnModuleInit {
   /**
    * Verifies the assertion and returns the owning user's id. Token issuance
    * is the controller's job (shared with /auth/login).
+   *
+   * Order matters: challenge -> credential -> signature -> email-verified
+   * gate -> counter/lastUsedAt write. A valid assertion from an unverified
+   * account must leave the row untouched (frontend review, 2026-10-17).
    */
   async finishLogin(input: {
     challengeId: string;
@@ -307,6 +327,19 @@ export class PasskeyService implements OnModuleInit {
 
     if (!verification.verified) {
       throw new UnauthorizedException(PASSKEY_ERRORS.verificationFailed);
+    }
+
+    // Same gate as /auth/login, checked BEFORE any write so a 403 leaves the
+    // counter and lastUsedAt exactly as they were.
+    const owner = await this.prisma.user.findUnique({
+      where: { id: passkey.userId },
+      select: { id: true, email: true, emailVerified: true },
+    });
+    if (!owner) {
+      throw new UnauthorizedException('User not found');
+    }
+    if (!owner.emailVerified) {
+      throw new PasskeyEmailNotVerifiedException(owner.email);
     }
 
     await this.prisma.passkey.update({

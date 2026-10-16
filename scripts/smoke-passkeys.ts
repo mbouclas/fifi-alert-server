@@ -1,35 +1,42 @@
 /* eslint-disable @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-return */
 /**
- * Live smoke test for the passkey (WebAuthn) endpoints — the acceptance
- * checklist from BACKEND_WORK_ORDER_PASSKEYS.md §4, minus the real ceremony.
+ * Live end-to-end test for the passkey (WebAuthn) endpoints: the acceptance
+ * checklist from BACKEND_WORK_ORDER_PASSKEYS.md §4 PLUS a real ceremony.
  *
- * What it proves against a RUNNING server:
- *   3.1  register/options needs a bearer, carries residentKey "required",
- *        rp.id from RP_ID, and a 5-minute challengeId
- *   3.2  a reused / foreign / login-type challengeId is 400; a garbage
- *        response with a fresh challenge is 400 "verification failed"
- *   3.3  login/options is public, never names a user (allowCredentials [])
- *   3.4  unknown credential -> 401; register challenge on login/verify -> 400;
- *        11th request from one visitor within a minute -> 429
- *   3.5  GET /auth/passkeys lists newest first and never leaks key material
- *   3.6  PATCH rename: trims, 400 on bad name, 404 for other user's id
- *   3.7  DELETE: 204, then 404; other user's id -> 404
- *   3.8  /auth/me carries passkeyCount
- *   3.9  /api/openapi.json documents the 5 paths
- *   -    login/social refactor: /auth/login still returns the four token fields
+ * A software ES256 authenticator (WebCrypto, hand-rolled CBOR) performs a
+ * genuine registration and sign-in, so these are proven against a RUNNING
+ * server, not mocks:
+ *   3.1  register/options: bearer only, residentKey "required", rp.id = RP_ID
+ *   3.2  register/verify: real attestation -> 201; same credential again ->
+ *        409; replayed challengeId -> 400; another user's / login-type /
+ *        unknown / EXPIRED challengeId -> 400; wrong origin or RP ID -> 400
+ *   3.3  login/options: public, allowCredentials always []
+ *   3.4  login/verify: real assertion -> 200 with the /auth/login body,
+ *        counter bumped, lastUsedAt set; wrong origin / wrong RP ID / counter
+ *        regression / bad signature -> 401; unknown credential -> 401;
+ *        register-type / replayed / expired challenge -> 400; unverified
+ *        email -> 403 with counter and lastUsedAt UNTOUCHED; 11th request
+ *        from one visitor -> 429
+ *   3.5  GET lists newest first, never leaks key material
+ *   3.6  PATCH trims, 400 on bad name, 404 for another user's id
+ *   3.7  DELETE 204 then 404, 404 for another user's id
+ *   3.8  /auth/me.passkeyCount
+ *   3.9  /api/openapi.json documents the paths
  *
- * A real registration cannot be done without a browser authenticator, so
- * passkey rows for 3.5-3.7 are inserted straight into the DB (requires
- * DATABASE_URL). The cryptographic path is covered by the web repo's Chrome
- * virtual-authenticator e2e (tests/e2e/passkeys.spec.ts).
+ * Challenge expiry is forced through Redis (DEL of the stored key) rather than
+ * by waiting 5 minutes, so REDIS_HOST/PORT/PASSWORD/DB must point at the same
+ * Redis the server uses. DATABASE_URL is needed to verify the user's email and
+ * to read the counter back.
  *
  * Usage:
  *   RP_ID=localhost RP_NAME="FiFi Alert" RP_ORIGINS=http://localhost:4173 \
  *     CLIENT_API_KEYS=devkey PORT=3199 bun run src/main.ts        (terminal 1)
  *   API_URL=http://localhost:3199 CLIENT_KEY=devkey RP_ID=localhost \
- *     bun run scripts/smoke-passkeys.ts                            (terminal 2)
+ *     RP_ORIGIN=http://localhost:4173 bun run scripts/smoke-passkeys.ts
  */
 import 'dotenv/config';
+import { createHash, webcrypto } from 'node:crypto';
+import Redis from 'ioredis';
 import pg from 'pg';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '../src/generated/prisma';
@@ -37,6 +44,14 @@ import { PrismaClient } from '../src/generated/prisma';
 const API = process.env.API_URL ?? 'http://localhost:3000';
 const CLIENT_KEY = process.env.CLIENT_KEY ?? 'devkey';
 const EXPECTED_RP_ID = process.env.RP_ID ?? 'localhost';
+const ORIGIN = process.env.RP_ORIGIN ?? 'http://localhost:4173';
+const redis = new Redis({
+  host: process.env.REDIS_HOST ?? 'localhost',
+  port: Number(process.env.REDIS_PORT ?? 6379),
+  password: process.env.REDIS_PASSWORD || undefined,
+  db: Number(process.env.REDIS_DB ?? 0),
+});
+const CHALLENGE_KEY_PREFIX = 'passkey:challenge:';
 
 const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
 const prisma = new PrismaClient({ adapter: new PrismaPg(pool) });
@@ -136,6 +151,189 @@ async function insertPasskey(userId: number, name: string, createdAt: Date) {
       createdAt,
     },
   });
+}
+
+// --------------------------------------------------------- authenticator
+// Minimal software authenticator: one ES256 key, UP flag only, counter under
+// test control. Produces the exact JSON shapes @simplewebauthn/browser would.
+
+const subtle = webcrypto.subtle;
+
+function b64url(bytes: Uint8Array | ArrayBuffer | Buffer): string {
+  return Buffer.from(bytes as Uint8Array).toString('base64url');
+}
+function sha256(data: Uint8Array | string): Buffer {
+  return createHash('sha256').update(data).digest();
+}
+function u32be(n: number): Uint8Array {
+  const b = new Uint8Array(4);
+  new DataView(b.buffer).setUint32(0, n);
+  return b;
+}
+function concat(...parts: Uint8Array[]): Uint8Array {
+  const out = new Uint8Array(parts.reduce((n, p) => n + p.length, 0));
+  let o = 0;
+  for (const p of parts) {
+    out.set(p, o);
+    o += p.length;
+  }
+  return out;
+}
+/** CBOR byte string (length < 65536). */
+function cborBstr(bytes: Uint8Array): Uint8Array {
+  if (bytes.length < 24)
+    return concat(new Uint8Array([0x40 + bytes.length]), bytes);
+  if (bytes.length < 256)
+    return concat(new Uint8Array([0x58, bytes.length]), bytes);
+  return concat(
+    new Uint8Array([0x59, bytes.length >> 8, bytes.length & 0xff]),
+    bytes,
+  );
+}
+/** CBOR text string (< 24 chars). */
+function cborTstr(text: string): Uint8Array {
+  const b = new TextEncoder().encode(text);
+  return concat(new Uint8Array([0x60 + b.length]), b);
+}
+/** COSE_Key for an EC2 P-256 public key: {1:2, 3:-7, -1:1, -2:x, -3:y}. */
+function coseEc2Key(x: Uint8Array, y: Uint8Array): Uint8Array {
+  return concat(
+    new Uint8Array([0xa5, 0x01, 0x02, 0x03, 0x26, 0x20, 0x01, 0x21]),
+    cborBstr(x),
+    new Uint8Array([0x22]),
+    cborBstr(y),
+  );
+}
+/** WebCrypto returns raw r||s; WebAuthn signatures are DER SEQUENCE(r, s). */
+function rawToDer(sig: ArrayBuffer): Uint8Array {
+  const raw = new Uint8Array(sig);
+  const int = (b: Uint8Array) => {
+    let i = 0;
+    while (i < b.length - 1 && b[i] === 0) i++;
+    let v = b.slice(i);
+    if (v[0] & 0x80) v = concat(new Uint8Array([0]), v);
+    return concat(new Uint8Array([0x02, v.length]), v);
+  };
+  const body = concat(int(raw.slice(0, 32)), int(raw.slice(32)));
+  return concat(new Uint8Array([0x30, body.length]), body);
+}
+
+class SoftAuthenticator {
+  private key!: CryptoKeyPair;
+  readonly credId = webcrypto.getRandomValues(new Uint8Array(16));
+  readonly credIdB64 = b64url(this.credId);
+  cose!: Uint8Array;
+  counter = 0;
+
+  async init() {
+    this.key = await subtle.generateKey(
+      { name: 'ECDSA', namedCurve: 'P-256' },
+      true,
+      ['sign'],
+    );
+    const jwk = await subtle.exportKey('jwk', this.key.publicKey);
+    this.cose = coseEc2Key(
+      Buffer.from(jwk.x!, 'base64url'),
+      Buffer.from(jwk.y!, 'base64url'),
+    );
+    return this;
+  }
+
+  /** navigator.credentials.create() with attestation "none". */
+  attest(challenge: string, opts: { origin?: string; rpId?: string } = {}) {
+    const authData = concat(
+      sha256(opts.rpId ?? EXPECTED_RP_ID),
+      new Uint8Array([0x41]), // UP | AT
+      u32be(0),
+      new Uint8Array(16), // aaguid
+      new Uint8Array([0, this.credId.length]),
+      this.credId,
+      this.cose,
+    );
+    const attObj = concat(
+      new Uint8Array([0xa3]),
+      cborTstr('fmt'),
+      cborTstr('none'),
+      cborTstr('attStmt'),
+      new Uint8Array([0xa0]),
+      cborTstr('authData'),
+      cborBstr(authData),
+    );
+    const clientData = new TextEncoder().encode(
+      JSON.stringify({
+        type: 'webauthn.create',
+        challenge,
+        origin: opts.origin ?? ORIGIN,
+        crossOrigin: false,
+      }),
+    );
+    return {
+      id: this.credIdB64,
+      rawId: this.credIdB64,
+      type: 'public-key',
+      response: {
+        clientDataJSON: b64url(clientData),
+        attestationObject: b64url(attObj),
+        transports: ['internal'],
+      },
+      clientExtensionResults: {},
+      authenticatorAttachment: 'platform',
+    };
+  }
+
+  /** navigator.credentials.get(). `counter` overrides the auto-increment. */
+  async assert(
+    challenge: string,
+    opts: {
+      origin?: string;
+      rpId?: string;
+      counter?: number;
+      corruptSignature?: boolean;
+    } = {},
+  ) {
+    const counter = opts.counter ?? ++this.counter;
+    const authData = concat(
+      sha256(opts.rpId ?? EXPECTED_RP_ID),
+      new Uint8Array([0x01]),
+      u32be(counter),
+    );
+    const clientData = new TextEncoder().encode(
+      JSON.stringify({
+        type: 'webauthn.get',
+        challenge,
+        origin: opts.origin ?? ORIGIN,
+        crossOrigin: false,
+      }),
+    );
+    const signed = concat(authData, sha256(clientData));
+    const sig = rawToDer(
+      await subtle.sign(
+        { name: 'ECDSA', hash: 'SHA-256' },
+        this.key.privateKey,
+        signed,
+      ),
+    );
+    if (opts.corruptSignature) sig[sig.length - 1] ^= 0xff;
+    return {
+      id: this.credIdB64,
+      rawId: this.credIdB64,
+      type: 'public-key',
+      response: {
+        clientDataJSON: b64url(clientData),
+        authenticatorData: b64url(authData),
+        signature: b64url(sig),
+        userHandle: null,
+      },
+      clientExtensionResults: {},
+    };
+  }
+}
+
+/** Force a challenge to expire now (instead of waiting 5 minutes). Returns the TTL it had. */
+async function expireChallenge(challengeId: string): Promise<number> {
+  const ttl = await redis.ttl(CHALLENGE_KEY_PREFIX + challengeId);
+  await redis.del(CHALLENGE_KEY_PREFIX + challengeId);
+  return ttl;
 }
 
 async function main() {
@@ -286,6 +484,155 @@ async function main() {
   });
   check('missing challengeId -> 400 (validation)', v5.status === 400, v5.body);
 
+  // ---- real ceremony: software authenticator
+  console.log('\n3.2b real registration with a software ES256 authenticator');
+  const authn = await new SoftAuthenticator().init();
+
+  const expOpts = await call('POST', '/auth/passkeys/register/options', {
+    token: a.token,
+    body: {},
+  });
+  const ttlBefore = await expireChallenge(expOpts.body.challengeId);
+  check(
+    'challenge is stored in Redis with a ~5 minute TTL',
+    ttlBefore > 280 && ttlBefore <= 300,
+    ttlBefore,
+  );
+  const vExp = await call('POST', '/auth/passkeys/register/verify', {
+    token: a.token,
+    body: {
+      challengeId: expOpts.body.challengeId,
+      response: authn.attest(expOpts.body.options.challenge),
+    },
+  });
+  check(
+    'EXPIRED challenge with an otherwise valid attestation -> 400 unknown challenge',
+    vExp.status === 400 &&
+      vExp.body?.message === 'unknown or expired challenge',
+    vExp.body,
+  );
+
+  const badOriginOpts = await call('POST', '/auth/passkeys/register/options', {
+    token: a.token,
+    body: {},
+  });
+  const vBadOrigin = await call('POST', '/auth/passkeys/register/verify', {
+    token: a.token,
+    body: {
+      challengeId: badOriginOpts.body.challengeId,
+      response: authn.attest(badOriginOpts.body.options.challenge, {
+        origin: 'https://evil.example',
+      }),
+    },
+  });
+  check(
+    'valid attestation from the WRONG ORIGIN -> 400 "verification failed"',
+    vBadOrigin.status === 400 &&
+      vBadOrigin.body?.message === 'verification failed',
+    vBadOrigin.body,
+  );
+
+  const badRpOpts = await call('POST', '/auth/passkeys/register/options', {
+    token: a.token,
+    body: {},
+  });
+  const vBadRp = await call('POST', '/auth/passkeys/register/verify', {
+    token: a.token,
+    body: {
+      challengeId: badRpOpts.body.challengeId,
+      response: authn.attest(badRpOpts.body.options.challenge, {
+        rpId: 'evil.example',
+      }),
+    },
+  });
+  check(
+    'valid attestation for the WRONG RP ID -> 400 "verification failed"',
+    vBadRp.status === 400 && vBadRp.body?.message === 'verification failed',
+    vBadRp.body,
+  );
+
+  const okOpts = await call('POST', '/auth/passkeys/register/options', {
+    token: a.token,
+    body: {},
+  });
+  const attestation = authn.attest(okOpts.body.options.challenge);
+  const reg = await call('POST', '/auth/passkeys/register/verify', {
+    token: a.token,
+    body: {
+      challengeId: okOpts.body.challengeId,
+      name: '  My laptop  ',
+      response: attestation,
+    },
+  });
+  check('real attestation -> 201', reg.status === 201, reg.body ?? reg.raw);
+  check(
+    '201 body is the Passkey DTO with trimmed name',
+    reg.body?.name === 'My laptop' &&
+      reg.body?.deviceType === 'singleDevice' &&
+      reg.body?.backedUp === false &&
+      JSON.stringify(reg.body?.transports) === '["internal"]',
+    reg.body,
+  );
+  check(
+    '201 body never leaks key material',
+    !('publicKey' in (reg.body ?? {})) &&
+      !('counter' in (reg.body ?? {})) &&
+      !('credentialId' in (reg.body ?? {})),
+  );
+  const regRow = await prisma.passkey.findUnique({
+    where: { credentialId: authn.credIdB64 },
+  });
+  check(
+    'DB row stores the COSE public key and counter 0',
+    !!regRow &&
+      Buffer.compare(Buffer.from(regRow.publicKey), Buffer.from(authn.cose)) ===
+        0 &&
+      regRow.counter === BigInt(0),
+    regRow && { counter: String(regRow.counter) },
+  );
+
+  const replay = await call('POST', '/auth/passkeys/register/verify', {
+    token: a.token,
+    body: { challengeId: okOpts.body.challengeId, response: attestation },
+  });
+  check(
+    'REPLAY of the successful body -> 400 unknown challenge',
+    replay.status === 400 &&
+      replay.body?.message === 'unknown or expired challenge',
+    replay.body,
+  );
+
+  const dupOpts = await call('POST', '/auth/passkeys/register/options', {
+    token: a.token,
+    body: {},
+  });
+  check(
+    'register/options now excludes the real credential',
+    (dupOpts.body?.options?.excludeCredentials ?? []).some(
+      (c: any) => c.id === authn.credIdB64,
+    ),
+    dupOpts.body?.options?.excludeCredentials,
+  );
+  const dup = await call('POST', '/auth/passkeys/register/verify', {
+    token: a.token,
+    body: {
+      challengeId: dupOpts.body.challengeId,
+      response: authn.attest(dupOpts.body.options.challenge),
+    },
+  });
+  check(
+    'same credential registered again (fresh challenge) -> 409',
+    dup.status === 409 && dup.body?.message === 'credential already registered',
+    dup.body,
+  );
+
+  const me1 = await call('GET', '/auth/me', { token: a.token });
+  check(
+    'me.passkeyCount is 1 after the real registration',
+    me1.body?.passkeyCount === 1,
+    me1.body?.passkeyCount,
+  );
+
   // ---------------------------------------------------- 3.3 login/options
   console.log('\n3.3 POST /auth/passkeys/login/options');
   const lo = await call('POST', '/auth/passkeys/login/options', {
@@ -391,8 +738,225 @@ async function main() {
     unchanged,
   );
 
+  // ---- real sign-in with the software authenticator
+  console.log('\n3.4b real sign-in');
+  async function loginOptions() {
+    const res = await call('POST', '/auth/passkeys/login/options', {
+      body: {},
+      visitor: freshVisitor(),
+    });
+    if (res.status !== 200)
+      throw new Error(`login/options ${res.status} ${res.raw}`);
+    return res.body as { challengeId: string; options: { challenge: string } };
+  }
+  async function loginVerify(challengeId: string, response: unknown) {
+    return call('POST', '/auth/passkeys/login/verify', {
+      body: { challengeId, response },
+      visitor: freshVisitor(),
+    });
+  }
+  const realRow = async () =>
+    prisma.passkey.findUnique({ where: { credentialId: authn.credIdB64 } });
+
+  let o1 = await loginOptions();
+  let r = await loginVerify(
+    o1.challengeId,
+    await authn.assert(o1.options.challenge, {
+      origin: 'https://evil.example',
+    }),
+  );
+  check(
+    'valid assertion from the WRONG ORIGIN -> 401 "verification failed"',
+    r.status === 401 && r.body?.message === 'verification failed',
+    r.body,
+  );
+
+  o1 = await loginOptions();
+  r = await loginVerify(
+    o1.challengeId,
+    await authn.assert(o1.options.challenge, { rpId: 'evil.example' }),
+  );
+  check(
+    'valid assertion for the WRONG RP ID -> 401',
+    r.status === 401 && r.body?.message === 'verification failed',
+    r.body,
+  );
+
+  o1 = await loginOptions();
+  r = await loginVerify(
+    o1.challengeId,
+    await authn.assert(o1.options.challenge, { corruptSignature: true }),
+  );
+  check(
+    'corrupted signature -> 401',
+    r.status === 401 && r.body?.message === 'verification failed',
+    r.body,
+  );
+
+  o1 = await loginOptions();
+  const otherChallenge = (await loginOptions()).options.challenge;
+  r = await loginVerify(o1.challengeId, await authn.assert(otherChallenge));
+  check(
+    'assertion signed over a DIFFERENT challenge than challengeId refers to -> 401',
+    r.status === 401,
+    r.body,
+  );
+
+  o1 = await loginOptions();
+  await expireChallenge(o1.challengeId);
+  r = await loginVerify(
+    o1.challengeId,
+    await authn.assert(o1.options.challenge),
+  );
+  check(
+    'EXPIRED login challenge with a valid assertion -> 400 unknown challenge',
+    r.status === 400 && r.body?.message === 'unknown or expired challenge',
+    r.body,
+  );
+  let row = await realRow();
+  check(
+    'no failed attempt touched counter or lastUsedAt',
+    row?.counter === BigInt(0) && row?.lastUsedAt === null,
+    row && { counter: String(row.counter), lastUsedAt: row.lastUsedAt },
+  );
+
+  // unverified email: valid assertion -> 403 and the row must stay untouched
+  await prisma.user.update({
+    where: { id: a.userId },
+    data: { emailVerified: false },
+  });
+  o1 = await loginOptions();
+  const gatedAssertion = await authn.assert(o1.options.challenge, {
+    counter: 10,
+  });
+  r = await loginVerify(o1.challengeId, gatedAssertion);
+  check(
+    'UNVERIFIED EMAIL with a valid assertion -> 403',
+    r.status === 403,
+    r.body,
+  );
+  check(
+    '403 message matches /auth/login',
+    /verify your email/i.test(r.body?.message ?? ''),
+    r.body?.message,
+  );
+  row = await realRow();
+  check(
+    '403 left counter and lastUsedAt untouched',
+    row?.counter === BigInt(0) && row?.lastUsedAt === null,
+    row && { counter: String(row.counter), lastUsedAt: row.lastUsedAt },
+  );
+  r = await loginVerify(o1.challengeId, gatedAssertion);
+  check(
+    'the gated attempt still consumed its challenge (replay -> 400)',
+    r.status === 400,
+    r.body,
+  );
+  await prisma.user.update({
+    where: { id: a.userId },
+    data: { emailVerified: true },
+  });
+
+  // success
+  o1 = await loginOptions();
+  const okAssertion = await authn.assert(o1.options.challenge, { counter: 10 });
+  const ok = await loginVerify(o1.challengeId, okAssertion);
+  check('real assertion -> 200', ok.status === 200, ok.body ?? ok.raw);
+  check(
+    '200 body is the /auth/login shape',
+    ok.body?.message === 'Login successful' &&
+      ['accessToken', 'refreshToken', 'expiresAt', 'refreshExpiresAt'].every(
+        (k) => typeof ok.body?.[k] === 'string',
+      ) &&
+      ok.body?.user?.email === EMAIL_A &&
+      ok.body?.session === undefined,
+    ok.body,
+  );
+  const meViaPasskey = await call('GET', '/auth/me', {
+    token: ok.body?.accessToken,
+  });
+  check(
+    'the passkey-issued access token works on /auth/me',
+    meViaPasskey.status === 200 && meViaPasskey.body?.email === EMAIL_A,
+    meViaPasskey.body,
+  );
+  row = await realRow();
+  check(
+    'success stored newCounter (10) and lastUsedAt',
+    row?.counter === BigInt(10) && row?.lastUsedAt instanceof Date,
+    row && { counter: String(row.counter), lastUsedAt: row.lastUsedAt },
+  );
+  const listAfterLogin = await call('GET', '/auth/passkeys', {
+    token: a.token,
+  });
+  check(
+    'GET /auth/passkeys shows lastUsedAt after sign-in',
+    typeof listAfterLogin.body?.find((p: any) => p.id === reg.body.id)
+      ?.lastUsedAt === 'string',
+    listAfterLogin.body,
+  );
+
+  r = await loginVerify(o1.challengeId, okAssertion);
+  check('REPLAY of the successful login body -> 400', r.status === 400, r.body);
+
+  // counter regression = cloned authenticator
+  o1 = await loginOptions();
+  r = await loginVerify(
+    o1.challengeId,
+    await authn.assert(o1.options.challenge, { counter: 10 }),
+  );
+  check(
+    'COUNTER REGRESSION (same counter 10 again) -> 401 "verification failed"',
+    r.status === 401 && r.body?.message === 'verification failed',
+    r.body,
+  );
+  o1 = await loginOptions();
+  r = await loginVerify(
+    o1.challengeId,
+    await authn.assert(o1.options.challenge, { counter: 4 }),
+  );
+  check(
+    'COUNTER REGRESSION (lower counter 4) -> 401',
+    r.status === 401,
+    r.body,
+  );
+  row = await realRow();
+  check(
+    'regressions did not change the stored counter',
+    row?.counter === BigInt(10),
+    row && String(row.counter),
+  );
+
+  o1 = await loginOptions();
+  r = await loginVerify(
+    o1.challengeId,
+    await authn.assert(o1.options.challenge, { counter: 11 }),
+  );
+  check('next monotonic counter (11) -> 200 again', r.status === 200, r.body);
+
+  // removing the passkey makes the credential unknown on the next sign-in
+  const removeReal = await call('DELETE', `/auth/passkeys/${reg.body.id}`, {
+    token: a.token,
+  });
+  check(
+    'DELETE the real passkey -> 204',
+    removeReal.status === 204,
+    removeReal.status,
+  );
+  o1 = await loginOptions();
+  r = await loginVerify(
+    o1.challengeId,
+    await authn.assert(o1.options.challenge, { counter: 12 }),
+  );
+  check(
+    'sign-in with a deleted passkey -> 401 "unknown credential"',
+    r.status === 401 && r.body?.message === 'unknown credential',
+    r.body,
+  );
+
   // throttle: 11 login/options from ONE visitor inside a minute -> 429
-  const visitor = '198.51.100.77';
+  // Unique per run: the in-memory throttle bucket survives between runs.
+  const visitor = `198.51.${(STAMP >> 8) % 250}.${STAMP % 250}`;
   let last = 0;
   let firstTooMany = -1;
   for (let i = 1; i <= 11; i++) {
@@ -586,6 +1150,7 @@ async function main() {
   });
 
   console.log(`\n${passed} passed, ${failed} failed`);
+  await redis.quit();
   await pool.end();
   process.exit(failed === 0 ? 0 : 1);
 }
@@ -595,6 +1160,7 @@ main().catch(async (error) => {
   await prisma.user
     .deleteMany({ where: { email: { in: [EMAIL_A, EMAIL_B] } } })
     .catch(() => undefined);
+  await redis.quit().catch(() => undefined);
   await pool.end();
   process.exit(1);
 });

@@ -20,6 +20,7 @@ jest.mock('@simplewebauthn/server', () => webauthn);
 
 import {
   PASSKEY_ERRORS,
+  PasskeyEmailNotVerifiedException,
   PasskeyService,
   normalisePasskeyName,
   toPasskeyDto,
@@ -350,6 +351,14 @@ describe('PasskeyService', () => {
   describe('finishLogin', () => {
     const response = { id: 'cred-abc', rawId: 'cred-abc', type: 'public-key' };
 
+    beforeEach(() => {
+      prisma.user.findUnique.mockResolvedValue({
+        id: USER_ID,
+        email: 'a@b.c',
+        emailVerified: true,
+      });
+    });
+
     it.each([
       ['unknown id', null],
       ['register challenge', { challenge: 'c', type: 'register', userId: 1 }],
@@ -439,6 +448,41 @@ describe('PasskeyService', () => {
       expect(update.where).toEqual({ id: 'pk_1' });
       expect(update.data.counter).toBe(BigInt(6));
       expect(update.data.lastUsedAt).toBeInstanceOf(Date);
+    });
+
+    it('applies the email-verified gate AFTER signature verification and BEFORE any write (403, row untouched)', async () => {
+      store.consume.mockResolvedValue({ challenge: 'c', type: 'login' });
+      prisma.passkey.findUnique.mockResolvedValue(buildRow());
+      webauthn.verifyAuthenticationResponse.mockResolvedValue({
+        verified: true,
+        authenticationInfo: { newCounter: 6, credentialBackedUp: true },
+      });
+      prisma.user.findUnique.mockResolvedValue({
+        id: USER_ID,
+        email: 'unverified@b.c',
+        emailVerified: false,
+      });
+
+      const attempt = service.finishLogin({ challengeId: 'c_x', response });
+      await expect(attempt).rejects.toBeInstanceOf(
+        PasskeyEmailNotVerifiedException,
+      );
+      await expect(attempt).rejects.toMatchObject({
+        email: 'unverified@b.c',
+        status: 403,
+      });
+      expect(webauthn.verifyAuthenticationResponse).toHaveBeenCalledTimes(1);
+      expect(prisma.passkey.update).not.toHaveBeenCalled();
+    });
+
+    it('does not consult the user row when the signature fails (gate never runs before verification)', async () => {
+      store.consume.mockResolvedValue({ challenge: 'c', type: 'login' });
+      prisma.passkey.findUnique.mockResolvedValue(buildRow());
+      webauthn.verifyAuthenticationResponse.mockRejectedValue(new Error('bad'));
+      await expect(
+        service.finishLogin({ challengeId: 'c_x', response }),
+      ).rejects.toBeInstanceOf(UnauthorizedException);
+      expect(prisma.user.findUnique).not.toHaveBeenCalled();
     });
 
     it('consumes the challenge exactly once per attempt, even on failure', async () => {
