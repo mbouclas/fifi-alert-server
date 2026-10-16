@@ -3,7 +3,7 @@
 #
 #   1. git pull (fast-forward only; aborts on local changes or a diverged branch)
 #   2. docker-compose up -d        -> Postgres + Redis data stack (docker-compose.prod.yml)
-#   3. bun install                 -> only when the lockfile changed
+#   3. bun install --frozen-lockfile (idempotent, always)
 #   4. prisma migrate deploy       -> only pending migrations, never resets
 #   5. prisma generate             -> keeps src/generated/prisma in sync with the schema
 #   6. pm2 startOrReload           -> the API itself runs on the host under pm2
@@ -99,17 +99,12 @@ wait_healthy fifi-alert-postgres
 wait_healthy fifi-alert-redis
 
 # ------------------------------------------------------- 3. dependencies
-if [ ! -d node_modules ] || [ "$PULL" -eq 0 ] || git diff --quiet "$BEFORE" "$AFTER" -- bun.lock package.json; then
-  if [ ! -d node_modules ]; then
-    log "bun install (no node_modules yet)"
-    bun install --frozen-lockfile
-  else
-    echo "dependencies unchanged; skipping bun install"
-  fi
-else
-  log "bun install (lockfile changed)"
-  bun install --frozen-lockfile
-fi
+# Always run it. It is idempotent and takes seconds when nothing changed, and
+# "did the lockfile change in THIS pull" is the wrong question: the host may
+# have pulled earlier by hand (as happened on 2026-10-16, when a dependency
+# added two commits before this script existed was never installed).
+log "bun install --frozen-lockfile"
+bun install --frozen-lockfile
 
 # ------------------------------------------------- 4/5. database schema
 log "prisma migrate deploy"
