@@ -1,6 +1,6 @@
 # nginx for app.fifi-alert.com
 
-The API listens on `127.0.0.1:3113` (pm2, see `ecosystem.prod.config.cjs`). nginx terminates TLS and proxies to it.
+The API listens on `127.0.0.1:3113` as the `fifi-alert-api` container from `docker-compose.prod.yml` (deployed with `./deploy.sh`). nginx terminates TLS and proxies to it.
 
 ## First install (no certificate yet)
 
@@ -28,12 +28,15 @@ curl https://app.fifi-alert.com/health
 curl -I https://app.fifi-alert.com/api        # swagger UI
 ```
 
-## Process manager on boot
+## On boot
 
-pm2 is installed under nvm (`source ~/.nvm/nvm.sh && nvm use 22`). To resurrect on reboot run once, as the deploy user:
+All three containers (`fifi-alert-api`, `fifi-alert-postgres`, `fifi-alert-redis`) have `restart: always`, so the Docker daemon brings them back after a reboot. No process manager is involved.
+
+Until 2026-10-17 the API ran on the host under pm2 (`ecosystem.prod.config.cjs`). `deploy.sh` removes that pm2 entry the first time it runs on a host that still has it. If `pm2 list` still shows `fifi-alert-server`, delete it by hand: it would fight the container for port 3113.
+
+## Logs
 
 ```bash
-source ~/.nvm/nvm.sh && nvm use 22
-pm2 startup      # prints a sudo command — run it
-pm2 save
+docker logs -f fifi-alert-api                       # stdout (Nest + winston console)
+ls ~/sites/fifi-alert/fifi-alert-server/logs        # winston files, bind-mounted from the container
 ```

@@ -1,15 +1,63 @@
-# Production data stack for fifi-alert-server.
-# Only Postgres (PostGIS) and Redis. The API itself runs on the host under pm2.
+# Production stack for fifi-alert-server: the API, Postgres (PostGIS) and Redis.
 #
-#   docker-compose -p fifi-alert -f docker-compose.prod.yml up -d
+#   ./deploy.sh                       (git pull + build + up, see the script)
+#   docker-compose -p fifi-alert -f docker-compose.prod.yml up -d --build
 #
-# Reads POSTGRES_PASSWORD / REDIS_PASSWORD from the .env in this directory.
-# Ports are bound to 127.0.0.1 only; nothing is reachable from outside the host.
+# The API reads the .env in this directory (bind-mounted, parsed by dotenv as
+# it always was). The few values that must differ inside the container network
+# (database / redis hosts, bind address) are set under `environment:`; dotenv
+# does not override variables that already exist, so they win.
+# Ports are bound to 127.0.0.1 only; nginx proxies app.fifi-alert.com to :3113.
 # Names and host ports are deliberately unique because this host runs other stacks
 # (a container named "redis" and ports 5432/6379/6380/6381 already exist there).
 version: "3.8"
 
 services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: fifi-alert-api:latest
+    container_name: fifi-alert-api
+    restart: always
+    # NOT env_file: compose 1.26 keeps inline "# comments" and quotes in
+    # values, dotenv strips them. The app loaded .env through dotenv under pm2,
+    # so mount the same file and let the same parser read it (see volumes).
+    environment:
+      HOST: 0.0.0.0
+      PORT: 3113
+      NODE_ENV: production
+      # Container-network addresses. dotenv never overrides variables that are
+      # already set, so these win over the 127.0.0.1:5433 / 127.0.0.1:6382
+      # values the same .env holds for tools run from the host.
+      DATABASE_URL: postgresql://fifi_alert:${POSTGRES_PASSWORD}@postgres:5432/fifi_alert
+      SHADOW_DATABASE_URL: postgresql://fifi_alert:${POSTGRES_PASSWORD}@postgres:5432/fifi_alert_shadow
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379
+    ports:
+      - "127.0.0.1:3113:3113"
+    volumes:
+      # Configuration, read by dotenv inside the container (see note above).
+      - ./.env:/app/.env:ro
+      # Host-owned state, same paths as before the containerisation.
+      - ./uploads:/app/uploads
+      - ./logs:/app/logs
+    depends_on:
+      - postgres
+      - redis
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:3113/api/openapi.json"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+    logging:
+      driver: json-file
+      options:
+        max-size: "20m"
+        max-file: "5"
+
   postgres:
     image: postgis/postgis:17-3.5
     container_name: fifi-alert-postgres
