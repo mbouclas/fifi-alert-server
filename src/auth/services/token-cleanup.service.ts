@@ -26,6 +26,23 @@ export class TokenCleanupService {
     try {
       const now = new Date();
 
+      // Drop replacement-pair blobs that are far past the reuse grace window.
+      // Replay is also gated on the child token being live, so this is
+      // housekeeping, not the security boundary.
+      const graceCutoff = new Date(now.getTime() - 60 * 60 * 1000);
+      const replacementResult = await this.prisma.session.updateMany({
+        where: {
+          replacementCiphertext: { not: null },
+          revokedAt: { lt: graceCutoff },
+        },
+        data: { replacementCiphertext: null },
+      });
+      if (replacementResult.count > 0) {
+        this.logger.log(
+          `Cleared ${replacementResult.count} stale replacement-pair blobs`,
+        );
+      }
+
       // Delete expired tokens (both revoked and non-revoked)
       const expiredResult = await this.prisma.session.deleteMany({
         where: {

@@ -181,7 +181,8 @@ exports.Prisma.SessionScalarFieldEnum = {
   userId: 'userId',
   impersonatedBy: 'impersonatedBy',
   revoked: 'revoked',
-  revokedAt: 'revokedAt'
+  revokedAt: 'revokedAt',
+  replacementCiphertext: 'replacementCiphertext'
 };
 
 exports.Prisma.AccountScalarFieldEnum = {

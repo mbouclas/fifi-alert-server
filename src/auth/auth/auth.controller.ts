@@ -1345,7 +1345,7 @@ export class AuthController {
   @ApiOperation({
     summary: 'Refresh tokens (rotating)',
     description:
-      'Exchanges a valid refresh token for a NEW access token AND a NEW refresh token. The presented refresh token is revoked immediately. Presenting an already-rotated refresh token again returns 401; if that happens outside the grace window, every session of the user is revoked.',
+      'Exchanges a valid refresh token for a NEW access token AND a NEW refresh token. The presented refresh token is revoked immediately. Presenting it again within the reuse grace window (REFRESH_TOKEN_REUSE_GRACE_SECONDS, default 60 s) returns the SAME pair that was issued for it, as long as that pair is still live; this absorbs a lost response or a race. Presenting it again outside the grace window revokes every session of the user and returns 401. Revoked or invalid tokens always return 401.',
   })
   @ApiBody({ type: RefreshTokenDto })
   @ApiResponse({

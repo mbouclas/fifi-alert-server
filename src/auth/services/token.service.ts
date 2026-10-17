@@ -1,6 +1,12 @@
 import { Injectable, UnauthorizedException, Logger } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { createHash, randomUUID } from 'node:crypto';
+import {
+  createCipheriv,
+  createDecipheriv,
+  createHash,
+  randomBytes,
+  randomUUID,
+} from 'node:crypto';
 import { PrismaService } from '../../services/prisma.service';
 import type { User, Role, Gate } from '../../generated/prisma';
 
@@ -15,11 +21,24 @@ export const DEFAULT_REFRESH_EXPIRATION = '30d';
 
 /**
  * Default grace window (seconds) after a refresh token has been rotated during
- * which presenting the OLD token is treated as a benign duplicate (mobile
- * retry, racing tabs) rather than theft. Outside this window a reuse revokes
- * every session of the user.
+ * which presenting the OLD token is treated as a benign duplicate (lost
+ * response, mobile retry, racing tabs) rather than theft. Inside the window
+ * the SAME pair that was issued for that token is returned again (idempotent
+ * replay). Outside this window a reuse revokes every session of the user.
  */
-export const DEFAULT_REFRESH_REUSE_GRACE_SECONDS = 30;
+export const DEFAULT_REFRESH_REUSE_GRACE_SECONDS = 60;
+
+/**
+ * A duplicate presentation that arrives while the winner is still minting the
+ * replacement pair finds the row revoked but with no pair stored yet. Rather
+ * than answer 401, re-read the row this many times, this far apart, waiting
+ * for the winner to store it (worst case ~1.5 s). Applies both to a request
+ * that lost the atomic claim and to one that read the row as already revoked
+ * within REPLACEMENT_SETTLE_MS of the revocation.
+ */
+const REPLAY_WAIT_ATTEMPTS = 6;
+const REPLAY_WAIT_DELAY_MS = 250;
+const REPLACEMENT_SETTLE_MS = 5_000;
 
 /**
  * Hash a JWT for storage/lookup in the Session table.
@@ -30,6 +49,10 @@ export const DEFAULT_REFRESH_REUSE_GRACE_SECONDS = 30;
  */
 export function hashToken(token: string): string {
   return createHash('sha256').update(token).digest('hex');
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 /**
@@ -350,10 +373,13 @@ export class TokenService {
    * access + refresh pair. Implements reuse detection.
    *
    * Outcomes:
-   *  - valid, active refresh token  → old one revoked, new pair returned
+   *  - valid, active refresh token  → old one revoked, new pair returned; the
+   *    new pair is also stored encrypted on the old row for grace replay
    *  - unknown / malformed / expired → UnauthorizedException
-   *  - already revoked, revokedAt within grace window → UnauthorizedException
-   *    ("already used"); nothing else happens (absorbs client retries)
+   *  - already revoked, revokedAt within grace window → the SAME pair that was
+   *    issued for this token is returned again, provided its refresh token is
+   *    still unrevoked and unexpired (lost response / race). If no replayable
+   *    pair exists → UnauthorizedException ("already used"), no family revoke.
    *  - already revoked, outside grace window → treated as theft: ALL sessions
    *    of the user are revoked and {@link RefreshTokenReuseError} is thrown
    *
@@ -380,7 +406,13 @@ export class TokenService {
     const tokenHash = hashToken(rawToken);
     const session = await this.prisma.session.findUnique({
       where: { token: tokenHash },
-      select: { revoked: true, revokedAt: true, userId: true, tokenType: true },
+      select: {
+        revoked: true,
+        revokedAt: true,
+        userId: true,
+        tokenType: true,
+        replacementCiphertext: true,
+      },
     });
 
     if (!session || session.tokenType !== 'refresh') {
@@ -391,8 +423,22 @@ export class TokenService {
       const graceMs = this.reuseGraceSeconds() * 1000;
       const revokedAtMs = session.revokedAt?.getTime() ?? 0;
       if (Date.now() - revokedAtMs <= graceMs) {
-        // Benign duplicate (retry / race). The replacement pair was already
-        // handed to the client; do not punish.
+        // Benign duplicate (lost response / retry / race). Hand back the pair
+        // that was issued for this token, if it is still live; do not punish.
+        // If the revocation is seconds old the winner may still be minting,
+        // so wait for the pair instead of answering 401 straight away.
+        const replay = await this.awaitReplacement(
+          tokenHash,
+          session.userId,
+          session.replacementCiphertext,
+          Date.now() - revokedAtMs < REPLACEMENT_SETTLE_MS,
+        );
+        if (replay) {
+          this.logger.log(
+            `Replayed in-grace refresh for user ${session.userId}`,
+          );
+          return replay;
+        }
         throw new UnauthorizedException('Refresh token already used');
       }
 
@@ -411,6 +457,21 @@ export class TokenService {
       data: { revoked: true, revokedAt: new Date() },
     });
     if (claimed.count === 0) {
+      // Lost the race. The winner stores the replacement pair right after
+      // minting it; wait briefly for it and replay, so both racers get the
+      // same answer.
+      const replay = await this.awaitReplacement(
+        tokenHash,
+        session.userId,
+        undefined,
+        true,
+      );
+      if (replay) {
+        this.logger.log(
+          `Replayed refresh after lost claim for user ${session.userId}`,
+        );
+        return replay;
+      }
       throw new UnauthorizedException('Refresh token already used');
     }
 
@@ -437,13 +498,170 @@ export class TokenService {
       userAgent,
     );
 
-    return {
+    const rotated: IRotatedTokens = {
       userId: user.id,
       accessToken: access.token,
       accessExpiresAt: access.expiresAt,
       refreshToken: refresh.token,
       refreshExpiresAt: refresh.expiresAt,
     };
+
+    // Remember the issued pair on the consumed row so a duplicate presentation
+    // inside the grace window gets the same answer. Best effort: a failure
+    // here must not fail a refresh that already succeeded.
+    try {
+      await this.prisma.session.update({
+        where: { token: tokenHash },
+        data: { replacementCiphertext: this.encryptReplacement(rotated) },
+      });
+    } catch (error) {
+      this.logger.error(
+        `Failed to store replacement pair for user ${user.id}: ${String(error)}`,
+      );
+    }
+
+    return rotated;
+  }
+
+  /**
+   * Resolve the replacement pair for a consumed refresh row, optionally
+   * waiting for the winner of the rotation to store it.
+   *
+   * @param tokenHash - Hash of the consumed (parent) refresh token
+   * @param userId - Owner of the row; a blob for another user is ignored
+   * @param initial - The blob read with the row, if any
+   * @param wait - When no blob is present (yet), re-read the row a few times
+   *   before giving up. False for stale rows where nothing will ever appear.
+   */
+  private async awaitReplacement(
+    tokenHash: string,
+    userId: number,
+    initial: string | null | undefined,
+    wait: boolean,
+  ): Promise<IRotatedTokens | null> {
+    let ciphertext = initial;
+    for (let attempt = 0; ; attempt++) {
+      if (ciphertext) {
+        // A stored pair that is not live will not become live by waiting.
+        return this.replayReplacement(ciphertext, userId);
+      }
+      if (!wait || attempt >= REPLAY_WAIT_ATTEMPTS) {
+        return null;
+      }
+      await sleep(REPLAY_WAIT_DELAY_MS);
+      const again = await this.prisma.session.findUnique({
+        where: { token: tokenHash },
+        select: { replacementCiphertext: true },
+      });
+      ciphertext = again?.replacementCiphertext;
+    }
+  }
+
+  /**
+   * Decrypt a stored replacement pair and check that it is still usable: the
+   * replacement refresh token must exist, belong to the same user, and be
+   * neither revoked nor expired. Logout / logout-all / password reset revoke
+   * the child row, which closes the replay even inside the grace window.
+   */
+  private async replayReplacement(
+    ciphertext: string | null | undefined,
+    userId: number,
+  ): Promise<IRotatedTokens | null> {
+    if (!ciphertext) {
+      return null;
+    }
+    const pair = this.decryptReplacement(ciphertext);
+    if (!pair || pair.userId !== userId) {
+      return null;
+    }
+    const child = await this.prisma.session.findUnique({
+      where: { token: hashToken(pair.refreshToken) },
+      select: { revoked: true, expiresAt: true, tokenType: true },
+    });
+    if (
+      !child ||
+      child.tokenType !== 'refresh' ||
+      child.revoked ||
+      child.expiresAt.getTime() <= Date.now()
+    ) {
+      return null;
+    }
+    return pair;
+  }
+
+  /**
+   * Key for the replacement-pair blob: SHA-256 of the JWT signing secret.
+   * The secret already mints tokens, so no new trust boundary is introduced.
+   */
+  private replacementKey(): Buffer {
+    return createHash('sha256')
+      .update(process.env.JWT_SECRET || 'your-secret-key-change-in-production')
+      .digest();
+  }
+
+  /**
+   * Encrypt a rotated pair for storage on the consumed refresh row.
+   * Format: base64(iv).base64(gcmTag).base64(ciphertext)
+   */
+  encryptReplacement(pair: IRotatedTokens): string {
+    const iv = randomBytes(12);
+    const cipher = createCipheriv('aes-256-gcm', this.replacementKey(), iv);
+    const plaintext = JSON.stringify({
+      userId: pair.userId,
+      accessToken: pair.accessToken,
+      accessExpiresAt: pair.accessExpiresAt.toISOString(),
+      refreshToken: pair.refreshToken,
+      refreshExpiresAt: pair.refreshExpiresAt.toISOString(),
+    });
+    const ciphertext = Buffer.concat([
+      cipher.update(plaintext, 'utf8'),
+      cipher.final(),
+    ]);
+    return [iv, cipher.getAuthTag(), ciphertext]
+      .map((b) => b.toString('base64'))
+      .join('.');
+  }
+
+  /**
+   * Inverse of {@link encryptReplacement}. Returns null on any malformed,
+   * tampered, or foreign-key blob; never throws into the request path.
+   */
+  decryptReplacement(blob: string): IRotatedTokens | null {
+    try {
+      const [ivB64, tagB64, ctB64] = blob.split('.');
+      if (!ivB64 || !tagB64 || !ctB64) {
+        return null;
+      }
+      const decipher = createDecipheriv(
+        'aes-256-gcm',
+        this.replacementKey(),
+        Buffer.from(ivB64, 'base64'),
+      );
+      decipher.setAuthTag(Buffer.from(tagB64, 'base64'));
+      const plaintext = Buffer.concat([
+        decipher.update(Buffer.from(ctB64, 'base64')),
+        decipher.final(),
+      ]).toString('utf8');
+      const parsed = JSON.parse(plaintext) as Record<string, unknown>;
+      if (
+        typeof parsed.userId !== 'number' ||
+        typeof parsed.accessToken !== 'string' ||
+        typeof parsed.refreshToken !== 'string' ||
+        typeof parsed.accessExpiresAt !== 'string' ||
+        typeof parsed.refreshExpiresAt !== 'string'
+      ) {
+        return null;
+      }
+      return {
+        userId: parsed.userId,
+        accessToken: parsed.accessToken,
+        accessExpiresAt: new Date(parsed.accessExpiresAt),
+        refreshToken: parsed.refreshToken,
+        refreshExpiresAt: new Date(parsed.refreshExpiresAt),
+      };
+    } catch {
+      return null;
+    }
   }
 
   /**
@@ -550,6 +768,15 @@ export class TokenService {
     userId: number,
     exceptToken?: string,
   ): Promise<number> {
+    // Drop any stored replacement pairs first so nothing of this user's can be
+    // replayed inside the grace window. (The replay is also gated on the child
+    // row being unrevoked, which the update below guarantees; this is belt
+    // and braces.)
+    await this.prisma.session.updateMany({
+      where: { userId, replacementCiphertext: { not: null } },
+      data: { replacementCiphertext: null },
+    });
+
     const result = await this.prisma.session.updateMany({
       where: {
         userId,

@@ -98,19 +98,24 @@ model Role {
 }
 
 model Session {
-  id             Int       @id @default(autoincrement())
-  expiresAt      DateTime
-  token          String    @pg.Text // access/refresh: SHA-256 hex of the JWT; session (better-auth): raw
-  tokenType      String    @default("session") @map("token_type") // "session" | "access" | "refresh"
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
-  ipAddress      String?
-  userAgent      String?
-  userId         Int
-  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  impersonatedBy Int?      @map("impersonated_by")
-  revoked        Boolean   @default(false)
-  revokedAt      DateTime? @map("revoked_at")
+  id                    Int       @id @default(autoincrement())
+  expiresAt             DateTime
+  token                 String    @pg.Text // access/refresh: SHA-256 hex of the JWT; session (better-auth): raw
+  tokenType             String    @default("session") @map("token_type") // "session" | "access" | "refresh"
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  ipAddress             String?
+  userAgent             String?
+  userId                Int
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  impersonatedBy        Int?      @map("impersonated_by")
+  revoked               Boolean   @default(false)
+  revokedAt             DateTime? @map("revoked_at")
+  // Refresh rows only: AES-256-GCM blob of the access+refresh pair issued when
+  // THIS token was rotated. Lets a duplicate presentation inside the reuse
+  // grace window get the same pair back (lost response / race). Nulled on
+  // revoke-all and by the cleanup cron.
+  replacementCiphertext String?   @map("replacement_ciphertext") @pg.Text
 
   @@unique([token])
   @@index([userId])

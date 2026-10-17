@@ -157,12 +157,20 @@ async function main() {
   const access2: string = refreshed.body?.accessToken;
   const refresh2: string = refreshed.body?.refreshToken;
 
-  console.log('\n5. Old refresh token is dead, new one works');
+  console.log('\n5. In-grace reuse replays the SAME pair, new one works');
   const reuse = await post('/auth/refresh-token', { refreshToken: refresh1 });
-  check('reusing the old refresh token returns 401', reuse.status === 401, {
+  check('in-grace reuse returns 200', reuse.status === 200, {
     status: reuse.status,
     body: reuse.body,
   });
+  check(
+    'replayed accessToken is byte-identical to the first rotation',
+    reuse.body?.accessToken === access2,
+  );
+  check(
+    'replayed refreshToken is byte-identical to the first rotation',
+    reuse.body?.refreshToken === refresh2,
+  );
 
   const me2 = await get('/auth/me', access2);
   check('the new access token works', me2.status === 200, me2.body);
@@ -190,6 +198,14 @@ async function main() {
     'refresh token is rejected after logout',
     refreshAfterLogout.status === 401,
     refreshAfterLogout.status,
+  );
+  const replayAfterLogout = await post('/auth/refresh-token', {
+    refreshToken: refresh1,
+  });
+  check(
+    'in-grace replay of the OLD token is rejected once its child is revoked',
+    replayAfterLogout.status === 401,
+    replayAfterLogout.status,
   );
 
   // ----------------------------------------------------------- logout-all

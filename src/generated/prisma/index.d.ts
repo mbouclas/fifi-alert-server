@@ -8566,6 +8566,7 @@ export namespace Prisma {
     impersonatedBy: number | null
     revoked: boolean | null
     revokedAt: Date | null
+    replacementCiphertext: string | null
   }
 
   export type SessionMaxAggregateOutputType = {
@@ -8581,6 +8582,7 @@ export namespace Prisma {
     impersonatedBy: number | null
     revoked: boolean | null
     revokedAt: Date | null
+    replacementCiphertext: string | null
   }
 
   export type SessionCountAggregateOutputType = {
@@ -8596,6 +8598,7 @@ export namespace Prisma {
     impersonatedBy: number
     revoked: number
     revokedAt: number
+    replacementCiphertext: number
     _all: number
   }
 
@@ -8625,6 +8628,7 @@ export namespace Prisma {
     impersonatedBy?: true
     revoked?: true
     revokedAt?: true
+    replacementCiphertext?: true
   }
 
   export type SessionMaxAggregateInputType = {
@@ -8640,6 +8644,7 @@ export namespace Prisma {
     impersonatedBy?: true
     revoked?: true
     revokedAt?: true
+    replacementCiphertext?: true
   }
 
   export type SessionCountAggregateInputType = {
@@ -8655,6 +8660,7 @@ export namespace Prisma {
     impersonatedBy?: true
     revoked?: true
     revokedAt?: true
+    replacementCiphertext?: true
     _all?: true
   }
 
@@ -8757,6 +8763,7 @@ export namespace Prisma {
     impersonatedBy: number | null
     revoked: boolean
     revokedAt: Date | null
+    replacementCiphertext: string | null
     _count: SessionCountAggregateOutputType | null
     _avg: SessionAvgAggregateOutputType | null
     _sum: SessionSumAggregateOutputType | null
@@ -8791,6 +8798,7 @@ export namespace Prisma {
     impersonatedBy?: boolean
     revoked?: boolean
     revokedAt?: boolean
+    replacementCiphertext?: boolean
     user?: boolean | UserDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["session"]>
 
@@ -8807,6 +8815,7 @@ export namespace Prisma {
     impersonatedBy?: boolean
     revoked?: boolean
     revokedAt?: boolean
+    replacementCiphertext?: boolean
     user?: boolean | UserDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["session"]>
 
@@ -8823,6 +8832,7 @@ export namespace Prisma {
     impersonatedBy?: boolean
     revoked?: boolean
     revokedAt?: boolean
+    replacementCiphertext?: boolean
     user?: boolean | UserDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["session"]>
 
@@ -8839,9 +8849,10 @@ export namespace Prisma {
     impersonatedBy?: boolean
     revoked?: boolean
     revokedAt?: boolean
+    replacementCiphertext?: boolean
   }
 
-  export type SessionOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "expiresAt" | "token" | "tokenType" | "createdAt" | "updatedAt" | "ipAddress" | "userAgent" | "userId" | "impersonatedBy" | "revoked" | "revokedAt", ExtArgs["result"]["session"]>
+  export type SessionOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "expiresAt" | "token" | "tokenType" | "createdAt" | "updatedAt" | "ipAddress" | "userAgent" | "userId" | "impersonatedBy" | "revoked" | "revokedAt" | "replacementCiphertext", ExtArgs["result"]["session"]>
   export type SessionInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     user?: boolean | UserDefaultArgs<ExtArgs>
   }
@@ -8870,6 +8881,7 @@ export namespace Prisma {
       impersonatedBy: number | null
       revoked: boolean
       revokedAt: Date | null
+      replacementCiphertext: string | null
     }, ExtArgs["result"]["session"]>
     composites: {}
   }
@@ -9306,6 +9318,7 @@ export namespace Prisma {
     readonly impersonatedBy: FieldRef<"Session", 'Int'>
     readonly revoked: FieldRef<"Session", 'Boolean'>
     readonly revokedAt: FieldRef<"Session", 'DateTime'>
+    readonly replacementCiphertext: FieldRef<"Session", 'String'>
   }
     
 
@@ -32191,7 +32204,8 @@ export namespace Prisma {
     userId: 'userId',
     impersonatedBy: 'impersonatedBy',
     revoked: 'revoked',
-    revokedAt: 'revokedAt'
+    revokedAt: 'revokedAt',
+    replacementCiphertext: 'replacementCiphertext'
   };
 
   export type SessionScalarFieldEnum = (typeof SessionScalarFieldEnum)[keyof typeof SessionScalarFieldEnum]
@@ -33282,6 +33296,7 @@ export namespace Prisma {
     impersonatedBy?: IntNullableFilter<"Session"> | number | null
     revoked?: BoolFilter<"Session"> | boolean
     revokedAt?: DateTimeNullableFilter<"Session"> | Date | string | null
+    replacementCiphertext?: StringNullableFilter<"Session"> | string | null
     user?: XOR<UserScalarRelationFilter, UserWhereInput>
   }
 
@@ -33298,6 +33313,7 @@ export namespace Prisma {
     impersonatedBy?: SortOrderInput | SortOrder
     revoked?: SortOrder
     revokedAt?: SortOrderInput | SortOrder
+    replacementCiphertext?: SortOrderInput | SortOrder
     user?: UserOrderByWithRelationInput
   }
 
@@ -33317,6 +33333,7 @@ export namespace Prisma {
     impersonatedBy?: IntNullableFilter<"Session"> | number | null
     revoked?: BoolFilter<"Session"> | boolean
     revokedAt?: DateTimeNullableFilter<"Session"> | Date | string | null
+    replacementCiphertext?: StringNullableFilter<"Session"> | string | null
     user?: XOR<UserScalarRelationFilter, UserWhereInput>
   }, "id" | "token">
 
@@ -33333,6 +33350,7 @@ export namespace Prisma {
     impersonatedBy?: SortOrderInput | SortOrder
     revoked?: SortOrder
     revokedAt?: SortOrderInput | SortOrder
+    replacementCiphertext?: SortOrderInput | SortOrder
     _count?: SessionCountOrderByAggregateInput
     _avg?: SessionAvgOrderByAggregateInput
     _max?: SessionMaxOrderByAggregateInput
@@ -33356,6 +33374,7 @@ export namespace Prisma {
     impersonatedBy?: IntNullableWithAggregatesFilter<"Session"> | number | null
     revoked?: BoolWithAggregatesFilter<"Session"> | boolean
     revokedAt?: DateTimeNullableWithAggregatesFilter<"Session"> | Date | string | null
+    replacementCiphertext?: StringNullableWithAggregatesFilter<"Session"> | string | null
   }
 
   export type AccountWhereInput = {
@@ -35696,6 +35715,7 @@ export namespace Prisma {
     impersonatedBy?: number | null
     revoked?: boolean
     revokedAt?: Date | string | null
+    replacementCiphertext?: string | null
     user: UserCreateNestedOneWithoutSessionsInput
   }
 
@@ -35712,6 +35732,7 @@ export namespace Prisma {
     impersonatedBy?: number | null
     revoked?: boolean
     revokedAt?: Date | string | null
+    replacementCiphertext?: string | null
   }
 
   export type SessionUpdateInput = {
@@ -35725,6 +35746,7 @@ export namespace Prisma {
     impersonatedBy?: NullableIntFieldUpdateOperationsInput | number | null
     revoked?: BoolFieldUpdateOperationsInput | boolean
     revokedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    replacementCiphertext?: NullableStringFieldUpdateOperationsInput | string | null
     user?: UserUpdateOneRequiredWithoutSessionsNestedInput
   }
 
@@ -35741,6 +35763,7 @@ export namespace Prisma {
     impersonatedBy?: NullableIntFieldUpdateOperationsInput | number | null
     revoked?: BoolFieldUpdateOperationsInput | boolean
     revokedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    replacementCiphertext?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type SessionCreateManyInput = {
@@ -35756,6 +35779,7 @@ export namespace Prisma {
     impersonatedBy?: number | null
     revoked?: boolean
     revokedAt?: Date | string | null
+    replacementCiphertext?: string | null
   }
 
   export type SessionUpdateManyMutationInput = {
@@ -35769,6 +35793,7 @@ export namespace Prisma {
     impersonatedBy?: NullableIntFieldUpdateOperationsInput | number | null
     revoked?: BoolFieldUpdateOperationsInput | boolean
     revokedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    replacementCiphertext?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type SessionUncheckedUpdateManyInput = {
@@ -35784,6 +35809,7 @@ export namespace Prisma {
     impersonatedBy?: NullableIntFieldUpdateOperationsInput | number | null
     revoked?: BoolFieldUpdateOperationsInput | boolean
     revokedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    replacementCiphertext?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type AccountCreateInput = {
@@ -38236,6 +38262,7 @@ export namespace Prisma {
     impersonatedBy?: SortOrder
     revoked?: SortOrder
     revokedAt?: SortOrder
+    replacementCiphertext?: SortOrder
   }
 
   export type SessionAvgOrderByAggregateInput = {
@@ -38257,6 +38284,7 @@ export namespace Prisma {
     impersonatedBy?: SortOrder
     revoked?: SortOrder
     revokedAt?: SortOrder
+    replacementCiphertext?: SortOrder
   }
 
   export type SessionMinOrderByAggregateInput = {
@@ -38272,6 +38300,7 @@ export namespace Prisma {
     impersonatedBy?: SortOrder
     revoked?: SortOrder
     revokedAt?: SortOrder
+    replacementCiphertext?: SortOrder
   }
 
   export type SessionSumOrderByAggregateInput = {
@@ -41969,6 +41998,7 @@ export namespace Prisma {
     impersonatedBy?: number | null
     revoked?: boolean
     revokedAt?: Date | string | null
+    replacementCiphertext?: string | null
   }
 
   export type SessionUncheckedCreateWithoutUserInput = {
@@ -41983,6 +42013,7 @@ export namespace Prisma {
     impersonatedBy?: number | null
     revoked?: boolean
     revokedAt?: Date | string | null
+    replacementCiphertext?: string | null
   }
 
   export type SessionCreateOrConnectWithoutUserInput = {
@@ -42448,6 +42479,7 @@ export namespace Prisma {
     impersonatedBy?: IntNullableFilter<"Session"> | number | null
     revoked?: BoolFilter<"Session"> | boolean
     revokedAt?: DateTimeNullableFilter<"Session"> | Date | string | null
+    replacementCiphertext?: StringNullableFilter<"Session"> | string | null
   }
 
   export type AccountUpsertWithWhereUniqueWithoutUserInput = {
@@ -46587,6 +46619,7 @@ export namespace Prisma {
     impersonatedBy?: number | null
     revoked?: boolean
     revokedAt?: Date | string | null
+    replacementCiphertext?: string | null
   }
 
   export type AccountCreateManyUserInput = {
@@ -46781,6 +46814,7 @@ export namespace Prisma {
     impersonatedBy?: NullableIntFieldUpdateOperationsInput | number | null
     revoked?: BoolFieldUpdateOperationsInput | boolean
     revokedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    replacementCiphertext?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type SessionUncheckedUpdateWithoutUserInput = {
@@ -46795,6 +46829,7 @@ export namespace Prisma {
     impersonatedBy?: NullableIntFieldUpdateOperationsInput | number | null
     revoked?: BoolFieldUpdateOperationsInput | boolean
     revokedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    replacementCiphertext?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type SessionUncheckedUpdateManyWithoutUserInput = {
@@ -46809,6 +46844,7 @@ export namespace Prisma {
     impersonatedBy?: NullableIntFieldUpdateOperationsInput | number | null
     revoked?: BoolFieldUpdateOperationsInput | boolean
     revokedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    replacementCiphertext?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type AccountUpdateWithoutUserInput = {

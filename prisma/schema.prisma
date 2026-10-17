@@ -111,6 +111,11 @@ model Session {
   impersonatedBy Int?      @map("impersonated_by")
   revoked        Boolean   @default(false)
   revokedAt      DateTime? @map("revoked_at")
+  // Refresh rows only: AES-256-GCM blob of the access+refresh pair issued when
+  // THIS token was rotated. Lets a duplicate presentation inside the reuse
+  // grace window get the same pair back (lost response / race). Nulled on
+  // revoke-all and by the cleanup cron.
+  replacementCiphertext String? @map("replacement_ciphertext") @pg.Text
 
   @@unique([token])
   @@index([userId])

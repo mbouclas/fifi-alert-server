@@ -355,13 +355,147 @@ describe('TokenService - JWT expiration (isolated, mocked Prisma)', () => {
       expect(prismaMock.session.updateMany).not.toHaveBeenCalled();
     });
 
-    it('reuse INSIDE the grace window → 401 only, no family revoke', async () => {
+    /** A pair as the winner of a rotation would have minted it. */
+    const issuedPair = async () => {
+      const access = await service.generateAccessToken(buildUser() as any);
+      const refresh = await service.generateRefreshToken(buildUser() as any);
+      createdSessions = [];
+      return {
+        userId: 42,
+        accessToken: access.token,
+        accessExpiresAt: access.expiresAt,
+        refreshToken: refresh.token,
+        refreshExpiresAt: refresh.expiresAt,
+      };
+    };
+
+    it('the winner stores the issued pair encrypted on the consumed row', async () => {
+      const { token: oldRefresh } = await service.generateRefreshToken(
+        buildUser() as any,
+      );
+      prismaMock.session.findUnique.mockResolvedValueOnce({
+        revoked: false,
+        revokedAt: null,
+        userId: 42,
+        tokenType: 'refresh',
+        replacementCiphertext: null,
+      });
+      prismaMock.session.updateMany.mockResolvedValueOnce({ count: 1 });
+      prismaMock.user.findUnique.mockResolvedValueOnce(userRow());
+
+      const rotated = await service.rotateRefreshToken(oldRefresh);
+
+      expect(prismaMock.session.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { token: hashToken(oldRefresh) },
+          data: { replacementCiphertext: expect.any(String) },
+        }),
+      );
+      const stored = prismaMock.session.update.mock.calls[0][0].data
+        .replacementCiphertext as string;
+      expect(stored).not.toContain(rotated.refreshToken);
+      expect(stored).not.toContain(rotated.accessToken);
+      expect(service.decryptReplacement(stored)).toEqual(rotated);
+    });
+
+    it('a failed replacement store does not fail the refresh', async () => {
+      const { token: oldRefresh } = await service.generateRefreshToken(
+        buildUser() as any,
+      );
+      prismaMock.session.findUnique.mockResolvedValueOnce({
+        revoked: false,
+        revokedAt: null,
+        userId: 42,
+        tokenType: 'refresh',
+        replacementCiphertext: null,
+      });
+      prismaMock.session.updateMany.mockResolvedValueOnce({ count: 1 });
+      prismaMock.user.findUnique.mockResolvedValueOnce(userRow());
+      prismaMock.session.update.mockRejectedValueOnce(new Error('db down'));
+
+      const rotated = await service.rotateRefreshToken(oldRefresh);
+      expect(rotated.userId).toBe(42);
+    });
+
+    it('reuse INSIDE the grace window → replays the SAME pair, no family revoke', async () => {
+      const { token } = await service.generateRefreshToken(buildUser() as any);
+      const pair = await issuedPair();
+      prismaMock.session.findUnique
+        .mockResolvedValueOnce({
+          revoked: true,
+          revokedAt: new Date(Date.now() - 5 * 1000), // 5s ago
+          userId: 42,
+          tokenType: 'refresh',
+          replacementCiphertext: service.encryptReplacement(pair),
+        })
+        // child (replacement) refresh row: live
+        .mockResolvedValueOnce({
+          revoked: false,
+          expiresAt: new Date(Date.now() + 1000 * 60 * 60),
+          tokenType: 'refresh',
+        });
+
+      const replayed = await service.rotateRefreshToken(token);
+
+      expect(replayed).toEqual(pair);
+      expect(prismaMock.session.updateMany).not.toHaveBeenCalled();
+      expect(prismaMock.user.findUnique).not.toHaveBeenCalled();
+      expect(createdSessions).toEqual([]); // nothing new minted
+      expect(DEFAULT_REFRESH_REUSE_GRACE_SECONDS).toBe(60);
+    });
+
+    it('reuse INSIDE the grace window with the child already revoked → 401, no family revoke', async () => {
+      const { token } = await service.generateRefreshToken(buildUser() as any);
+      const pair = await issuedPair();
+      prismaMock.session.findUnique
+        .mockResolvedValueOnce({
+          revoked: true,
+          revokedAt: new Date(Date.now() - 5 * 1000),
+          userId: 42,
+          tokenType: 'refresh',
+          replacementCiphertext: service.encryptReplacement(pair),
+        })
+        .mockResolvedValueOnce({
+          revoked: true, // logged out meanwhile
+          expiresAt: new Date(Date.now() + 1000 * 60 * 60),
+          tokenType: 'refresh',
+        });
+
+      const err = await service.rotateRefreshToken(token).catch((e) => e);
+
+      expect(err).toBeInstanceOf(UnauthorizedException);
+      expect(err).not.toBeInstanceOf(RefreshTokenReuseError);
+      expect(err.message).toMatch(/already used/);
+      expect(prismaMock.session.updateMany).not.toHaveBeenCalled();
+    });
+
+    it('reuse INSIDE the grace window with a foreign-user blob → 401', async () => {
+      const { token } = await service.generateRefreshToken(buildUser() as any);
+      const pair = { ...(await issuedPair()), userId: 99 };
+      prismaMock.session.findUnique.mockResolvedValueOnce({
+        revoked: true,
+        revokedAt: new Date(Date.now() - 5 * 1000),
+        userId: 42,
+        tokenType: 'refresh',
+        replacementCiphertext: service.encryptReplacement(pair),
+      });
+
+      const err = await service.rotateRefreshToken(token).catch((e) => e);
+
+      expect(err).toBeInstanceOf(UnauthorizedException);
+      expect(err).not.toBeInstanceOf(RefreshTokenReuseError);
+      // No child lookup for a blob that does not belong to this user.
+      expect(prismaMock.session.findUnique).toHaveBeenCalledTimes(1);
+    });
+
+    it('reuse INSIDE the grace window without a stored pair (settled legacy row) → 401 only, no waiting', async () => {
       const { token } = await service.generateRefreshToken(buildUser() as any);
       prismaMock.session.findUnique.mockResolvedValueOnce({
         revoked: true,
-        revokedAt: new Date(Date.now() - 5 * 1000), // 5s ago
+        revokedAt: new Date(Date.now() - 20 * 1000), // long past settle time
         userId: 42,
         tokenType: 'refresh',
+        replacementCiphertext: null,
       });
 
       const err = await service.rotateRefreshToken(token).catch((e) => e);
@@ -370,18 +504,54 @@ describe('TokenService - JWT expiration (isolated, mocked Prisma)', () => {
       expect(err).not.toBeInstanceOf(RefreshTokenReuseError);
       expect(err.message).toMatch(/already used/);
       expect(prismaMock.session.updateMany).not.toHaveBeenCalled();
-      expect(DEFAULT_REFRESH_REUSE_GRACE_SECONDS).toBe(30);
+      // No re-reads: a row revoked that long ago will not gain a pair.
+      expect(prismaMock.session.findUnique).toHaveBeenCalledTimes(1);
+    });
+
+    it('reuse INSIDE the grace window while the winner is still minting → waits, then replays', async () => {
+      const { token } = await service.generateRefreshToken(buildUser() as any);
+      const pair = await issuedPair();
+      prismaMock.session.findUnique
+        // row already revoked a moment ago, pair not stored yet
+        .mockResolvedValueOnce({
+          revoked: true,
+          revokedAt: new Date(Date.now() - 50),
+          userId: 42,
+          tokenType: 'refresh',
+          replacementCiphertext: null,
+        })
+        // first re-read: still nothing
+        .mockResolvedValueOnce({ replacementCiphertext: null })
+        // second re-read: winner stored it
+        .mockResolvedValueOnce({
+          replacementCiphertext: service.encryptReplacement(pair),
+        })
+        // child row lookup
+        .mockResolvedValueOnce({
+          revoked: false,
+          expiresAt: new Date(Date.now() + 1000 * 60 * 60),
+          tokenType: 'refresh',
+        });
+
+      const replayed = await service.rotateRefreshToken(token);
+
+      expect(replayed).toEqual(pair);
+      expect(prismaMock.session.updateMany).not.toHaveBeenCalled();
+      expect(createdSessions).toEqual([]);
     });
 
     it('reuse OUTSIDE the grace window → revokes ALL user sessions and throws RefreshTokenReuseError', async () => {
       const { token } = await service.generateRefreshToken(buildUser() as any);
+      const pair = await issuedPair();
       prismaMock.session.findUnique.mockResolvedValueOnce({
         revoked: true,
         revokedAt: new Date(Date.now() - 120 * 1000), // 2 minutes ago
         userId: 42,
         tokenType: 'refresh',
+        // Even with a stored pair, outside the window it must NOT be replayed.
+        replacementCiphertext: service.encryptReplacement(pair),
       });
-      prismaMock.session.updateMany.mockResolvedValueOnce({ count: 3 });
+      prismaMock.session.updateMany.mockResolvedValue({ count: 3 });
 
       const err = await service.rotateRefreshToken(token).catch((e) => e);
 
@@ -393,10 +563,88 @@ describe('TokenService - JWT expiration (isolated, mocked Prisma)', () => {
           where: { userId: 42, revoked: false },
         }),
       );
-      // No replacement pair was issued.
+      // No replacement pair was issued, and the stored one was not replayed.
       expect(createdSessions.filter((s) => s.tokenType !== 'refresh')).toEqual(
         [],
       );
+      // Stored blobs of the user are wiped as part of the family revoke.
+      expect(prismaMock.session.updateMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { userId: 42, replacementCiphertext: { not: null } },
+          data: { replacementCiphertext: null },
+        }),
+      );
+    });
+
+    it('revokeAllUserTokens nulls stored replacement pairs before revoking', async () => {
+      prismaMock.session.updateMany.mockResolvedValue({ count: 2 });
+
+      await service.revokeAllUserTokens(42);
+
+      const calls = prismaMock.session.updateMany.mock.calls.map((c) => c[0]);
+      expect(calls[0]).toEqual({
+        where: { userId: 42, replacementCiphertext: { not: null } },
+        data: { replacementCiphertext: null },
+      });
+      expect(calls[1]).toEqual(
+        expect.objectContaining({ where: { userId: 42, revoked: false } }),
+      );
+    });
+
+    it('a lost claim replays the pair once the winner has stored it', async () => {
+      const { token } = await service.generateRefreshToken(buildUser() as any);
+      const pair = await issuedPair();
+      prismaMock.session.findUnique
+        .mockResolvedValueOnce({
+          revoked: false,
+          revokedAt: null,
+          userId: 42,
+          tokenType: 'refresh',
+          replacementCiphertext: null,
+        })
+        // first re-read: winner has not stored yet
+        .mockResolvedValueOnce({ replacementCiphertext: null })
+        // second re-read: stored
+        .mockResolvedValueOnce({
+          replacementCiphertext: service.encryptReplacement(pair),
+        })
+        // child row lookup
+        .mockResolvedValueOnce({
+          revoked: false,
+          expiresAt: new Date(Date.now() + 1000 * 60 * 60),
+          tokenType: 'refresh',
+        });
+      prismaMock.session.updateMany.mockResolvedValueOnce({ count: 0 });
+
+      const replayed = await service.rotateRefreshToken(token);
+
+      expect(replayed).toEqual(pair);
+      expect(prismaMock.user.findUnique).not.toHaveBeenCalled();
+      expect(createdSessions).toEqual([]);
+    });
+
+    it('replacement blob round-trips, and a tampered or foreign blob decrypts to null', async () => {
+      const pair = await issuedPair();
+      const blob = service.encryptReplacement(pair);
+
+      expect(service.decryptReplacement(blob)).toEqual(pair);
+      expect(blob.split('.')).toHaveLength(3);
+      expect(blob).not.toContain(pair.refreshToken);
+
+      const [iv, tag, ct] = blob.split('.');
+      const flipped = Buffer.from(ct, 'base64');
+      flipped[0] ^= 0xff;
+      expect(
+        service.decryptReplacement(
+          [iv, tag, flipped.toString('base64')].join('.'),
+        ),
+      ).toBeNull();
+      expect(service.decryptReplacement('garbage')).toBeNull();
+      expect(service.decryptReplacement('')).toBeNull();
+
+      process.env.JWT_SECRET = 'a-different-secret';
+      expect(service.decryptReplacement(blob)).toBeNull();
+      process.env.JWT_SECRET = TEST_SECRET;
     });
 
     it('honours REFRESH_TOKEN_REUSE_GRACE_SECONDS', async () => {
@@ -415,13 +663,18 @@ describe('TokenService - JWT expiration (isolated, mocked Prisma)', () => {
       expect(prismaMock.session.updateMany).not.toHaveBeenCalled();
     });
 
-    it('treats a lost race to claim the token as an in-grace reuse (401, no family revoke)', async () => {
+    it('treats a lost race with nothing to replay as an in-grace reuse (401, no family revoke)', async () => {
       const { token } = await service.generateRefreshToken(buildUser() as any);
       prismaMock.session.findUnique.mockResolvedValueOnce({
         revoked: false,
         revokedAt: null,
         userId: 42,
         tokenType: 'refresh',
+        replacementCiphertext: null,
+      });
+      // Every re-read finds no stored pair.
+      prismaMock.session.findUnique.mockResolvedValue({
+        replacementCiphertext: null,
       });
       prismaMock.session.updateMany.mockResolvedValueOnce({ count: 0 });
 

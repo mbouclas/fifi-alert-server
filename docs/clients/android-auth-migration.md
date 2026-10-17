@@ -14,7 +14,7 @@
 | `POST /auth/login` | included `session.token` | `session` is always absent. Use `accessToken` / `refreshToken` / `expiresAt` / `refreshExpiresAt`. |
 | `POST /auth/update-password` | `{ message }` | `{ message, revokedSessions }`. All **other** devices are signed out. |
 | `POST /auth/reset-password` | other sessions stayed valid | every session of the user is revoked |
-| Reusing an already-rotated refresh token | worked | `401`. If the reuse is more than 30 s after rotation, **all** sessions of the user are revoked and the user must log in again. |
+| Reusing an already-rotated refresh token | worked | Within 60 s of rotation: `200` with the **same** pair that rotation issued (covers a lost response or a race), as long as that pair is still live. More than 60 s after rotation: `401` and **all** sessions of the user are revoked; the user must log in again. |
 
 ## Target architecture
 
@@ -149,7 +149,7 @@ Key rules the code above enforces:
 
 - **Persist before retry.** If the app is killed between receiving the new pair and saving it, the old refresh token is already dead. Saving first minimizes that window.
 - **One refresh at a time.** The lock plus the "did someone else already refresh" check means concurrent 401s share one rotation.
-- **No automatic retry of `/auth/refresh-token`.** If you have a generic retry interceptor, exclude that path. The 30 s server grace window covers one accidental duplicate, not a retry storm.
+- **No automatic retry of `/auth/refresh-token`.** If you have a generic retry interceptor, exclude that path. Within the 60 s server grace window a duplicate gets the same pair back; that covers one accidental duplicate, not a retry storm.
 - **Network failure ≠ invalid token.** Only a `401` from refresh clears storage.
 
 ### 5. Optional proactive refresh

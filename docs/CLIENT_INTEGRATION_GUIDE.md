@@ -525,7 +525,7 @@ export const apiClient = new ApiClient();
 1. **Persist both new tokens** before retrying the original request.
 2. **Serialize refreshes.** Two concurrent calls with the same refresh token: the second gets `401`. Use one lock / one in-flight promise.
 3. **Never auto-retry the refresh call.** A `401` from it means the token is dead: clear storage and go to login.
-4. **Reuse detection.** Presenting an already-rotated refresh token more than 30 seconds after rotation revokes **all** sessions of the user.
+4. **Reuse detection.** Presenting an already-rotated refresh token within 60 seconds of rotation returns the same pair again (idempotent replay). More than 60 seconds after rotation it revokes **all** sessions of the user.
 5. **Logout** must send the refresh token in the body (`{ "refreshToken": "..." }`) together with the bearer header so both are revoked. `POST /auth/logout-all` revokes every session.
 
 ### Proactive Refresh (Recommended)
