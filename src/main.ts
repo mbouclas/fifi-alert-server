@@ -102,7 +102,7 @@ async function bootstrap() {
         in: 'header',
         name: 'X-Client-Key',
         description:
-          'Static client app key (CLIENT_API_KEYS). Lets client apps read the adoption board without a logged-in user.',
+          'Static client app key (CLIENT_API_KEYS). Lets client apps read the adoption board, public alerts and validate invite links without a logged-in user.',
       },
       'client-key',
     )
@@ -112,6 +112,7 @@ async function bootstrap() {
     .addTag('Pets', 'Pet profile management')
     .addTag('Pet Types', 'Pet type management (localised via lang / Accept-Language)')
     .addTag('Adoptions', 'Pet adoption board (public browse with X-Client-Key, owner management with bearer)')
+    .addTag('invitations', 'Invite a friend by email and track who joined (bearer; link validation with X-Client-Key)')
     .addTag('Languages', 'Available languages and the default language')
     .addTag('Sightings', 'Pet sighting reports')
     .addTag('Devices', 'Device registration and location management')

@@ -64,14 +64,16 @@ export class SmtpService implements IEmailProvider {
 
     // Check for preset provider configuration
     const provider = process.env.SMTP_PROVIDER?.toLowerCase();
+    // No credentials at all → an unauthenticated relay (local sink / dev
+    // catcher). Passing an empty `auth` object makes nodemailer attempt AUTH
+    // anyway and fail with "Missing credentials for PLAIN".
     const transportConfig = this.getProviderPreset(provider) || {
       host,
       port,
       secure,
-      auth: {
-        user: user || '',
-        pass: password || '',
-      },
+      ...(user || password
+        ? { auth: { user: user || '', pass: password || '' } }
+        : {}),
     };
 
     // Initialize Nodemailer transporter

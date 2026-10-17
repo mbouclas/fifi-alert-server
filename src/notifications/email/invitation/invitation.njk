@@ -1,0 +1,28 @@
+{% extends "common/layout.nunj" %}
+
+{#
+  Invitation email. EVERY variable below is pre-escaped by InvitationService
+  (nunjucks runs with autoescape: false). `bodyHtml` is already HTML
+  (paragraphs / <br/> / the accept anchor). Chrome strings come from
+  invitation.locale.ts in the recipient's language.
+#}
+
+{% block title %}{{ subject }}{% endblock %}
+
+{% block header %}{{ chrome.header }}{% endblock %}
+
+{% block content %}
+  <mj-text>
+    {{ bodyHtml }}
+  </mj-text>
+{% endblock %}
+
+{% block footer %}
+  <p style="margin-bottom: 10px;">{{ receivedBecause }}</p>
+  <p style="margin-bottom: 10px;">© {{ year }} FiFi Alert. {{ chrome.rights }}</p>
+  <p style="margin-bottom: 10px;">{{ chrome.tagline }}</p>
+  <p>
+    <a href="{{ appUrl }}/privacy" class="footer-link">{{ chrome.privacy }}</a> |
+    <a href="{{ appUrl }}/support" class="footer-link">{{ chrome.support }}</a>
+  </p>
+{% endblock %}

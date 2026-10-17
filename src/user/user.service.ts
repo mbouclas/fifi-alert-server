@@ -90,10 +90,6 @@ const userServiceEmailTemplateNames: Record<string, IEmailTemplate> = {
     subject: 'Welcome to Our Service!',
     file: `notifications/email/user/welcome.njk`,
   },
-  invite: {
-    subject: 'Invitation to Join Our Service',
-    file: `notifications/email/user/invite.njk`,
-  },
   forgotPassword: {
     subject: 'Reset Your FiFi Alert Password',
     file: `notifications/email/user/forgotPassword.njk`,
@@ -1527,71 +1523,5 @@ export class UserService {
       lastName: user.lastName ?? '',
       name: user.name ?? '',
     };
-  }
-
-  /**
-   * Send invitation email to a new user
-   * @param user User being invited
-   * @param inviteToken Invitation token
-   * @param invitedBy User who sent the invitation
-   * @param expiresIn Token expiration duration (e.g., "7 days")
-   * @returns Success message
-   */
-  async sendInviteEmail(
-    user: User,
-    inviteToken: string,
-    invitedBy?: User,
-    expiresIn: string = '7 days',
-  ): Promise<{ success: boolean; message: string }> {
-    this.logger.log(`Sending invite email to user ${user.id}: ${user.email}`);
-
-    const appUrl = getWebAppUrl();
-    const inviteLink = `${appUrl}/accept-invite?token=${inviteToken}`;
-
-    // Instantiate EmailService with local templates
-    const emailService = new EmailService(
-      this.emailProvider,
-      this.eventEmitter,
-      userServiceEmailTemplateNames,
-    );
-
-    try {
-      await emailService.sendHtml('invite', {
-        from: String(process.env.MAIL_NOTIFICATIONS_FROM),
-        to: user.email,
-        templateData: {
-          user: {
-            id: user.id,
-            email: user.email,
-            firstName: user.firstName,
-            lastName: user.lastName,
-            name: user.name,
-          },
-          inviteLink,
-          expiresIn,
-          invitedBy: invitedBy
-            ? {
-                firstName: invitedBy.firstName,
-                lastName: invitedBy.lastName,
-                name: invitedBy.name,
-                email: invitedBy.email,
-              }
-            : undefined,
-        },
-      });
-
-      this.logger.log(`Invite email sent successfully to user ${user.id}`);
-
-      return {
-        success: true,
-        message: `Invitation email sent to ${user.email}`,
-      };
-    } catch (error) {
-      this.logger.error(
-        `Failed to send invite email to user ${user.id}:`,
-        error,
-      );
-      throw new Error('FAILED_TO_SEND_INVITE_EMAIL');
-    }
   }
 }

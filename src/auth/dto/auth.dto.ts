@@ -92,6 +92,16 @@ export class SignupDto {
   @IsString()
   @IsUrl()
   callbackURL?: string;
+
+  @ApiPropertyOptional({
+    description:
+      'Raw token from an `/accept-invite?token=` link. When the account is created, the matching pending invitation is marked accepted (`acceptedVia: token`). Ignored silently if unknown, expired or revoked; never blocks signup.',
+    maxLength: 256,
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(256)
+  inviteToken?: string;
 }
 
 /**
@@ -517,4 +527,14 @@ export class SocialLoginDto {
   @IsString()
   @MaxLength(512)
   nonce?: string;
+
+  @ApiPropertyOptional({
+    description:
+      'Raw token from an `/accept-invite?token=` link. When the account is created, the matching pending invitation is marked accepted (`acceptedVia: token`). Ignored silently if unknown, expired or revoked; never blocks signup.',
+    maxLength: 256,
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(256)
+  inviteToken?: string;
 }

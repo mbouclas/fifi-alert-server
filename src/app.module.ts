@@ -36,6 +36,7 @@ import { LoggingInterceptor } from './shared/interceptors/logging.interceptor';
 import { AuditModule } from './audit/audit.module';
 import { PetModule } from './pet/pet.module';
 import { AdoptionModule } from './adoption/adoption.module';
+import { InvitationModule } from './invitation/invitation.module';
 import { AlertZoneCacheService } from './user/alert-zone-cache.service';
 import { PetTypesModule } from './pet-types/pet-types.module';
 import { I18nModule } from './i18n/i18n.module';
@@ -105,6 +106,7 @@ import { I18nModule } from './i18n/i18n.module';
     PetModule,
     AdoptionModule,
     PetTypesModule,
+    InvitationModule,
   ],
   controllers: [AppController],
   providers: [

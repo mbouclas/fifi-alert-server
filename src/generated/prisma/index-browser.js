@@ -304,6 +304,36 @@ exports.Prisma.AdoptionListingScalarFieldEnum = {
   updated_at: 'updated_at'
 };
 
+exports.Prisma.InvitationScalarFieldEnum = {
+  id: 'id',
+  senderUserId: 'senderUserId',
+  recipientEmail: 'recipientEmail',
+  recipientName: 'recipientName',
+  locale: 'locale',
+  subject: 'subject',
+  body: 'body',
+  message: 'message',
+  tokenHash: 'tokenHash',
+  status: 'status',
+  acceptedVia: 'acceptedVia',
+  createdAt: 'createdAt',
+  sentAt: 'sentAt',
+  expiresAt: 'expiresAt',
+  acceptedAt: 'acceptedAt',
+  revokedAt: 'revokedAt',
+  convertedUserId: 'convertedUserId'
+};
+
+exports.Prisma.InvitationSendLogScalarFieldEnum = {
+  id: 'id',
+  invitationId: 'invitationId',
+  senderUserId: 'senderUserId',
+  recipientHash: 'recipientHash',
+  sentAt: 'sentAt',
+  outcome: 'outcome',
+  error: 'error'
+};
+
 exports.Prisma.AlertScalarFieldEnum = {
   id: 'id',
   creator_id: 'creator_id',
@@ -548,6 +578,18 @@ exports.AdoptionStatus = exports.$Enums.AdoptionStatus = {
   WITHDRAWN: 'WITHDRAWN'
 };
 
+exports.InvitationStatus = exports.$Enums.InvitationStatus = {
+  PENDING: 'PENDING',
+  ACCEPTED: 'ACCEPTED',
+  EXPIRED: 'EXPIRED',
+  REVOKED: 'REVOKED'
+};
+
+exports.InvitationAcceptedVia = exports.$Enums.InvitationAcceptedVia = {
+  TOKEN: 'TOKEN',
+  EMAIL: 'EMAIL'
+};
+
 exports.PetSpecies = exports.$Enums.PetSpecies = {
   DOG: 'DOG',
   CAT: 'CAT',
@@ -600,6 +642,8 @@ exports.Prisma.ModelName = {
   PetTypeTranslation: 'PetTypeTranslation',
   Pet: 'Pet',
   AdoptionListing: 'AdoptionListing',
+  Invitation: 'Invitation',
+  InvitationSendLog: 'InvitationSendLog',
   Alert: 'Alert',
   ReunionSnapshot: 'ReunionSnapshot',
   Device: 'Device',

@@ -24,6 +24,13 @@ export const AUTH_EVENT_NAMES = {
   ACCOUNT_DELETION_STARTED: 'ACCOUNT_DELETION_STARTED',
   /** better-auth deleted the user row. */
   ACCOUNT_DELETED: 'ACCOUNT_DELETED',
+  /**
+   * A brand-new account was created through `POST /auth/signup` or a first
+   * `POST /auth/social`. NOT emitted for logins of existing users. Carries the
+   * optional `inviteToken` so the invitation module can record a conversion
+   * without the auth controller depending on it.
+   */
+  USER_REGISTERED: 'USER_REGISTERED',
 } as const;
 
 export type AuthEventName =
@@ -76,4 +83,13 @@ export interface IAccountDeletionVerificationRequestedPayload {
 
 export interface IAccountDeletionPayload {
   user: IAuthEventUser;
+}
+
+export type UserRegisteredSource = 'signup' | 'social';
+
+export interface IUserRegisteredPayload {
+  user: IAuthEventUser;
+  source: UserRegisteredSource;
+  /** Raw invite token from the `/accept-invite?token=` link, if the client sent one. */
+  inviteToken?: string;
 }

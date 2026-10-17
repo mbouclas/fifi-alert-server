@@ -30,14 +30,17 @@ model User {
   accounts      Account[]
 
   // MVP Phase 1 Relations
-  devices            Device[]          @relation("UserDevices")
-  created_alerts     Alert[]           @relation("CreatedAlerts")
-  reported_sightings Sighting[]        @relation("ReportedSightings")
-  auditLogs          AuditLog[]
-  pets               Pet[]             @relation("UserPets")
-  alert_zones        AlertZone[]       @relation("UserAlertZones")
-  adoptionListings   AdoptionListing[] @relation("UserAdoptionListings")
-  passkeys           Passkey[]         @relation("UserPasskeys")
+  devices              Device[]            @relation("UserDevices")
+  created_alerts       Alert[]             @relation("CreatedAlerts")
+  reported_sightings   Sighting[]          @relation("ReportedSightings")
+  auditLogs            AuditLog[]
+  pets                 Pet[]               @relation("UserPets")
+  alert_zones          AlertZone[]         @relation("UserAlertZones")
+  adoptionListings     AdoptionListing[]   @relation("UserAdoptionListings")
+  passkeys             Passkey[]           @relation("UserPasskeys")
+  sentInvitations      Invitation[]        @relation("UserSentInvitations")
+  convertedInvitations Invitation[]        @relation("UserConvertedInvitations")
+  invitationSendLogs   InvitationSendLog[] @relation("UserInvitationSendLogs")
 
   @@index([email])
   @@index([banned])
@@ -373,6 +376,74 @@ model AdoptionListing {
   @@index([status])
   @@index([location_point], type: Gist, name: "adoption_listing_location_gist_idx") // Spatial index
   @@map("adoption_listing")
+}
+
+// ============================================================================
+// Invitations — "invite a friend by email" (BACKEND_WORK_ORDER_INVITATIONS.md)
+// ============================================================================
+
+enum InvitationStatus {
+  PENDING
+  ACCEPTED
+  EXPIRED
+  REVOKED
+}
+
+enum InvitationAcceptedVia {
+  TOKEN
+  EMAIL
+}
+
+// One row per invited address per sender; a resend updates the row.
+// A partial unique index `(sender_user_id, recipient_email) WHERE status = 'PENDING'`
+// (one open invite per sender+address) lives in SQL only — Prisma cannot express it.
+model Invitation {
+  id             Int     @id @default(autoincrement())
+  senderUserId   Int     @map("sender_user_id")
+  sender         User    @relation("UserSentInvitations", fields: [senderUserId], references: [id], onDelete: Cascade)
+  recipientEmail String  @map("recipient_email") @pg.VarChar(254) // lower-cased
+  recipientName  String? @map("recipient_name") @pg.VarChar(120)
+  locale         String  @pg.VarChar(5)
+  subject        String  @pg.VarChar(200)
+  body           String  @pg.Text // template as received, WITH the {inviteLink} placeholder
+  message        String? @pg.Text // raw personal message, audit only
+  tokenHash      String  @unique @map("token_hash") @pg.Char(64) // SHA-256 hex of the raw token
+
+  status      InvitationStatus       @default(PENDING)
+  acceptedVia InvitationAcceptedVia? @map("accepted_via")
+
+  createdAt  DateTime  @default(now()) @map("created_at")
+  sentAt     DateTime  @map("sent_at")
+  expiresAt  DateTime  @map("expires_at")
+  acceptedAt DateTime? @map("accepted_at")
+  revokedAt  DateTime? @map("revoked_at")
+
+  convertedUserId Int?  @map("converted_user_id") // never exposed in DTOs
+  convertedUser   User? @relation("UserConvertedInvitations", fields: [convertedUserId], references: [id], onDelete: SetNull)
+
+  sendLogs InvitationSendLog[]
+
+  @@index([senderUserId, createdAt])
+  @@index([recipientEmail, status])
+  @@index([status, expiresAt])
+  @@map("invitation")
+}
+
+// One row per send attempt (create + every resend): rolling-window limits and abuse tracing.
+model InvitationSendLog {
+  id            Int        @id @default(autoincrement())
+  invitationId  Int        @map("invitation_id")
+  invitation    Invitation @relation(fields: [invitationId], references: [id], onDelete: Cascade)
+  senderUserId  Int        @map("sender_user_id")
+  sender        User       @relation("UserInvitationSendLogs", fields: [senderUserId], references: [id], onDelete: Cascade)
+  recipientHash String     @map("recipient_hash") @pg.Char(64) // SHA-256 hex of the lower-cased address
+  sentAt        DateTime   @default(now()) @map("sent_at")
+  outcome       String     @pg.VarChar(16) // queued | sent | failed
+  error         String?    @pg.VarChar(500)
+
+  @@index([senderUserId, sentAt])
+  @@index([sentAt])
+  @@map("invitation_send_log")
 }
 
 // Alert Status Enum

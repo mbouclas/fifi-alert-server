@@ -68,7 +68,13 @@ import {
 } from '../dto';
 import { AUDIT_EVENT_NAMES } from '../../audit/audit-event-names';
 import { IAuditEventPayload } from '../../audit/interfaces/audit-event-payload.interface';
-import { AUTH_EVENT_NAMES, type IPasswordUpdatedPayload } from '../auth-events';
+import {
+  AUTH_EVENT_NAMES,
+  type IAuthEventUser,
+  type IPasswordUpdatedPayload,
+  type IUserRegisteredPayload,
+  type UserRegisteredSource,
+} from '../auth-events';
 import { withTemporaryBetterAuthSession } from '../services/better-auth-session.helper';
 
 /**
@@ -402,6 +408,11 @@ export class AuthController {
 
       this.logger.log(
         `New user via ${provider}: ${result.user.email} (id ${userId})`,
+      );
+      this.emitUserRegistered(
+        { id: userId, email: result.user.email, name: result.user.name },
+        'social',
+        dto.inviteToken,
       );
       try {
         const auditPayload: IAuditEventPayload = {
@@ -862,6 +873,18 @@ export class AuthController {
       // Better Auth only creates the user row; grant the default role so the
       // account has permissions once the email is verified.
       await this.userService.assignDefaultRole(Number(result.user.id));
+
+      this.emitUserRegistered(
+        {
+          id: Number(result.user.id),
+          email: result.user.email,
+          name: result.user.name,
+          firstName: signupDto.firstName,
+          lastName: signupDto.lastName,
+        },
+        'signup',
+        signupDto.inviteToken,
+      );
 
       await this.requestVerificationEmail(
         signupDto.email.toLowerCase(),
@@ -1391,6 +1414,34 @@ export class AuthController {
       }
       this.logger.error(`Token refresh failed: ${error}`);
       throw new UnauthorizedException('Invalid or expired refresh token');
+    }
+  }
+
+  /**
+   * Announce a brand-new account (signup or first social sign-in) to the rest
+   * of the app, e.g. the invitation module records conversions. Bookkeeping
+   * only: it must never fail the request, and `/auth/signup` has no
+   * ValidationPipe, so the token is type-checked before it travels.
+   */
+  private emitUserRegistered(
+    user: IAuthEventUser,
+    source: UserRegisteredSource,
+    inviteToken: unknown,
+  ): void {
+    try {
+      const payload: IUserRegisteredPayload = {
+        user,
+        source,
+        inviteToken:
+          typeof inviteToken === 'string' &&
+          inviteToken.length > 0 &&
+          inviteToken.length <= 256
+            ? inviteToken
+            : undefined,
+      };
+      this.eventEmitter.emit(AUTH_EVENT_NAMES.USER_REGISTERED, payload);
+    } catch (error) {
+      this.logger.error('Failed to emit USER_REGISTERED event:', error);
     }
   }
 }

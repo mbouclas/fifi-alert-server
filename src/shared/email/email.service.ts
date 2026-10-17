@@ -68,10 +68,6 @@ export const baseEmailTemplateNames: Record<string, IEmailTemplate> = {
     subject: 'Forgot Your Password?',
     file: 'notifications/email/user/forgotPassword.njk',
   },
-  invite: {
-    subject: "You're Invited!",
-    file: 'notifications/email/user/invite.njk',
-  },
   newAlert: {
     subject: 'New Pet Alert Near You',
     file: 'notifications/email/alert/newAlert.njk',
