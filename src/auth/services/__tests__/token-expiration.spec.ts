@@ -441,7 +441,7 @@ describe('TokenService - JWT expiration (isolated, mocked Prisma)', () => {
       expect(prismaMock.session.updateMany).not.toHaveBeenCalled();
       expect(prismaMock.user.findUnique).not.toHaveBeenCalled();
       expect(createdSessions).toEqual([]); // nothing new minted
-      expect(DEFAULT_REFRESH_REUSE_GRACE_SECONDS).toBe(60);
+      expect(DEFAULT_REFRESH_REUSE_GRACE_SECONDS).toBe(300);
     });
 
     it('reuse INSIDE the grace window with the child already revoked → 401, no family revoke', async () => {
@@ -545,7 +545,7 @@ describe('TokenService - JWT expiration (isolated, mocked Prisma)', () => {
       const pair = await issuedPair();
       prismaMock.session.findUnique.mockResolvedValueOnce({
         revoked: true,
-        revokedAt: new Date(Date.now() - 120 * 1000), // 2 minutes ago
+        revokedAt: new Date(Date.now() - 400 * 1000), // past the 300 s default
         userId: 42,
         tokenType: 'refresh',
         // Even with a stored pair, outside the window it must NOT be replayed.

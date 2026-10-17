@@ -26,7 +26,7 @@ export const DEFAULT_REFRESH_EXPIRATION = '30d';
  * the SAME pair that was issued for that token is returned again (idempotent
  * replay). Outside this window a reuse revokes every session of the user.
  */
-export const DEFAULT_REFRESH_REUSE_GRACE_SECONDS = 60;
+export const DEFAULT_REFRESH_REUSE_GRACE_SECONDS = 300;
 
 /**
  * A duplicate presentation that arrives while the winner is still minting the

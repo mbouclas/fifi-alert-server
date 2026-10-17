@@ -171,7 +171,7 @@ curl -X POST http://localhost:3000/auth/refresh-token \
 # Response: { accessToken, expiresAt, refreshToken, refreshExpiresAt }
 # The refresh token you sent is now REVOKED. Persist the new one.
 # Sending the same refresh token again returns 401; more than
-# REFRESH_TOKEN_REUSE_GRACE_SECONDS (default 30s) after rotation it is
+# REFRESH_TOKEN_REUSE_GRACE_SECONDS (default 300 s) after rotation it is
 # treated as theft and ALL sessions of that user are revoked.
 ```
 

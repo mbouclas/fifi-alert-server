@@ -314,7 +314,7 @@ JWT_SECRET=PRODUCTION_JWT_SECRET_MINIMUM_64_CHARS_ROTATE_ANNUALLY
 JWT_REFRESH_SECRET=PRODUCTION_REFRESH_SECRET_MINIMUM_64_CHARS_ROTATE_ANNUALLY
 JWT_ACCESS_EXPIRATION=15m  # Short-lived for security
 JWT_REFRESH_EXPIRATION=30d  # Long-lived, rotated on every refresh
-REFRESH_TOKEN_REUSE_GRACE_SECONDS=30  # Reuse of a rotated refresh token beyond this revokes all sessions
+REFRESH_TOKEN_REUSE_GRACE_SECONDS=300  # Reuse of a rotated refresh token beyond this revokes all sessions
 AUTH_PASSWORD_MIN_LENGTH=8
 
 #########################################
