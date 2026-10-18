@@ -5,7 +5,7 @@ description: "Skill for the Device area of fifi-alert-server. 10 symbols across 
 
 # Device
 
-10 symbols | 2 files | Cohesion: 94%
+10 symbols | 2 files | Cohesion: 100%
 
 ## When to Use
 
@@ -25,42 +25,25 @@ description: "Skill for the Device area of fifi-alert-server. 10 symbols across 
 Start here when exploring this area:
 
 - **`register`** (Method) — `src/device/device.service.ts:24`
-- **`updateLocation`** (Method) — `src/device/device.service.ts:196`
-- **`updatePushToken`** (Method) — `src/device/device.service.ts:286`
-- **`findByUserId`** (Method) — `src/device/device.service.ts:349`
-- **`getLocationStatus`** (Method) — `src/device/device.service.ts:364`
+- **`updateLocation`** (Method) — `src/device/device.service.ts:186`
+- **`updatePushToken`** (Method) — `src/device/device.service.ts:276`
+- **`findByUserId`** (Method) — `src/device/device.service.ts:339`
+- **`getLocationStatus`** (Method) — `src/device/device.service.ts:354`
 
 ## Key Symbols
 
 | Symbol | Type | File | Line |
 |--------|------|------|------|
 | `register` | Method | `src/device/device.service.ts` | 24 |
-| `updateLocation` | Method | `src/device/device.service.ts` | 196 |
-| `updatePushToken` | Method | `src/device/device.service.ts` | 286 |
-| `findByUserId` | Method | `src/device/device.service.ts` | 349 |
-| `getLocationStatus` | Method | `src/device/device.service.ts` | 364 |
-| `mapToResponseDto` | Method | `src/device/device.service.ts` | 415 |
+| `updateLocation` | Method | `src/device/device.service.ts` | 186 |
+| `updatePushToken` | Method | `src/device/device.service.ts` | 276 |
+| `findByUserId` | Method | `src/device/device.service.ts` | 339 |
+| `getLocationStatus` | Method | `src/device/device.service.ts` | 354 |
+| `mapToResponseDto` | Method | `src/device/device.service.ts` | 405 |
 | `create` | Method | `src/device/saved-zone.service.ts` | 30 |
 | `findByDevice` | Method | `src/device/saved-zone.service.ts` | 116 |
 | `enrichWithCoordinates` | Method | `src/device/saved-zone.service.ts` | 288 |
 | `mapToResponseDto` | Method | `src/device/saved-zone.service.ts` | 324 |
-
-## Execution Flows
-
-| Flow | Type | Steps |
-|------|------|-------|
-| `FindByDevice → Sleep` | cross_community | 5 |
-| `Register → GetLocationStatus` | intra_community | 3 |
-| `UpdateLocation → GetLocationStatus` | intra_community | 3 |
-| `UpdatePushToken → GetLocationStatus` | intra_community | 3 |
-| `FindByDevice → MapToResponseDto` | intra_community | 3 |
-| `FindByUserId → GetLocationStatus` | intra_community | 3 |
-
-## Connected Areas
-
-| Area | Connections |
-|------|-------------|
-| Sighting | 1 calls |
 
 ## How to Explore
 

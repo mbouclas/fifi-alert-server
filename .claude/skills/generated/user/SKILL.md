@@ -1,92 +1,94 @@
 ---
 name: user
-description: "Skill for the User area of fifi-alert-server. 53 symbols across 12 files."
+description: "Skill for the User area of fifi-alert-server. 83 symbols across 18 files."
 ---
 
 # User
 
-53 symbols | 12 files | Cohesion: 86%
+83 symbols | 18 files | Cohesion: 83%
 
 ## When to Use
 
 - Working with code in `src/`
-- Understanding how buildIncludeObject, buildQueryOptions, isValidPrismaRelationObject work
+- Understanding how formatExpiresIn, getWebAppUrl, buildWebAppUrl work
 - Modifying user-related functionality
 
 ## Key Files
 
 | File | Symbols |
 |------|---------|
-| `src/user/user.service.ts` | findOne, findMany, resolveRoles, delete, assignGate (+18) |
+| `src/user/user.service.ts` | formatExpiresIn, handleAccountVerificationEmailRequested, handlePasswordResetEmailRequested, handleEmailChangeConfirmationRequested, handleAccountDeletionVerificationRequested (+29) |
 | `src/user/user.controller.ts` | findAll, findOne, findByEmail, getUserPet, getAlertZone (+5) |
 | `src/user/alert-zone.service.ts` | create, findByUser, findOne, update, delete (+1) |
+| `src/auth/auth-links.ts` | extractCallbackURL, buildWebVerificationUrl, buildWebResetPasswordUrl, buildWebDeleteAccountUrl |
+| `src/notification/alert-email.service.ts` | isOptedIn, sendAlertEmail, sendPetIsHomeEmail |
+| `src/config/web-app.config.ts` | stripTrailingSlash, getWebAppUrl, buildWebAppUrl |
+| `src/alert/alert.service.ts` | sendAlertCreatedEmail, sendAlertResolvedEmail, sendAlertNearYouEmails |
+| `src/shared/email/email.service.ts` | EmailService, sendHtml, loadTemplate |
+| `src/auth/auth/auth.controller.ts` | login, logFailedLoginAttempt, me |
 | `src/user/alert-zone-cache.service.ts` | getActiveAlertZones, fetchActiveZonesFromDB, warmCache |
-| `src/shared/helpers/prisma-include.helper.ts` | buildIncludeObject, buildQueryOptions |
-| `src/auth/services/auth-email.service.ts` | sendEmailVerificationEmail, sendLoginNotificationEmail |
-| `src/shared/helpers/prisma-model-fields.helper.ts` | isValidPrismaRelationObject, sanitizeUpdateData |
-| `src/alert/alert.service.ts` | sendAlertNearYouEmails |
-| `src/shared/email/email.service.ts` | EmailService |
-| `src/services/prisma.service.ts` | PrismaService |
 
 ## Entry Points
 
 Start here when exploring this area:
 
-- **`buildIncludeObject`** (Function) — `src/shared/helpers/prisma-include.helper.ts:73`
-- **`buildQueryOptions`** (Function) — `src/shared/helpers/prisma-include.helper.ts:113`
-- **`isValidPrismaRelationObject`** (Function) — `src/shared/helpers/prisma-model-fields.helper.ts:105`
-- **`sanitizeUpdateData`** (Function) — `src/shared/helpers/prisma-model-fields.helper.ts:132`
-- **`EmailService`** (Class) — `src/shared/email/email.service.ts:109`
+- **`formatExpiresIn`** (Function) — `src/user/user.service.ts:115`
+- **`getWebAppUrl`** (Function) — `src/config/web-app.config.ts:20`
+- **`buildWebAppUrl`** (Function) — `src/config/web-app.config.ts:41`
+- **`extractCallbackURL`** (Function) — `src/auth/auth-links.ts:16`
+- **`buildWebVerificationUrl`** (Function) — `src/auth/auth-links.ts:32`
 
 ## Key Symbols
 
 | Symbol | Type | File | Line |
 |--------|------|------|------|
-| `EmailService` | Class | `src/shared/email/email.service.ts` | 109 |
+| `EmailService` | Class | `src/shared/email/email.service.ts` | 102 |
 | `PrismaService` | Class | `src/services/prisma.service.ts` | 12 |
+| `formatExpiresIn` | Function | `src/user/user.service.ts` | 115 |
+| `getWebAppUrl` | Function | `src/config/web-app.config.ts` | 20 |
+| `buildWebAppUrl` | Function | `src/config/web-app.config.ts` | 41 |
+| `extractCallbackURL` | Function | `src/auth/auth-links.ts` | 16 |
+| `buildWebVerificationUrl` | Function | `src/auth/auth-links.ts` | 32 |
+| `buildWebResetPasswordUrl` | Function | `src/auth/auth-links.ts` | 49 |
+| `buildWebDeleteAccountUrl` | Function | `src/auth/auth-links.ts` | 76 |
 | `buildIncludeObject` | Function | `src/shared/helpers/prisma-include.helper.ts` | 73 |
 | `buildQueryOptions` | Function | `src/shared/helpers/prisma-include.helper.ts` | 113 |
-| `isValidPrismaRelationObject` | Function | `src/shared/helpers/prisma-model-fields.helper.ts` | 105 |
-| `sanitizeUpdateData` | Function | `src/shared/helpers/prisma-model-fields.helper.ts` | 132 |
-| `findOne` | Method | `src/user/user.service.ts` | 427 |
-| `findMany` | Method | `src/user/user.service.ts` | 467 |
-| `resolveRoles` | Method | `src/user/user.service.ts` | 577 |
-| `delete` | Method | `src/user/user.service.ts` | 652 |
-| `assignGate` | Method | `src/user/user.service.ts` | 762 |
-| `removeGate` | Method | `src/user/user.service.ts` | 809 |
-| `getUserGates` | Method | `src/user/user.service.ts` | 854 |
-| `handleAccountVerificationEmailRequested` | Method | `src/user/user.service.ts` | 946 |
-| `sendAccountVerificationEmail` | Method | `src/user/user.service.ts` | 963 |
-| `sendForgotPasswordEmail` | Method | `src/user/user.service.ts` | 1067 |
-| `sendInviteEmail` | Method | `src/user/user.service.ts` | 1188 |
-| `sendAlertNearYouEmails` | Method | `src/alert/alert.service.ts` | 911 |
-| `sendEmailVerificationEmail` | Method | `src/auth/services/auth-email.service.ts` | 54 |
-| `sendLoginNotificationEmail` | Method | `src/auth/services/auth-email.service.ts` | 156 |
+| `handleAccountVerificationEmailRequested` | Method | `src/user/user.service.ts` | 1016 |
+| `handlePasswordResetEmailRequested` | Method | `src/user/user.service.ts` | 1040 |
+| `handleEmailChangeConfirmationRequested` | Method | `src/user/user.service.ts` | 1129 |
+| `handleAccountDeletionVerificationRequested` | Method | `src/user/user.service.ts` | 1161 |
+| `sendAccountVerificationEmail` | Method | `src/user/user.service.ts` | 1223 |
+| `sendWelcomeEmail` | Method | `src/user/user.service.ts` | 1277 |
+| `sendForgotPasswordEmail` | Method | `src/user/user.service.ts` | 1331 |
+| `sendPasswordChangedEmail` | Method | `src/user/user.service.ts` | 1375 |
+| `sendEmailChangeConfirmationEmail` | Method | `src/user/user.service.ts` | 1424 |
 
 ## Execution Flows
 
 | Flow | Type | Steps |
 |------|------|-------|
-| `Main → BuildIncludeObject` | cross_community | 5 |
-| `Main → GetUserScalarFields` | cross_community | 5 |
-| `Main → GetUserRelationFields` | cross_community | 5 |
-| `Main → GetUserImmutableFields` | cross_community | 5 |
-| `Main → IsValidPrismaRelationObject` | cross_community | 5 |
-| `Main → UpdateUserPassword` | cross_community | 4 |
-| `HandleAccountVerificationEmailRequested → LoadTemplate` | cross_community | 4 |
-| `HandleAccountVerificationEmailRequested → Send` | cross_community | 4 |
-| `UpdateUserPassword → GetUserScalarFields` | cross_community | 4 |
-| `UpdateUserPassword → GetUserRelationFields` | cross_community | 4 |
+| `HandleEmailChangeConfirmationRequested → Trim` | cross_community | 6 |
+| `HandleEmailChangeConfirmationRequested → StripTrailingSlash` | intra_community | 6 |
+| `HandleAccountDeletionVerificationRequested → Trim` | cross_community | 6 |
+| `HandleAccountDeletionVerificationRequested → StripTrailingSlash` | intra_community | 6 |
+| `Resolve → Trim` | cross_community | 6 |
+| `Resolve → StripTrailingSlash` | cross_community | 6 |
+| `HandlePasswordResetEmailRequested → Trim` | cross_community | 6 |
+| `HandlePasswordResetEmailRequested → StripTrailingSlash` | intra_community | 6 |
+| `HandleAccountVerificationEmailRequested → Trim` | cross_community | 6 |
+| `HandleAccountVerificationEmailRequested → StripTrailingSlash` | intra_community | 6 |
 
 ## Connected Areas
 
 | Area | Connections |
 |------|-------------|
-| Email | 7 calls |
-| GetUser | 1 calls |
+| Auth | 7 calls |
+| Questions | 6 calls |
+| Invitation | 1 calls |
+| Scripts | 1 calls |
 
 ## How to Explore
 
-1. `gitnexus_context({name: "buildIncludeObject"})` — see callers and callees
+1. `gitnexus_context({name: "formatExpiresIn"})` — see callers and callees
 2. `gitnexus_query({query: "user"})` — find related execution flows
 3. Read key files listed above for implementation details

@@ -2,7 +2,7 @@
 <!-- gitnexus:start -->
 # GitNexus — Code Intelligence
 
-This project is indexed by GitNexus as **fifi-alert-server** (3810 symbols, 7114 relationships, 131 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
+This project is indexed by GitNexus as **fifi-alert-server** (5999 symbols, 11749 relationships, 248 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
 
 > If any GitNexus tool warns the index is stale, run `npx gitnexus analyze` in terminal first.
 
@@ -40,6 +40,26 @@ This project is indexed by GitNexus as **fifi-alert-server** (3810 symbols, 7114
 | Rename / extract / split / refactor | `.claude/skills/gitnexus/gitnexus-refactoring/SKILL.md` |
 | Tools, resources, schema reference | `.claude/skills/gitnexus/gitnexus-guide/SKILL.md` |
 | Index, status, clean, wiki CLI commands | `.claude/skills/gitnexus/gitnexus-cli/SKILL.md` |
+| Work in the Scripts area (84 symbols) | `.claude/skills/generated/scripts/SKILL.md` |
+| Work in the User area (83 symbols) | `.claude/skills/generated/user/SKILL.md` |
+| Work in the Questions area (48 symbols) | `.claude/skills/generated/questions/SKILL.md` |
+| Work in the Invitation area (36 symbols) | `.claude/skills/generated/invitation/SKILL.md` |
+| Work in the Services area (29 symbols) | `.claude/skills/generated/services/SKILL.md` |
+| Work in the Notification area (27 symbols) | `.claude/skills/generated/notification/SKILL.md` |
+| Work in the Alert area (26 symbols) | `.claude/skills/generated/alert/SKILL.md` |
+| Work in the Auth area (24 symbols) | `.claude/skills/generated/auth/SKILL.md` |
+| Work in the Pet area (21 symbols) | `.claude/skills/generated/pet/SKILL.md` |
+| Work in the Adoption area (21 symbols) | `.claude/skills/generated/adoption/SKILL.md` |
+| Work in the Upload area (21 symbols) | `.claude/skills/generated/upload/SKILL.md` |
+| Work in the Pet-types area (17 symbols) | `.claude/skills/generated/pet-types/SKILL.md` |
+| Work in the Guards area (13 symbols) | `.claude/skills/generated/guards/SKILL.md` |
+| Work in the Passkeys area (12 symbols) | `.claude/skills/generated/passkeys/SKILL.md` |
+| Work in the Audit area (12 symbols) | `.claude/skills/generated/audit/SKILL.md` |
+| Work in the Scenarios area (10 symbols) | `.claude/skills/generated/scenarios/SKILL.md` |
+| Work in the Location area (10 symbols) | `.claude/skills/generated/location/SKILL.md` |
+| Work in the Sighting area (10 symbols) | `.claude/skills/generated/sighting/SKILL.md` |
+| Work in the Device area (10 symbols) | `.claude/skills/generated/device/SKILL.md` |
+| Work in the Smtp area (10 symbols) | `.claude/skills/generated/smtp/SKILL.md` |
 
 <!-- gitnexus:end -->
 
